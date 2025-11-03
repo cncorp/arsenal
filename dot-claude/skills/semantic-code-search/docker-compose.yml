@@ -29,11 +29,13 @@ services:
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       DATABASE_URL: postgresql://codesearch:codesearch@postgres:5432/codesearch  # pragma: allowlist secret
+      PROJECT_ROOT: /project
     volumes:
-      # Mount project root (3 levels up from skill directory)
-      # .claude/skills/semantic-code-search -> project root
-      - ../../..:/workspace:ro
-    working_dir: /workspace
+      # Mount skill source code to /app
+      - ./src:/app/src:ro
+      # Mount project root - use absolute path to avoid symlink issues
+      - /home/odio/Hacking/codel/ct4:/project:ro
+    working_dir: /project
     command: tail -f /dev/null
 
 volumes:
