@@ -2,6 +2,45 @@
 
 This file provides guidance to our AI coding agents (e.g., Claude Code and Codex CLI) when working with code in this repository.
 
+## 🚀 Updating Superpowers
+
+**When users ask "Do I have any new superpowers?" or "Check for superpowers updates":**
+
+Run these commands to check for and install updates:
+
+```bash
+# Navigate to the superpowers submodule
+cd superpowers
+
+# Fetch and show what's new
+git fetch origin
+git log --oneline HEAD..origin/main
+
+# If there are updates, show them to the user
+git log --oneline HEAD..origin/main --pretty=format:"- %s"
+
+# If updates exist, ask user if they want to update, then:
+git pull origin main
+
+# Run the install script to update symlinks and dependencies
+cd ..
+./superpowers/install.sh
+
+# Verify the update
+cd superpowers && git log --oneline -1
+```
+
+**What to tell the user:**
+- List what new features/fixes are available (from the git log)
+- Explain that updating will give them access to new agents, commands, or skills
+- Mention any breaking changes or important notes from commit messages
+- After updating, list what new capabilities they now have access to
+
+**Available Superpowers:**
+- **Agents**: Auto-invoked specialized agents (pytest-test-reviewer, mypy-error-fixer, test-fixture-reviewer, task-complete-enforcer)
+- **Commands**: Slash commands like `/buildit`, `/planit`, `/review-code`, `/mypy`, `/research`, and more
+- **Skills**: Specialized capabilities (langfuse-prompt-viewer, playwright-tester, docker-log-debugger, test-runner, twilio-test-caller)
+
 ## Key files
 
 **Codel Text** is an AI-powered relationship coaching platform that monitors couples' text conversations and delivers contextual coaching interventions. Users text naturally while the system provides 1:1 coaching to improve communication patterns. Before doing anything else, make sure you understand:
