@@ -26,7 +26,7 @@ Use proactively when:
 ## Setup (First Time)
 
 ```bash
-cd /home/odio/Hacking/codel/ct3/.claude/skills/playwright-tester
+cd .claude/skills/playwright-tester
 npm run setup
 ```
 
@@ -86,7 +86,7 @@ For complex tasks, write custom Playwright code and execute via `run.js`. The ex
 **Step 1: Auto-detect dev servers (if testing localhost)**
 
 ```bash
-cd /home/odio/Hacking/codel/ct3/.claude/skills/playwright-tester && node -e "require('./lib/helpers').detectDevServers().then(servers => console.log(JSON.stringify(servers)))"
+cd .claude/skills/playwright-tester && node -e "require('./lib/helpers').detectDevServers().then(servers => console.log(JSON.stringify(servers)))"
 ```
 
 - If **1 server found**: Use it automatically
@@ -121,7 +121,7 @@ const TARGET_URL = 'http://100.93.144.78:5172';
 **Step 3: Execute from skill directory**
 
 ```bash
-cd /home/odio/Hacking/codel/ct3/.claude/skills/playwright-tester && node run.js /tmp/playwright-test-admin.js
+cd .claude/skills/playwright-tester && node run.js /tmp/playwright-test-admin.js
 ```
 
 ## Common Automation Patterns
@@ -322,7 +322,7 @@ await helpers.retryWithBackoff(async () => {
 For simple one-off tasks, execute inline without creating files:
 
 ```bash
-cd /home/odio/Hacking/codel/ct3/.claude/skills/playwright-tester && node run.js "
+cd .claude/skills/playwright-tester && node run.js "
 const browser = await chromium.launch({ headless: false });
 const page = await browser.newPage();
 await page.goto('http://100.93.144.78:5172/admin');
@@ -364,7 +364,7 @@ curl -s http://100.93.144.78:5172 | head -20
 
 | Problem | Solution |
 |---------|----------|
-| Playwright not installed | Run `cd /home/odio/Hacking/codel/ct3/.claude/skills/playwright-tester && npm run setup` |
+| Playwright not installed | Run `cd .claude/skills/playwright-tester && npm run setup` |
 | Module not found | Ensure using `run.js` wrapper for JavaScript execution |
 | Browser doesn't open | Verify `headless: false` in script |
 | Connection refused | Start frontend: `cd frontend && npm run dev` |
@@ -406,13 +406,13 @@ curl -s http://100.93.144.78:5172 | head -20
 playwright screenshot http://100.93.144.78:5172/admin /tmp/admin.png --viewport-size=1920,1080 --wait-for-timeout 3000
 
 # 🔥 Auto-detect servers (JavaScript)
-cd /home/odio/Hacking/codel/ct3/.claude/skills/playwright-tester && node -e "require('./lib/helpers').detectDevServers().then(s => console.log(JSON.stringify(s)))"
+cd .claude/skills/playwright-tester && node -e "require('./lib/helpers').detectDevServers().then(s => console.log(JSON.stringify(s)))"
 
 # 🔥 Execute automation script (JavaScript)
-cd /home/odio/Hacking/codel/ct3/.claude/skills/playwright-tester && node run.js /tmp/playwright-test-mytest.js
+cd .claude/skills/playwright-tester && node run.js /tmp/playwright-test-mytest.js
 
 # 🔥 Inline quick task (JavaScript)
-cd /home/odio/Hacking/codel/ct3/.claude/skills/playwright-tester && node run.js "await page.goto('http://100.93.144.78:5172'); await page.screenshot({path: '/tmp/quick.png'});"
+cd .claude/skills/playwright-tester && node run.js "await page.goto('http://100.93.144.78:5172'); await page.screenshot({path: '/tmp/quick.png'});"
 
 # Start frontend server
 cd frontend && npm run dev

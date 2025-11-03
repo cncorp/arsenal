@@ -26,24 +26,24 @@ Fetch and view prompts from Langfuse to understand their content, schema, and co
 
 ```bash
 # Fetch specific prompt (from api directory)
-cd /home/odio/Hacking/codel/ct3/api && \
+cd api && \
 set -a; source .env; set +a; \
 PYTHONPATH=src uv run python src/cli/refresh_prompt_cache.py PROMPT_NAME
 
 # Fetch all prompts
-cd /home/odio/Hacking/codel/ct3/api && \
+cd api && \
 set -a; source .env; set +a; \
 PYTHONPATH=src uv run python src/cli/refresh_prompt_cache.py
 
 # Fetch multiple prompts
-cd /home/odio/Hacking/codel/ct3/api && \
+cd api && \
 set -a; source .env; set +a; \
 PYTHONPATH=src uv run python src/cli/refresh_prompt_cache.py prompt1 prompt2 prompt3
 ```
 
 ## Cached Location
 
-Prompts saved to: `/home/odio/Hacking/codel/ct3/docs/cached_prompts/`
+Prompts saved to: `docs/cached_prompts/`
 
 Files created:
 - `{prompt_name}_production.txt` - Prompt content + version
@@ -124,14 +124,14 @@ Files created:
 
 ```bash
 # List cached prompts
-ls -1 /home/odio/Hacking/codel/ct3/docs/cached_prompts/*_production.txt | xargs -n1 basename | sed 's/_production.txt$//'
+ls -1 docs/cached_prompts/*_production.txt | xargs -n1 basename | sed 's/_production.txt$//'
 
 # Fetch prompt
-cd /home/odio/Hacking/codel/ct3/api && set -a; source .env; set +a; PYTHONPATH=src uv run python src/cli/refresh_prompt_cache.py PROMPT_NAME
+cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python src/cli/refresh_prompt_cache.py PROMPT_NAME
 
 # Read prompt
-cat /home/odio/Hacking/codel/ct3/docs/cached_prompts/PROMPT_NAME_production.txt
-cat /home/odio/Hacking/codel/ct3/docs/cached_prompts/PROMPT_NAME_production_config.json
+cat docs/cached_prompts/PROMPT_NAME_production.txt
+cat docs/cached_prompts/PROMPT_NAME_production_config.json
 ```
 
 **Note:** This is READ-ONLY. Never modify Langfuse prompts directly.
