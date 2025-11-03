@@ -1,0 +1,54 @@
+#!/bin/bash
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}Uninstalling Superpowers symlinks from ct3...${NC}\n"
+
+# Get the directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CT3_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Remove .claude symlink
+if [ -L "$CT3_ROOT/.claude" ]; then
+    rm "$CT3_ROOT/.claude"
+    echo -e "${GREEN}✓ Removed .claude symlink${NC}"
+else
+    echo "  ! No .claude symlink found"
+fi
+
+# Remove AGENTS.md symlinks
+if [ -L "$CT3_ROOT/AGENTS.md" ]; then
+    rm "$CT3_ROOT/AGENTS.md"
+    echo -e "${GREEN}✓ Removed root AGENTS.md symlink${NC}"
+
+    # Restore backup if it exists
+    if [ -f "$CT3_ROOT/AGENTS.md.backup" ]; then
+        mv "$CT3_ROOT/AGENTS.md.backup" "$CT3_ROOT/AGENTS.md"
+        echo -e "${GREEN}✓ Restored AGENTS.md from backup${NC}"
+    fi
+else
+    echo "  ! No root AGENTS.md symlink found"
+fi
+
+if [ -L "$CT3_ROOT/api/tests/AGENTS.md" ]; then
+    rm "$CT3_ROOT/api/tests/AGENTS.md"
+    echo -e "${GREEN}✓ Removed testing AGENTS.md symlink${NC}"
+
+    # Restore backup if it exists
+    if [ -f "$CT3_ROOT/api/tests/AGENTS.md.backup" ]; then
+        mv "$CT3_ROOT/api/tests/AGENTS.md.backup" "$CT3_ROOT/api/tests/AGENTS.md"
+        echo -e "${GREEN}✓ Restored testing AGENTS.md from backup${NC}"
+    fi
+else
+    echo "  ! No testing AGENTS.md symlink found"
+fi
+
+echo -e "\n${GREEN}✓ Uninstallation complete!${NC}"
+echo ""
+echo "Note: This only removes symlinks. The superpowers submodule remains."
+echo "To fully remove superpowers, run: git submodule deinit superpowers && git rm superpowers"
