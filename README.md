@@ -138,26 +138,91 @@ Invoke with `/command-name` in Claude Code:
 
 ### 🎯 Skills (Specialized Tools)
 
-**Semantic Code Search:**
+**Semantic Code Search** - Find code by meaning, not text matching
 ```bash
 # Start the skill
 cd superpowers && docker-compose up -d
 
-# Find code by meaning, not text
+# Examples of what you can ask Claude:
+"Find all authentication logic in the codebase"
+"Where do we handle webhook messages?"
+"Show me database query functions"
+"Find code that sends emails"
+
+# Direct CLI usage:
 docker exec superpowers-semantic-search-cli python /app/src/cli.py find "authentication logic"
 docker exec superpowers-semantic-search-cli python /app/src/cli.py find "send message to user"
 ```
 
-**Langfuse Prompt Viewer:**
-- View and debug Langfuse prompts and traces
-- Understand prompt schemas when KeyError occurs
-- Analyze AI model behavior in production
+**Langfuse Prompt Viewer** - Debug prompts and traces
+```bash
+# Examples of what you can ask Claude:
+"Show me the voice_message_enricher prompt"
+"What schema does the intervention_router prompt return?"
+"View the trace for this error: trace_abc123"
+"Why am I getting KeyError: 'therapist_response'?"
 
-**Other Skills:**
-- **`playwright-tester`** - Browser automation testing
-- **`docker-log-debugger`** - Debug container logs
-- **`test-runner`** - Run and manage test suites
-- **`twilio-test-caller`** - Test Twilio voice integrations
+# It will run:
+cd api && PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py
+```
+
+**Playwright Tester** - Browser automation and testing
+```bash
+# Examples of what you can ask Claude:
+"Test if the login page loads correctly"
+"Find the submit button on the registration form"
+"Check if error messages appear when form validation fails"
+"Take a screenshot of the dashboard page"
+"Verify the chat widget opens when clicked"
+
+# It will use the playwright-tester skill to:
+# - Launch browsers (Chrome, Firefox, Safari)
+# - Find elements by text, CSS selector, or accessibility role
+# - Interact with forms, buttons, links
+# - Take screenshots and verify page state
+```
+
+**Docker Log Debugger** - Analyze container logs for errors
+```bash
+# Examples of what you can ask Claude:
+"Find errors in the api container logs"
+"Show me database connection failures"
+"What's causing the worker to crash?"
+"Search logs for 'KeyError' in the last 100 lines"
+
+# It will run:
+docker logs codel-api --tail 100 | grep -i error
+docker logs codel-worker --since 10m
+```
+
+**Test Runner** - Run tests in parallel and background
+```bash
+# Examples of what you can ask Claude:
+"Run all unit tests in the background"
+"Run integration tests in parallel while I keep working"
+"Show me test results for the messaging module"
+"Run smoke tests and let me know when they finish"
+
+# It will run:
+cd api && just test-unit &
+# Or monitor existing test runs
+pytest --workers 4 tests/integration/
+```
+
+**Twilio Test Caller** - Test voice call functionality
+```bash
+# Examples of what you can ask Claude:
+"Place a test call to +15555551234"
+"Test the voice menu IVR flow"
+"Verify call recording works"
+"Send a test SMS to check delivery"
+
+# It will use Twilio API to:
+# - Initiate test calls
+# - Verify call connection and audio
+# - Test IVR menu responses
+# - Check SMS delivery status
+```
 
 ### 📚 System Prompts
 Automatically loaded guidance for AI agents:
