@@ -1,0 +1,21 @@
+{
+  "comment": "Superpowers default settings - symlinked to .claude/settings.local.json",
+  "bashCommandApprovals": {
+    "requireApprovalPatterns": [
+      "git commit*",
+      "git push*",
+      "git pull*",
+      "git merge*",
+      "git reset*",
+      "git rebase*",
+      "git stash pop*",
+      "git cherry-pick*",
+      "git apply*",
+      "rm -rf*",
+      "sudo*"
+    ]
+  },
+  "permissions": {
+    "allowGitWrite": false
+  }
+}
