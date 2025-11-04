@@ -102,14 +102,23 @@ docker exec superpowers-semantic-search-cli python /app/src/cli.py find "send me
 
 **Langfuse Prompt Viewer** - Debug prompts and traces
 ```bash
+# Setup (required): Add Langfuse keys to superpowers/.env
+# LANGFUSE_PUBLIC_KEY=pk-lf-...
+# LANGFUSE_SECRET_KEY=sk-lf-...
+# LANGFUSE_HOST=https://your-langfuse-instance.com
+
 # Examples of what you can ask Claude:
-"Show me the voice_message_enricher prompt"
+"Show me the message_enricher prompt"
 "What schema does the intervention_router prompt return?"
 "View the trace for this error: trace_abc123"
 "Why am I getting KeyError: 'therapist_response'?"
+"List all available prompts"
 
-# It will run:
-cd api && PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py
+# It will run (portable - works from any directory):
+set -a; source superpowers/.env; set +a
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py message_enricher
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/check_prompts.py
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py trace_id
 ```
 
 **Playwright Tester** - Browser automation and testing
