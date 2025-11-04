@@ -4,39 +4,23 @@ Reusable Claude Code agents, commands, skills, and patterns for your projects.
 
 ## Quick Start
 
-1. **Copy environment template**:
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your OPENAI_API_KEY
-   ```
-
-2. **Start all skill containers** (optional, for Docker-based skills):
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Verify skills are running**:
-   ```bash
-   docker ps | grep superpowers
-   ```
-
-## Environment Setup
-
-Skills that require API keys (like semantic-code-search) use a shared `.env` file at the superpowers root:
-
 ```bash
-# Copy template
-cp .env.example .env
+# 1. Initialize submodule (if not already done)
+git submodule update --init --recursive
 
-# Add your API keys
-echo "OPENAI_API_KEY=sk-proj-your-key" >> .env
+# 2. Run install script (handles .env setup automatically)
+./superpowers/install.sh
+
+# 3. Start Docker services (optional - for semantic-code-search)
+cd superpowers && docker-compose up -d
 ```
 
-Alternatively, export from your shell environment:
-```bash
-export OPENAI_API_KEY=$(grep OPENAI_API_KEY ../api/.env | cut -d '=' -f2)
-docker-compose up -d
-```
+**The install script automatically:**
+- Creates symlinks for `.claude`, `.pre-commit-scripts`, and `AGENTS.md` files
+- Installs Node.js dependencies (playwright-tester, etc.)
+- Sets up `superpowers/.env` and offers to copy OPENAI_API_KEY from `api/.env`
+
+**Adding to a new repository:** `git submodule add git@github.com:cncorp/superpowers.git superpowers` then follow above.
 
 ## Structure
 
@@ -53,57 +37,19 @@ superpowers/
 │   ├── AGENTS.md       # Root-level agent guidance
 │   └── testing/        # Testing-specific patterns
 │       └── AGENTS.md
-├── install.sh          # Installation script
+├── .env.example        # Environment template (copy to .env)
+├── docker-compose.yml  # Centralized Docker orchestration
+├── install.sh          # Installation script (idempotent)
 ├── uninstall.sh        # Uninstallation script
 └── README.md           # This file
 ```
-
-## Installation
-
-### As a Git Submodule
-
-From your project root:
-
-```bash
-# Add as submodule
-git submodule add git@github.com:cncorp/superpowers.git superpowers
-
-# Initialize and update
-git submodule update --init --recursive
-```
-
-### Linking to Your Project
-
-After adding as a submodule, create symlinks to enable the agents/commands/skills:
-
-```bash
-# From your project root directory
-./superpowers/install.sh
-```
-
-This will:
-- Link `.claude/` configurations to your project root (symlinks `dot-claude/` → `.claude/`)
-- Link `.pre-commit-scripts/` for code quality checks (symlinks `pre-commit-scripts/` → `.pre-commit-scripts/`)
-- Create symlinks for AGENTS.md files in appropriate locations
-- Install Node.js dependencies for skills that require them (playwright-tester, etc.)
-- Preserve existing project-specific customizations
-
-### Prerequisites
-
-For skills requiring Node.js (like playwright-tester):
-- Node.js and npm must be installed
-- The install script will automatically run `npm install` for these skills
-- If npm is not available, you can manually install dependencies later:
-  ```bash
-  cd superpowers/dot-claude/skills/playwright-tester
-  npm install
-  ```
 
 ## What You Get
 
 ### 🤖 Specialized Agents (Auto-invoked)
 Claude Code automatically uses these agents when appropriate:
 
+- **`git-reader`** - Read-only git operations (status, diffs, history, logs) with tool-level enforcement
 - **`pytest-test-reviewer`** - Reviews test code for quality, parametrization, and best practices
 - **`test-fixture-reviewer`** - Refactors test fixtures to follow patterns
 - **`mypy-error-fixer`** - Automatically fixes type errors

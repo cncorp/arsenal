@@ -2,7 +2,27 @@
 
 This file provides guidance to our AI coding agents (e.g., Claude Code and Codex CLI) when working with code in this repository.
 
-## 🚀 Updating Superpowers
+## 🚀 Installing Superpowers
+
+**When users ask to "install superpowers" or "set up superpowers":**
+
+```bash
+# 1. Ensure submodule is initialized (skip if already done)
+git submodule update --init --recursive
+
+# 2. Run install script (handles .env setup automatically)
+./superpowers/install.sh
+
+# 3. Start Docker services (optional - for semantic-code-search skill)
+cd superpowers && docker-compose up -d
+```
+
+**The install script automatically:**
+- Creates symlinks for `.claude`, `.pre-commit-scripts`, and `AGENTS.md` files
+- Installs Node.js dependencies (playwright-tester, etc.)
+- Sets up `superpowers/.env` and offers to copy OPENAI_API_KEY from `api/.env`
+
+## 🔄 Updating Superpowers
 
 **When users ask "Do I have any new superpowers?" or "Check for superpowers updates":**
 
@@ -37,7 +57,7 @@ cd superpowers && git log --oneline -1
 - After updating, list what new capabilities they now have access to
 
 **Available Superpowers:**
-- **Agents**: Auto-invoked specialized agents (pytest-test-reviewer, mypy-error-fixer, test-fixture-reviewer, task-complete-enforcer)
+- **Agents**: Auto-invoked specialized agents (git-reader, pytest-test-reviewer, mypy-error-fixer, test-fixture-reviewer, task-complete-enforcer)
 - **Commands**: Slash commands like `/buildit`, `/planit`, `/review-code`, `/mypy`, `/research`, and more
 - **Skills**: Specialized capabilities (langfuse-prompt-viewer, playwright-tester, docker-log-debugger, test-runner, twilio-test-caller)
 
