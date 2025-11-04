@@ -9,41 +9,101 @@ INSTRUCTIONS FOR CLAUDE/AI AGENTS:
 - This is strictly for local development reference only
 
 Usage:
-    python src/cli/refresh_prompt_cache.py [prompt_name]
+    python refresh_prompt_cache.py [prompt_name]
 
 Examples:
-    python src/cli/refresh_prompt_cache.py                    # Download all prompts for viewing
-    python src/cli/refresh_prompt_cache.py message_enricher   # Download specific prompt for viewing
+    python refresh_prompt_cache.py                    # Download all prompts for viewing
+    python refresh_prompt_cache.py message_enricher   # Download specific prompt for viewing
+
+Environment:
+    Requires LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY environment variables.
+    Load with: set -a; source superpowers/.env; set +a
 """
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
+from langfuse import Langfuse
 from langfuse.api.resources.commons.errors.not_found_error import NotFoundError
 
-from common.langfuse_client import get_langfuse
-from common.prompt_discovery import get_all_prompts
-from logger import get_logger
 
-logger = get_logger()
+def get_langfuse() -> Langfuse | None:
+    """Get Langfuse client from environment variables."""
+    try:
+        public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
+        secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
+        host = os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com")
+
+        if not public_key or not secret_key:
+            print("ERROR: Missing required environment variables:")
+            print("  - LANGFUSE_PUBLIC_KEY")
+            print("  - LANGFUSE_SECRET_KEY")
+            print("\nLoad them with: set -a; source superpowers/.env; set +a")
+            return None
+
+        return Langfuse(
+            public_key=public_key,
+            secret_key=secret_key,
+            host=host
+        )
+    except Exception as e:
+        print(f"ERROR: Failed to initialize Langfuse client: {e}")
+        return None
 
 
-def refresh_prompt_cache(prompt_names: list[str] | None = None) -> None:
+def get_all_prompts(langfuse: Langfuse) -> list[str]:
+    """Get all prompt names from Langfuse."""
+    all_prompts = []
+    page = 1
+    page_size = 100
+    max_pages = 100
+
+    while page <= max_pages:
+        try:
+            response = langfuse.client.prompts.list(page=page, limit=page_size)
+            page_prompts = [p.name for p in response.data]
+            all_prompts.extend(page_prompts)
+
+            # Check if last page
+            if len(page_prompts) < page_size:
+                break
+
+            # Check meta info if available
+            if hasattr(response, "meta") and hasattr(response.meta, "totalPages"):
+                if page >= response.meta.totalPages:
+                    break
+
+            page += 1
+        except Exception as e:
+            print(f"Warning: Pagination failed on page {page}: {e}")
+            if page == 1:
+                # Try fallback to simple list on first page
+                try:
+                    response = langfuse.client.prompts.list()
+                    return [p.name for p in response.data]
+                except Exception as fallback_e:
+                    print(f"ERROR: Fallback also failed: {fallback_e}")
+                    return []
+            break
+
+    return all_prompts
+
+
+def refresh_prompt_cache(langfuse: Langfuse, prompt_names: list[str] | None = None, cache_dir: Path | None = None) -> None:
     """Download prompts from Langfuse to local cache for viewing only (AI agents: READ-ONLY operation)."""
-    cache_dir = Path("../docs/cached_prompts")
+    if cache_dir is None:
+        # Default to docs/cached_prompts relative to current directory
+        cache_dir = Path("docs/cached_prompts")
+
     cache_dir.mkdir(parents=True, exist_ok=True)
 
-    langfuse = get_langfuse()
-    if not langfuse:
-        logger.error("Failed to get Langfuse client")
-        return
-
     if prompt_names is None:
-        logger.info("Discovering all prompts in Langfuse...")
-        all_prompts = sorted(get_all_prompts())
-        logger.info("Found prompts in Langfuse", count=len(all_prompts))
+        print("Discovering all prompts in Langfuse...")
+        all_prompts = sorted(get_all_prompts(langfuse))
+        print(f"Found {len(all_prompts)} prompts in Langfuse")
         prompts_to_refresh = all_prompts
     else:
         prompts_to_refresh = prompt_names
@@ -69,22 +129,28 @@ def refresh_prompt_cache(prompt_names: list[str] | None = None) -> None:
                     with open(config_file, "w") as f:
                         json.dump(prompt.config, f, indent=2)
 
-                logger.info("Prompt cached successfully", prompt_name=prompt_name, label=label)
+                print(f"✓ Cached: {prompt_name} ({label})")
 
             except NotFoundError:
-                logger.warning("Prompt not found", prompt_name=prompt_name, label=label)
+                print(f"⚠ Not found: {prompt_name} ({label})")
+            except Exception as e:
+                print(f"✗ Error caching {prompt_name}: {e}")
 
 
 def main() -> None:
     """Main function."""
+    langfuse = get_langfuse()
+    if not langfuse:
+        sys.exit(1)
+
     prompt_names = sys.argv[1:] if len(sys.argv) > 1 else None
     if prompt_names:
-        logger.info("Refreshing specific prompts", prompts=prompt_names)
+        print(f"Refreshing specific prompts: {', '.join(prompt_names)}")
     else:
-        logger.info("Refreshing ALL prompts in the system")
+        print("Refreshing ALL prompts in the system")
 
-    refresh_prompt_cache(prompt_names)
-    logger.info("Cached prompts saved", directory="docs/cached_prompts/")
+    refresh_prompt_cache(langfuse, prompt_names)
+    print(f"\n✓ Cached prompts saved to: docs/cached_prompts/")
 
 
 if __name__ == "__main__":

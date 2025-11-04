@@ -9,7 +9,7 @@ allowed-tools:
 
 # Langfuse Prompt & Trace Viewer
 
-Comprehensive skill for working with Langfuse prompts and traces. Includes scripts for fetching prompts, viewing traces, and caching prompt content.
+Comprehensive skill for working with Langfuse prompts and traces. Portable scripts that work with any project using Langfuse.
 
 ## When to Use
 
@@ -22,7 +22,31 @@ Comprehensive skill for working with Langfuse prompts and traces. Includes scrip
 - Debugging Langfuse traces
 - Analyzing AI model behavior in production
 
-**Example:** `KeyError: 'therapist_response'` → Fetch `voice_message_enricher` to see actual schema
+**Example:** `KeyError: 'therapist_response'` → Fetch the prompt to see actual schema
+
+## Environment Setup
+
+**Required environment variables:**
+- `LANGFUSE_PUBLIC_KEY` - Langfuse API public key
+- `LANGFUSE_SECRET_KEY` - Langfuse API secret key
+- `LANGFUSE_HOST` - Langfuse instance URL (optional, defaults to https://cloud.langfuse.com)
+
+**Optional:**
+- `ENVIRONMENT` - Environment label (defaults to "production") - used by `check_prompts.py` to check prompt availability
+
+**Setup:**
+```bash
+# Add to superpowers/.env:
+LANGFUSE_PUBLIC_KEY=pk-lf-...  # pragma: allowlist-secret
+LANGFUSE_SECRET_KEY=sk-lf-...  # pragma: allowlist-secret
+LANGFUSE_HOST=https://your-langfuse-instance.com
+ENVIRONMENT=production
+```
+
+**Load environment:**
+```bash
+set -a; source superpowers/.env; set +a
+```
 
 ## Available Scripts
 
@@ -32,17 +56,17 @@ Downloads Langfuse prompts to `docs/cached_prompts/` for offline viewing.
 
 **Usage:**
 ```bash
-# Fetch specific prompt (from project root or api directory)
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py PROMPT_NAME
+# Load environment first
+set -a; source superpowers/.env; set +a
+
+# Fetch specific prompt
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py PROMPT_NAME
 
 # Fetch all prompts
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py
 
 # Fetch multiple prompts
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py prompt1 prompt2 prompt3
-
-# Or use justfile command (if available)
-cd api && just refresh-prompts PROMPT_NAME
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py prompt1 prompt2 prompt3
 ```
 
 **Cached Location:**
@@ -51,17 +75,22 @@ cd api && just refresh-prompts PROMPT_NAME
 
 ### 2. check_prompts.py - List Available Prompts
 
-Lists all prompts available in Langfuse without downloading them.
+Lists all prompts available in Langfuse and checks their availability in the current environment.
 
 **Usage:**
 ```bash
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/check_prompts.py
+# Load environment first
+set -a; source superpowers/.env; set +a
+
+# Check all prompts
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/check_prompts.py
 ```
 
 **Output:**
 - Lists all prompt names in Langfuse
-- Shows which prompts are available
-- Useful for discovering prompt names before fetching
+- Shows which prompts are available in the specified environment (from `ENVIRONMENT` variable)
+- Color-coded indicators (✓ green for available, ✗ red for missing)
+- Summary statistics
 
 ### 3. fetch_trace.py - View Langfuse Traces
 
@@ -69,17 +98,20 @@ Fetch and display Langfuse traces for debugging AI model behavior.
 
 **Usage:**
 ```bash
+# Load environment first
+set -a; source superpowers/.env; set +a
+
 # Fetch specific trace by ID
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/fetch_trace.py db29520b-9acb-4af9-a7a0-1aa005eb7b24
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py db29520b-9acb-4af9-a7a0-1aa005eb7b24
 
 # Fetch trace from Langfuse URL
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/fetch_trace.py "https://langfuse.prod.cncorp.io/project/.../traces?peek=db29520b..."
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py "https://langfuse.example.com/project/.../traces?peek=db29520b..."
 
 # List recent traces
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/fetch_trace.py --list --limit 5
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py --list --limit 5
 
 # View help
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/fetch_trace.py --help
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py --help
 ```
 
 **What it shows:**
@@ -87,32 +119,8 @@ cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skil
 - All observations (LLM calls, tool uses, etc.)
 - Input/output for each step
 - Timing information
+- Hierarchical display of nested observations
 - Useful for debugging AI workflows
-
-## Key Prompts Reference
-
-### Core Processing
-- `message_enricher` - 🔥 Most critical - analyzes affect, conflict_state, intervention_needed
-- `voice_message_enricher` - Voice enrichment with key_quote, segment_conflict_health
-- `1on1` - One-on-one coaching conversations
-- `fact_extractor` - Extracts facts for LTMM
-
-### Intervention Logic
-- `group_message_intervention_conditions_yaml` - SQL conditions triggering interventions
-- `group_msg_intervention_needed_sender/recipient` - Intervention responses
-- `group_msg_needs_soft_startup` - Soft startup intervention
-- `group_msg_needs_timeout_sender/recipient` - Timeout suggestions
-- `group_msg_positive_reinforcement_sender/recipient` - Positive reinforcement
-
-### Onboarding
-- `onboarding_v3_1on1` - V3 individual flow
-- `onboarding_v3_group` - V3 group flow
-- `onboarding_group_conversation` - Group onboarding
-
-### Voice Features
-- `voice_active_mediation` - Active mediation during calls
-- `voice_conflict_intro` - Voice conflict intro
-- `voice_guidance_delivery` - Voice guidance delivery
 
 ## Understanding Prompt Configs
 
@@ -149,12 +157,6 @@ cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skil
 3. Check config: `json_object` vs `json_schema`
 4. Fix test to handle optional field OR update prompt
 
-### Intervention Not Triggering
-1. Fetch `message_enricher` to see `intervention_needed` values
-2. Fetch `group_message_intervention_conditions_yaml` for SQL conditions
-3. Verify enrichment result matches conditions
-4. Check trace with `fetch_trace.py` to see actual flow
-
 ### Schema Validation Fails
 1. Fetch the prompt using `refresh_prompt_cache.py`
 2. Read config's `json_schema` section
@@ -167,37 +169,30 @@ cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skil
 3. Examine inputs, outputs, and intermediate steps
 4. Check for unexpected model responses
 
-## Environment Requirements
-
-**Required environment variables:**
-- `LANGFUSE_PUBLIC_KEY` - Langfuse API public key
-- `LANGFUSE_SECRET_KEY` - Langfuse API secret key
-- `LANGFUSE_HOST` - Langfuse instance URL (optional, defaults to cloud)
-
-**How to set:**
-```bash
-# Load from .env file
-cd api && set -a; source .env; set +a
-```
-
 ## Quick Reference
 
 ```bash
+# Setup (one-time)
+# Add LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST to superpowers/.env
+
+# Load environment (required before each use)
+set -a; source superpowers/.env; set +a
+
 # List all available prompts
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/check_prompts.py
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/check_prompts.py
 
 # Fetch specific prompt
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py PROMPT_NAME
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py PROMPT_NAME
 
 # View cached prompt
 cat docs/cached_prompts/PROMPT_NAME_production.txt
 cat docs/cached_prompts/PROMPT_NAME_production_config.json
 
 # List recent traces
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/fetch_trace.py --list --limit 5
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py --list --limit 5
 
 # Fetch specific trace
-cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skills/langfuse-prompt-viewer/fetch_trace.py TRACE_ID
+python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py TRACE_ID
 ```
 
 ## Important Notes
@@ -208,7 +203,8 @@ cd api && set -a; source .env; set +a; PYTHONPATH=src uv run python .claude/skil
 - DO NOT push changes to Langfuse
 - Always verify you're looking at the correct environment
 
-**Project Structure:**
-- Scripts expect to run from project `api/` directory
-- Scripts use project's `common.langfuse_client` and `logger` modules
-- Cached prompts saved to `docs/cached_prompts/` relative to project root
+**Portability:**
+- Scripts are self-contained and work from any directory
+- No project-specific dependencies required
+- Only requires `langfuse` Python package
+- Works with superpowers/.env for configuration

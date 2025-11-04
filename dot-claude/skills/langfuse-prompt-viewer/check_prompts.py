@@ -10,22 +10,18 @@ INSTRUCTIONS FOR CLAUDE/AI AGENTS:
 
 This script lists all prompts from Langfuse and shows their status
 in the current environment with colored indicators.
+
+Environment:
+    Requires LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY environment variables.
+    Optional: ENVIRONMENT (defaults to "production")
+    Load with: set -a; source superpowers/.env; set +a
 """
 
 import os
 import sys
 
-from dotenv import load_dotenv
+from langfuse import Langfuse
 from langfuse.api.resources.commons.errors.not_found_error import NotFoundError
-
-load_dotenv()
-
-from common.langfuse_client import get_langfuse
-from common.prompt_discovery import get_all_prompts
-from logger import get_logger
-
-logger = get_logger()
-langfuse = get_langfuse()
 
 
 # Color codes for terminal output
@@ -37,22 +33,83 @@ class Colors:
     BOLD = "\033[1m"
 
 
-def check_prompt_exists(prompt_type: str) -> tuple[bool, str]:
+def get_langfuse() -> Langfuse | None:
+    """Get Langfuse client from environment variables."""
+    try:
+        public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
+        secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
+        host = os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com")
+
+        if not public_key or not secret_key:
+            print("ERROR: Missing required environment variables:")
+            print("  - LANGFUSE_PUBLIC_KEY")
+            print("  - LANGFUSE_SECRET_KEY")
+            print("\nLoad them with: set -a; source superpowers/.env; set +a")
+            return None
+
+        return Langfuse(
+            public_key=public_key,
+            secret_key=secret_key,
+            host=host
+        )
+    except Exception as e:
+        print(f"ERROR: Failed to initialize Langfuse client: {e}")
+        return None
+
+
+def get_all_prompts(langfuse: Langfuse) -> list[str]:
+    """Get all prompt names from Langfuse."""
+    all_prompts = []
+    page = 1
+    page_size = 100
+    max_pages = 100
+
+    while page <= max_pages:
+        try:
+            response = langfuse.client.prompts.list(page=page, limit=page_size)
+            page_prompts = [p.name for p in response.data]
+            all_prompts.extend(page_prompts)
+
+            # Check if last page
+            if len(page_prompts) < page_size:
+                break
+
+            # Check meta info if available
+            if hasattr(response, "meta") and hasattr(response.meta, "totalPages"):
+                if page >= response.meta.totalPages:
+                    break
+
+            page += 1
+        except Exception as e:
+            print(f"Warning: Pagination failed on page {page}: {e}")
+            if page == 1:
+                # Try fallback to simple list on first page
+                try:
+                    response = langfuse.client.prompts.list()
+                    return [p.name for p in response.data]
+                except Exception as fallback_e:
+                    print(f"ERROR: Fallback also failed: {fallback_e}")
+                    return []
+            break
+
+    return all_prompts
+
+
+def check_prompt_exists(langfuse: Langfuse, prompt_type: str, environment: str) -> tuple[bool, str]:
     """
     Check if a prompt exists in Langfuse for the current environment only.
 
     Args:
+        langfuse: Langfuse client
         prompt_type: The prompt type to check
+        environment: Label to check (e.g., "production", "staging")
 
     Returns:
         Tuple of (exists, environment) where environment is the label where it was found
     """
-    # Check environment label only
-    env = os.environ["ENVIRONMENT"].lower()
-
     try:
-        langfuse.get_prompt(prompt_type, label=env, cache_ttl_seconds=0)
-        return True, env
+        langfuse.get_prompt(prompt_type, label=environment, cache_ttl_seconds=0)
+        return True, environment
     except NotFoundError:
         return False, "none"
 
@@ -70,16 +127,21 @@ def print_prompt_status(prompt_type: str, exists: bool, environment: str = "") -
 
 def main() -> None:
     """Main function to check all prompts."""
+    langfuse = get_langfuse()
+    if not langfuse:
+        sys.exit(1)
+
+    env = os.environ.get("ENVIRONMENT", "production").lower()
+
     print(f"{Colors.BOLD}Checking All Langfuse Prompts{Colors.RESET}")
-    env = os.environ["ENVIRONMENT"]
     print(f"Environment: {Colors.WHITE}{env}{Colors.RESET}")
     print("=" * 50)
 
     # Get all prompts from Langfuse
     try:
-        all_prompts = get_all_prompts()
-        logger.info(f"Found {len(all_prompts)} total prompts in Langfuse")
-    except (NotFoundError, AttributeError, KeyError) as e:
+        all_prompts = get_all_prompts(langfuse)
+        print(f"Found {len(all_prompts)} total prompts in Langfuse\n")
+    except Exception as e:
         print(f"{Colors.RED}Failed to fetch prompts from Langfuse: {e}{Colors.RESET}")
         sys.exit(1)
 
@@ -88,9 +150,9 @@ def main() -> None:
     found_prompts = 0
 
     # Check each prompt's availability in current environment
-    print(f"\n{Colors.BOLD}All Prompts in Langfuse ({total_prompts} total):{Colors.RESET}")
+    print(f"{Colors.BOLD}All Prompts in Langfuse ({total_prompts} total):{Colors.RESET}")
     for prompt_name in sorted(all_prompts):
-        exists, environment = check_prompt_exists(prompt_name)
+        exists, environment = check_prompt_exists(langfuse, prompt_name, env)
         print_prompt_status(prompt_name, exists, environment)
         if exists:
             found_prompts += 1

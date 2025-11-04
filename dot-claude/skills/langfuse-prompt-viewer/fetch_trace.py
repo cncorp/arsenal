@@ -9,18 +9,18 @@ INSTRUCTIONS FOR CLAUDE/AI AGENTS:
 - This is strictly a debugging tool for understanding trace flow
 
 Usage:
-    python src/cli/fetch_trace.py <trace_id>
-    python src/cli/fetch_trace.py <langfuse_url>
-    python src/cli/fetch_trace.py --list [--limit 10]
+    python fetch_trace.py <trace_id>
+    python fetch_trace.py <langfuse_url>
+    python fetch_trace.py --list [--limit 10]
 
 Examples:
-    python src/cli/fetch_trace.py db29520b-9acb-4af9-a7a0-1aa005eb7b24
-    python src/cli/fetch_trace.py "https://langfuse.prod.cncorp.io/project/.../traces?peek=db29520b..."
-    python src/cli/fetch_trace.py --list --limit 5
+    python fetch_trace.py db29520b-9acb-4af9-a7a0-1aa005eb7b24
+    python fetch_trace.py "https://langfuse.prod.example.com/project/.../traces?peek=db29520b..."
+    python fetch_trace.py --list --limit 5
 
 Environment:
     Requires LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY environment variables.
-    Load with: set -a; source .env; set +a
+    Load with: set -a; source superpowers/.env; set +a
 """
 
 import argparse
@@ -31,16 +31,35 @@ import sys
 from typing import TypeAlias
 from urllib.parse import parse_qs, urlparse
 
+from langfuse import Langfuse
 from langfuse.api.resources.commons.errors.not_found_error import NotFoundError
 
-from common.langfuse_client import get_langfuse
-from logger import get_logger
-
-logger = get_logger()
-
 # Type alias for observation data from Langfuse API
-# Using 'object' with proper type guards where needed
 ObservationDict: TypeAlias = dict[str, object]
+
+
+def get_langfuse() -> Langfuse | None:
+    """Get Langfuse client from environment variables."""
+    try:
+        public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
+        secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
+        host = os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com")
+
+        if not public_key or not secret_key:
+            print("ERROR: Missing required environment variables:")
+            print("  - LANGFUSE_PUBLIC_KEY")
+            print("  - LANGFUSE_SECRET_KEY")
+            print("\nLoad them with: set -a; source superpowers/.env; set +a")
+            return None
+
+        return Langfuse(
+            public_key=public_key,
+            secret_key=secret_key,
+            host=host
+        )
+    except Exception as e:
+        print(f"ERROR: Failed to initialize Langfuse client: {e}")
+        return None
 
 
 def extract_trace_id_from_url(url: str) -> str | None:
@@ -118,19 +137,13 @@ def format_observation(obs: ObservationDict, indent: int = 0) -> str:
     return "\n".join(lines)
 
 
-def display_trace(trace_id: str) -> None:
+def display_trace(langfuse: Langfuse, trace_id: str) -> None:
     """Fetch and display a trace with all its observations."""
-    langfuse = get_langfuse()
-    if not langfuse or not getattr(langfuse, "enabled", True):
-        logger.error("Langfuse client not available or disabled")
-        logger.info("Make sure to set environment variables: LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY")
-        return
-
     try:
         # Fetch the trace
         trace_response = langfuse.fetch_trace(trace_id)
         if not trace_response:
-            logger.error("Trace not found", trace_id=trace_id)
+            print(f"ERROR: Trace not found: {trace_id}")
             return
 
         # Extract the actual trace data
@@ -246,24 +259,17 @@ def display_trace(trace_id: str) -> None:
         print("\n" + "=" * 80)
 
     except NotFoundError:
-        logger.error("Trace not found in Langfuse", trace_id=trace_id)
-        print(f"\nError: Trace with ID '{trace_id}' not found in Langfuse")
+        print(f"\nERROR: Trace with ID '{trace_id}' not found in Langfuse")
     except (ConnectionError, TimeoutError) as e:
-        logger.error("Failed to connect to Langfuse", trace_id=trace_id, error=str(e))
-        print(f"\nError connecting to Langfuse: {e}")
+        print(f"\nERROR: Failed to connect to Langfuse: {e}")
         print("\nMake sure you have the correct environment variables set:")
-        print("  export LANGFUSE_PUBLIC_KEY=your_key")
-        print("  export LANGFUSE_SECRET_KEY=your_secret")
-        print("  export LANGFUSE_HOST=your_host_url")
+        print("  LANGFUSE_PUBLIC_KEY")
+        print("  LANGFUSE_SECRET_KEY")
+        print("  LANGFUSE_HOST")
 
 
-def list_recent_traces(limit: int = 10) -> None:
+def list_recent_traces(langfuse: Langfuse, limit: int = 10) -> None:
     """List recent traces."""
-    langfuse = get_langfuse()
-    if not langfuse or not getattr(langfuse, "enabled", True):
-        logger.error("Langfuse client not available or disabled")
-        return
-
     try:
         traces = langfuse.fetch_traces(limit=limit)
 
@@ -284,17 +290,15 @@ def list_recent_traces(limit: int = 10) -> None:
             print(f"   User: {user_id or 'N/A'}")
 
             # Show trace URL
-            langfuse_host = os.environ["LANGFUSE_HOST"]
+            langfuse_host = os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com")
             print(f"   URL: {langfuse_host}/traces/{trace_id}")
 
         print("\n" + "=" * 80)
 
     except NotFoundError as e:
-        logger.error("Failed to fetch traces from Langfuse", error=str(e))
-        print("\nError: Could not fetch traces from Langfuse")
+        print(f"\nERROR: Could not fetch traces from Langfuse: {e}")
     except (ConnectionError, TimeoutError) as e:
-        logger.error("Failed to connect to Langfuse", error=str(e))
-        print(f"\nError connecting to Langfuse: {e}")
+        print(f"\nERROR: Failed to connect to Langfuse: {e}")
 
 
 def main() -> None:
@@ -306,19 +310,23 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    langfuse = get_langfuse()
+    if not langfuse:
+        sys.exit(1)
+
     if args.list:
-        list_recent_traces(args.limit)
+        list_recent_traces(langfuse, args.limit)
     elif args.trace_input:
         # Check if it's a URL or direct trace ID
         if args.trace_input.startswith("http"):
             trace_id = extract_trace_id_from_url(args.trace_input)
             if not trace_id:
-                logger.error("Could not extract trace ID from URL", url=args.trace_input)
+                print(f"ERROR: Could not extract trace ID from URL: {args.trace_input}")
                 sys.exit(1)
-            logger.info("Extracted trace ID from URL", trace_id=trace_id)
-            display_trace(trace_id)
+            print(f"Extracted trace ID from URL: {trace_id}")
+            display_trace(langfuse, trace_id)
         else:
-            display_trace(args.trace_input)
+            display_trace(langfuse, args.trace_input)
     else:
         parser.print_help()
 
