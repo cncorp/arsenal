@@ -28,8 +28,13 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 from typing import TypeAlias
 from urllib.parse import parse_qs, urlparse
+
+# Add current directory to path to import env_loader
+sys.path.insert(0, str(Path(__file__).parent))
+from env_loader import load_superpowers_env
 
 from langfuse import Langfuse
 from langfuse.api.resources.commons.errors.not_found_error import NotFoundError
@@ -309,6 +314,10 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=10, help="Number of traces to list (default: 10)")
 
     args = parser.parse_args()
+
+    # Auto-load environment from superpowers/.env
+    if not load_superpowers_env():
+        sys.exit(1)
 
     langfuse = get_langfuse()
     if not langfuse:

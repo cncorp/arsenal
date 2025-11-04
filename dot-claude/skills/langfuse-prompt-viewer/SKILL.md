@@ -43,10 +43,7 @@ LANGFUSE_HOST=https://your-langfuse-instance.com
 ENVIRONMENT=production
 ```
 
-**Load environment:**
-```bash
-set -a; source superpowers/.env; set +a
-```
+**No manual environment loading needed!** The scripts automatically find and load `superpowers/.env` from anywhere in the project.
 
 ## Available Scripts
 
@@ -56,17 +53,17 @@ Downloads Langfuse prompts to `docs/cached_prompts/` for offline viewing.
 
 **Usage:**
 ```bash
-# Load environment first
-set -a; source superpowers/.env; set +a
+# Navigate to the skill directory
+cd .claude/skills/langfuse-prompt-viewer
 
 # Fetch specific prompt
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py PROMPT_NAME
+uv run python refresh_prompt_cache.py PROMPT_NAME
 
 # Fetch all prompts
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py
+uv run python refresh_prompt_cache.py
 
 # Fetch multiple prompts
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py prompt1 prompt2 prompt3
+uv run python refresh_prompt_cache.py prompt1 prompt2 prompt3
 ```
 
 **Cached Location:**
@@ -79,11 +76,11 @@ Lists all prompts available in Langfuse and checks their availability in the cur
 
 **Usage:**
 ```bash
-# Load environment first
-set -a; source superpowers/.env; set +a
+# Navigate to the skill directory
+cd .claude/skills/langfuse-prompt-viewer
 
 # Check all prompts
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/check_prompts.py
+uv run python check_prompts.py
 ```
 
 **Output:**
@@ -98,20 +95,20 @@ Fetch and display Langfuse traces for debugging AI model behavior.
 
 **Usage:**
 ```bash
-# Load environment first
-set -a; source superpowers/.env; set +a
+# Navigate to the skill directory
+cd .claude/skills/langfuse-prompt-viewer
 
 # Fetch specific trace by ID
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py db29520b-9acb-4af9-a7a0-1aa005eb7b24
+uv run python fetch_trace.py db29520b-9acb-4af9-a7a0-1aa005eb7b24
 
 # Fetch trace from Langfuse URL
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py "https://langfuse.example.com/project/.../traces?peek=db29520b..."
+uv run python fetch_trace.py "https://langfuse.example.com/project/.../traces?peek=db29520b..."
 
 # List recent traces
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py --list --limit 5
+uv run python fetch_trace.py --list --limit 5
 
 # View help
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py --help
+uv run python fetch_trace.py --help
 ```
 
 **What it shows:**
@@ -174,25 +171,26 @@ python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py --hel
 ```bash
 # Setup (one-time)
 # Add LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST to superpowers/.env
+# Make sure to add # pragma: allowlist-secret comments after secrets
 
-# Load environment (required before each use)
-set -a; source superpowers/.env; set +a
+# Navigate to skill directory
+cd .claude/skills/langfuse-prompt-viewer
 
 # List all available prompts
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/check_prompts.py
+uv run python check_prompts.py
 
 # Fetch specific prompt
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py PROMPT_NAME
+uv run python refresh_prompt_cache.py PROMPT_NAME
 
 # View cached prompt
-cat docs/cached_prompts/PROMPT_NAME_production.txt
-cat docs/cached_prompts/PROMPT_NAME_production_config.json
+cat ../../docs/cached_prompts/PROMPT_NAME_production.txt
+cat ../../docs/cached_prompts/PROMPT_NAME_production_config.json
 
 # List recent traces
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py --list --limit 5
+uv run python fetch_trace.py --list --limit 5
 
 # Fetch specific trace
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py TRACE_ID
+uv run python fetch_trace.py TRACE_ID
 ```
 
 ## Important Notes
@@ -204,7 +202,8 @@ python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py TRACE
 - Always verify you're looking at the correct environment
 
 **Portability:**
-- Scripts are self-contained and work from any directory
-- No project-specific dependencies required
-- Only requires `langfuse` Python package
-- Works with superpowers/.env for configuration
+- Scripts are fully standalone with their own virtual environment via UV
+- Automatically find and load `superpowers/.env` from anywhere in the project
+- No manual environment loading needed
+- Dependencies (langfuse==2.60.3, httpx==0.27.2) are pinned for compatibility
+- Work from any directory - the scripts locate project root automatically

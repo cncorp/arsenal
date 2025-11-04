@@ -26,6 +26,10 @@ import re
 import sys
 from pathlib import Path
 
+# Add current directory to path to import env_loader
+sys.path.insert(0, str(Path(__file__).parent))
+from env_loader import load_superpowers_env, find_project_root
+
 from langfuse import Langfuse
 from langfuse.api.resources.commons.errors.not_found_error import NotFoundError
 
@@ -63,7 +67,8 @@ def get_all_prompts(langfuse: Langfuse) -> list[str]:
 
     while page <= max_pages:
         try:
-            response = langfuse.client.prompts.list(page=page, limit=page_size)
+            # Use the api.prompts.list() method which is the correct API for Langfuse v3
+            response = langfuse.api.prompts.list(page=page, limit=page_size)
             page_prompts = [p.name for p in response.data]
             all_prompts.extend(page_prompts)
 
@@ -72,8 +77,8 @@ def get_all_prompts(langfuse: Langfuse) -> list[str]:
                 break
 
             # Check meta info if available
-            if hasattr(response, "meta") and hasattr(response.meta, "totalPages"):
-                if page >= response.meta.totalPages:
+            if hasattr(response, "meta") and hasattr(response.meta, "total_pages"):
+                if page >= response.meta.total_pages:
                     break
 
             page += 1
@@ -82,7 +87,7 @@ def get_all_prompts(langfuse: Langfuse) -> list[str]:
             if page == 1:
                 # Try fallback to simple list on first page
                 try:
-                    response = langfuse.client.prompts.list()
+                    response = langfuse.api.prompts.list()
                     return [p.name for p in response.data]
                 except Exception as fallback_e:
                     print(f"ERROR: Fallback also failed: {fallback_e}")
@@ -95,8 +100,9 @@ def get_all_prompts(langfuse: Langfuse) -> list[str]:
 def refresh_prompt_cache(langfuse: Langfuse, prompt_names: list[str] | None = None, cache_dir: Path | None = None) -> None:
     """Download prompts from Langfuse to local cache for viewing only (AI agents: READ-ONLY operation)."""
     if cache_dir is None:
-        # Default to docs/cached_prompts relative to current directory
-        cache_dir = Path("docs/cached_prompts")
+        # Default to docs/cached_prompts relative to project root
+        project_root = find_project_root()
+        cache_dir = project_root / "docs" / "cached_prompts"
 
     cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -139,6 +145,10 @@ def refresh_prompt_cache(langfuse: Langfuse, prompt_names: list[str] | None = No
 
 def main() -> None:
     """Main function."""
+    # Auto-load environment from superpowers/.env
+    if not load_superpowers_env():
+        sys.exit(1)
+
     langfuse = get_langfuse()
     if not langfuse:
         sys.exit(1)

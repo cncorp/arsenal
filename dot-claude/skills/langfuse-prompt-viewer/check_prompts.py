@@ -19,6 +19,11 @@ Environment:
 
 import os
 import sys
+from pathlib import Path
+
+# Add current directory to path to import env_loader
+sys.path.insert(0, str(Path(__file__).parent))
+from env_loader import load_superpowers_env
 
 from langfuse import Langfuse
 from langfuse.api.resources.commons.errors.not_found_error import NotFoundError
@@ -66,7 +71,8 @@ def get_all_prompts(langfuse: Langfuse) -> list[str]:
 
     while page <= max_pages:
         try:
-            response = langfuse.client.prompts.list(page=page, limit=page_size)
+            # Use the api.prompts.list() method which is the correct API for Langfuse v3
+            response = langfuse.api.prompts.list(page=page, limit=page_size)
             page_prompts = [p.name for p in response.data]
             all_prompts.extend(page_prompts)
 
@@ -75,8 +81,8 @@ def get_all_prompts(langfuse: Langfuse) -> list[str]:
                 break
 
             # Check meta info if available
-            if hasattr(response, "meta") and hasattr(response.meta, "totalPages"):
-                if page >= response.meta.totalPages:
+            if hasattr(response, "meta") and hasattr(response.meta, "total_pages"):
+                if page >= response.meta.total_pages:
                     break
 
             page += 1
@@ -85,7 +91,7 @@ def get_all_prompts(langfuse: Langfuse) -> list[str]:
             if page == 1:
                 # Try fallback to simple list on first page
                 try:
-                    response = langfuse.client.prompts.list()
+                    response = langfuse.api.prompts.list()
                     return [p.name for p in response.data]
                 except Exception as fallback_e:
                     print(f"ERROR: Fallback also failed: {fallback_e}")
@@ -127,6 +133,10 @@ def print_prompt_status(prompt_type: str, exists: bool, environment: str = "") -
 
 def main() -> None:
     """Main function to check all prompts."""
+    # Auto-load environment from superpowers/.env
+    if not load_superpowers_env():
+        sys.exit(1)
+
     langfuse = get_langfuse()
     if not langfuse:
         sys.exit(1)
