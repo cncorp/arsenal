@@ -2,14 +2,22 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-API_DIR="${ROOT_DIR}/api"
-LOG_DIR="${API_DIR}/tmp/test-logs"
 
-if [ ! -d "${API_DIR}" ]; then
-  echo "Could not locate api directory at ${API_DIR}." >&2
+# Find project root by looking for api/ directory
+# Start from script dir and walk up until we find it
+ROOT_DIR="${SCRIPT_DIR}"
+while [ ! -d "${ROOT_DIR}/api" ] && [ "${ROOT_DIR}" != "/" ]; do
+  ROOT_DIR="$(cd "${ROOT_DIR}/.." && pwd)"
+done
+
+if [ ! -d "${ROOT_DIR}/api" ]; then
+  echo "Could not locate project root with api/ directory." >&2
+  echo "Searched from: ${SCRIPT_DIR}" >&2
   exit 1
 fi
+
+API_DIR="${ROOT_DIR}/api"
+LOG_DIR="${API_DIR}/tmp/test-logs"
 
 # Create log directory if it doesn't exist
 mkdir -p "${LOG_DIR}"
