@@ -95,8 +95,12 @@ def get_all_prompts(langfuse: Langfuse) -> list[str]:
 
 def refresh_prompt_cache(
     langfuse: Langfuse, prompt_names: list[str] | None = None, cache_dir: Path | None = None
-) -> None:
-    """Download prompts from Langfuse to local cache for viewing only (AI agents: READ-ONLY operation)."""
+) -> Path:
+    """Download prompts from Langfuse to local cache for viewing only (AI agents: READ-ONLY operation).
+
+    Returns:
+        Path to the cache directory where prompts were saved.
+    """
     if cache_dir is None:
         # Default to docs/cached_prompts relative to project root
         project_root = find_project_root()
@@ -140,6 +144,8 @@ def refresh_prompt_cache(
             except Exception as e:  # noqa: BLE001 - CLI tool: continue processing other prompts on error
                 print(f"✗ Error caching {prompt_name}: {e}")
 
+    return cache_dir
+
 
 def main() -> None:
     """Main function."""
@@ -157,8 +163,11 @@ def main() -> None:
     else:
         print("Refreshing ALL prompts in the system")
 
-    refresh_prompt_cache(langfuse, prompt_names)
-    print("\n✓ Cached prompts saved to: docs/cached_prompts/")
+    cache_dir = refresh_prompt_cache(langfuse, prompt_names)
+    project_root = find_project_root()
+    relative_path = cache_dir.relative_to(project_root)
+    print(f"\n✓ Cached prompts saved to: {relative_path}")
+    print(f"  Full path: {cache_dir.absolute()}")
 
 
 if __name__ == "__main__":
