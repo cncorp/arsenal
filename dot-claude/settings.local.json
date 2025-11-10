@@ -2,22 +2,21 @@
   "comment": "Superpowers default settings - symlinked to .claude/settings.local.json",
   "command_blocklist": [
     "pytest",
-    "uv run pytest"
+    "uv run pytest",
+    "git commit*",
+    "git push*",
+    "git pull*",
+    "git merge*",
+    "git reset*",
+    "git rebase*",
+    "git stash pop*",
+    "git cherry-pick*",
+    "git apply*",
+    "rm -rf*",
+    "sudo*"
   ],
   "bashCommandApprovals": {
-    "requireApprovalPatterns": [
-      "git commit*",
-      "git push*",
-      "git pull*",
-      "git merge*",
-      "git reset*",
-      "git rebase*",
-      "git stash pop*",
-      "git cherry-pick*",
-      "git apply*",
-      "rm -rf*",
-      "sudo*"
-    ]
+    "requireApprovalPatterns": []
   },
   "permissions": {
     "allowGitWrite": false
