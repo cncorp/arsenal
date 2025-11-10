@@ -1,8 +1,6 @@
 {
-  "comment": "Superpowers default settings - symlinked to .claude/settings.local.json",
+  "comment": "Superpowers default settings - symlinked to .claude/settings.local.json. pytest removed from blocklist to allow verification of test results.",
   "command_blocklist": [
-    "pytest",
-    "uv run pytest",
     "git commit*",
     "git push*",
     "git pull*",

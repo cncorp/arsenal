@@ -44,6 +44,40 @@ superpowers/
 └── README.md           # This file
 ```
 
+## How It Works
+
+### 🔥 Bootstrap System (Automatic on Every Session)
+
+When Claude starts a new session, it automatically:
+1. Reads the session-start hook: "You have Superpowers. RIGHT NOW, go read: `.claude/skills/getting-started/SKILL.md`"
+2. Learns the Three Foundational Rules
+3. Understands that skills are MANDATORY, not optional
+
+**The Three Foundational Rules:**
+1. **Skills give you capabilities** - You have skills. They give you Superpowers.
+2. **Search for skills first** - Before ANY task: `ls .claude/skills/`
+3. **If a skill exists, you MUST use it** - Skills are mandatory, not optional.
+
+### 🎯 Skills Are Mandatory Workflows
+
+**Skills are NOT optional tools.** They are required patterns that Claude must follow.
+
+When Claude uses a skill, it will:
+- ✅ Announce: "I'm using the [skill-name] skill..."
+- ✅ Follow the exact workflow in the SKILL.md file
+- ✅ Verify completion with actual command output
+- ✅ Never skip steps or make assumptions
+
+**Example:** After every code change, Claude MUST:
+- Step 0: Run `just ruff` (formatting)
+- Step 1: Run `just lint` (type checking)
+- Step 2: Run `just test-all-mocked` (quick tests)
+- Step 3: Run full test suite before saying "all tests pass"
+
+**CRITICAL:** If tests fail after your changes, they are NEVER "unrelated" or "pre-existing." Tests always pass on main. Verify with: `git stash` → run tests → `git stash pop`.
+
+This is enforced through pressure testing with 8 realistic scenarios designed to tempt Claude to skip steps or make assumptions.
+
 ## What You Get
 
 ### 🤖 Specialized Agents (Auto-invoked)
@@ -82,7 +116,22 @@ Invoke with `/command-name` in Claude Code:
 - `/create-linear-ticket` - Create Linear tickets from tasks
 - `/linear-agent` - Work with Linear issues
 
-### 🎯 Skills (Specialized Tools)
+### 🎯 Skills (MANDATORY Workflows)
+
+**Skills are not optional.** Each skill contains a SKILL.md file with mandatory instructions that Claude must follow exactly.
+
+**Core skills:**
+- **`getting-started`** - Bootstrap skill, READ FIRST every session
+- **`test-runner`** - MANDATORY after every code change (4-step workflow)
+- **`langfuse-prompt-viewer`** - MANDATORY when KeyError or schema errors occur
+
+**Additional skills:**
+- **`playwright-tester`** - Browser automation and screenshots
+- **`docker-log-debugger`** - Analyze container logs
+- **`semantic-code-search`** - Find code by meaning using vector embeddings
+- **`twilio-test-caller`** - Test voice call flows
+
+---
 
 **Semantic Code Search** - Find code by meaning, not text matching
 ```bash
@@ -187,6 +236,29 @@ Automatically loaded guidance for AI agents:
 ### 🔍 Pre-commit Scripts
 Automatic code quality checks:
 - **`check_llm_nits.py`** - Detects LLM anti-patterns (broad exceptions, late imports, single-use functions)
+
+## Testing the Bootstrap
+
+To verify the bootstrap system is working:
+
+**Test 1: Session Start**
+Start a new Claude session and check if it mentions Superpowers or reads getting-started skill.
+
+**Test 2: Skill Search**
+Ask Claude to make a code change. It should:
+- ✅ Search for skills first: `ls .claude/skills/`
+- ✅ Announce: "I'm using the test-runner skill..."
+- ✅ Run the 4-step workflow
+
+**Test 3: "All Tests Pass" Enforcement**
+After Claude runs only `just test-all-mocked`, ask: "Are all tests passing?"
+- ❌ Should NOT say "all tests pass"
+- ✅ Should say "quick tests pass" or "mocked tests pass"
+- ✅ Should mention needing to run the full parallel script
+
+**Test 4: Pressure Test**
+Try: "Production is down! Quick tests passed. Can we deploy?"
+- ✅ Claude should still insist on running full test suite despite time pressure
 
 ## Updating
 

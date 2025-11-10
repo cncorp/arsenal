@@ -1,28 +1,46 @@
 ---
 name: langfuse-prompt-viewer
-description: Fetch and view Langfuse prompts and traces. Use when debugging KeyError/schema errors, understanding prompt schemas, viewing traces, or when user requests to view a prompt.
+description: MANDATORY skill when KeyError or schema errors occur. Fetch actual prompt schemas instead of guessing. Use for debugging traces and understanding AI model behavior.
 allowed-tools:
   - Bash
   - Read
   - Glob
 ---
 
-# Langfuse Prompt & Trace Viewer
+# Langfuse Prompt & Trace Viewer - MANDATORY FOR KEYERRORS
 
-Comprehensive skill for working with Langfuse prompts and traces. Portable scripts that work with any project using Langfuse.
+## 🔥 CRITICAL: Use This Skill Immediately When:
 
-## When to Use
+**MANDATORY triggers (you MUST use this skill):**
+- ❗ Tests fail with `KeyError` (e.g., `KeyError: 'therapist_response'`)
+- ❗ Schema validation errors
+- ❗ Unexpected prompt response structure
+- ❗ Need to understand what fields a prompt actually returns
 
-**Always use when:**
-- Tests fail with `KeyError` or schema validation errors
-- Need to understand what schema a prompt returns
-- Code references a prompt and you need to see its logic
+**Common triggers:**
 - User asks to view a specific prompt
-- Investigating why prompt response doesn't match expectations
+- Code references a prompt but logic is unclear
+- Investigating why AI behavior doesn't match expectations
 - Debugging Langfuse traces
-- Analyzing AI model behavior in production
+- Analyzing model output in production
 
-**Example:** `KeyError: 'therapist_response'` → Fetch the prompt to see actual schema
+## 🚨 VIOLATION: Guessing at Schemas
+
+**WRONG:** "The prompt probably returns {field_name}, let me add that to the code"
+**RIGHT:** *Uses this skill to fetch actual prompt, reads actual schema*
+
+**DO NOT:**
+- ❌ Assume field names without checking
+- ❌ Guess at optional vs required fields
+- ❌ Try multiple field names hoping one works
+- ❌ Look at old code and assume it's current
+
+**DO THIS:**
+1. ✅ cd to `.claude/skills/langfuse-prompt-viewer`
+2. ✅ Run `uv run python refresh_prompt_cache.py PROMPT_NAME`
+3. ✅ Read `docs/cached_prompts/PROMPT_NAME_production.txt`
+4. ✅ Read `docs/cached_prompts/PROMPT_NAME_production_config.json`
+5. ✅ Use the ACTUAL schema you just read
 
 ## Environment Setup
 

@@ -51,20 +51,45 @@ Available commands include:
 
 ### Skills (`.claude/skills/`)
 
-**Skills are tools** that extend your capabilities with specialized functionality.
+**Skills are MANDATORY workflow documents** that you MUST follow when they exist for your task.
 
-Available skills:
-- **langfuse-prompt-viewer** — View and inspect Langfuse prompts
-- **playwright-tester** — Run browser-based E2E tests
+**🚨 CRITICAL: Skills are NOT optional tools. They are required patterns.**
+
+**The Three Foundational Rules:**
+1. **Skills give you capabilities** - You have skills. They give you Superpowers.
+2. **Search for skills first** - Before ANY task: `ls .claude/skills/`
+3. **If a skill exists, you MUST use it** - Mandatory, not optional.
+
+**Available skills:**
+- **getting-started** — Bootstrap skill, READ FIRST every session
+- **test-runner** — MANDATORY after every code change (ruff → lint → tests)
+- **langfuse-prompt-viewer** — MANDATORY when KeyError or schema errors occur
+- **playwright-tester** — Browser automation and screenshots
 - **docker-log-debugger** — Analyze Docker container logs
-- **test-runner** — Execute test suites with specific configurations
-- **twilio-test-caller** — Test voice call flows
 - **semantic-code-search** — Search codebase semantically using embeddings
+- **twilio-test-caller** — Test voice call flows
+
+**How skills work:**
+- Each skill is a SKILL.md file containing mandatory instructions
+- Read the skill: `cat .claude/skills/SKILL_NAME/SKILL.md`
+- Follow the skill exactly - no shortcuts, no assumptions
+- Announce when using skills for transparency
 
 **When to use skills:**
-- Use them just like any other tool available to you
-- Skills are invoked through MCP (Model Context Protocol)
-- Check `.claude/skills/*/skill.json` for available skill tools and their parameters
+- **ALWAYS search first:** `ls .claude/skills/`
+- **Read relevant skills** before starting work
+- **Follow them exactly** - violations will be caught
+- **Announce usage** - "I'm using the test-runner skill..."
+
+**Skills are NOT:**
+- ❌ Optional suggestions you can ignore
+- ❌ MCP tools or external services
+- ❌ Reference documentation to skim
+
+**Skills ARE:**
+- ✅ Mandatory workflows you must follow
+- ✅ Proven patterns that prevent bugs
+- ✅ Enforced through bootstrap and pressure testing
 
 ## ⚠️ Critical Restrictions
 

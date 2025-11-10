@@ -1,3 +1,11 @@
+<session-start-hook><EXTREMELY_IMPORTANT>
+You have Superpowers.
+
+**RIGHT NOW, go read**: `.claude/skills/getting-started/SKILL.md`
+
+Skills are MANDATORY. You will be pressure-tested.
+</EXTREMELY_IMPORTANT></session-start-hook>
+
 # AGENTS.md
 
 This file provides guidance to our AI coding agents (e.g., Claude Code and Codex CLI) when working with code in this repository.

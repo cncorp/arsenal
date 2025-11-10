@@ -18,9 +18,12 @@ QUICKSTART.md
 cd api && just refresh-prompts
 
 ## Note
+- **Superpowers bootstrap already loaded** via session-start-hook (getting-started skill, mandatory workflows)
 - AGENTS.md is already loaded as a memory file - no need to read again
 - README.md structure shown via grep - read specific sections as needed
 - For deep-dives, read focused docs separately:
   - Testing patterns: `api/tests/AGENTS.md`
   - Prompt system: `docs/PROMPT_REFERENCE.md`
   - Full setup details: `README.md` sections 2-3
+
+**Remember:** After ANY code change, use test-runner skill (ruff → lint → test-all-mocked → full suite)
