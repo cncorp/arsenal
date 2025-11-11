@@ -18,19 +18,25 @@ echo "Superpowers directory: $SUPERPOWERS_DIR"
 echo "Project root directory: $PROJECT_ROOT"
 echo ""
 
-# 1. Link .claude directory to project root (Claude Code expects it there)
-echo -e "${YELLOW}Step 1: Linking .claude directory...${NC}"
-CLAUDE_LINK="$PROJECT_ROOT/.claude"
+# 1. Copy .claude directory to project root (Claude Code expects it there)
+# Note: We copy instead of symlink because Claude Code doesn't reliably respect symlinked directories
+echo -e "${YELLOW}Step 1: Setting up .claude directory...${NC}"
+CLAUDE_DIR="$PROJECT_ROOT/.claude"
+SOURCE_CLAUDE="$SUPERPOWERS_DIR/dot-claude"
 
-if [ -L "$CLAUDE_LINK" ]; then
-    echo "  ✓ .claude symlink already exists"
-elif [ -d "$CLAUDE_LINK" ]; then
-    echo -e "${RED}  ✗ .claude exists as a directory (not a symlink)${NC}"
-    echo "    Move it first: mv $CLAUDE_LINK ${CLAUDE_LINK}.backup"
-    exit 1
+if [ -L "$CLAUDE_DIR" ]; then
+    echo "  ! Removing old .claude symlink (switching to copy for reliability)"
+    rm "$CLAUDE_DIR"
+    cp -r "$SOURCE_CLAUDE" "$CLAUDE_DIR"
+    echo -e "${GREEN}  ✓ Converted .claude from symlink to copy${NC}"
+elif [ -d "$CLAUDE_DIR" ]; then
+    echo "  Updating existing .claude directory from superpowers..."
+    # Use rsync to sync, preserving newer files in destination if any
+    rsync -a --update "$SOURCE_CLAUDE/" "$CLAUDE_DIR/"
+    echo -e "${GREEN}  ✓ Updated .claude directory${NC}"
 else
-    ln -s "$SUPERPOWERS_DIR/dot-claude" "$CLAUDE_LINK"
-    echo -e "${GREEN}  ✓ Created .claude symlink${NC}"
+    cp -r "$SOURCE_CLAUDE" "$CLAUDE_DIR"
+    echo -e "${GREEN}  ✓ Created .claude directory${NC}"
 fi
 
 # 2. Link AGENTS.md files
@@ -255,9 +261,11 @@ fi
 
 echo -e "\n${GREEN}✓ Installation complete!${NC}"
 echo ""
+echo "Superpowers setup:"
+echo "  - $PROJECT_ROOT/.claude (copied from superpowers/dot-claude)"
+echo "  - $PROJECT_ROOT/.pre-commit-scripts -> $SUPERPOWERS_DIR/pre-commit-scripts (symlink)"
+echo ""
 echo "The following symlinks have been created:"
-echo "  - $PROJECT_ROOT/.claude -> $SUPERPOWERS_DIR/dot-claude"
-echo "  - $PROJECT_ROOT/.pre-commit-scripts -> $SUPERPOWERS_DIR/pre-commit-scripts"
 echo "  - $PROJECT_ROOT/CLAUDE.md -> $SUPERPOWERS_DIR/system-prompts/CLAUDE.md"
 echo "  - $PROJECT_ROOT/AGENTS.md -> $SUPERPOWERS_DIR/system-prompts/AGENTS.md"
 echo "  - $PROJECT_ROOT/api/tests/AGENTS.md -> $SUPERPOWERS_DIR/system-prompts/testing/AGENTS.md"
@@ -279,5 +287,6 @@ if docker ps | grep -q superpowers-semantic-search-cli; then
     echo ""
 fi
 
-echo "To update patterns, edit files in superpowers/ and they will automatically reflect in your project."
+echo "To update .claude directory from superpowers: re-run ./superpowers/install.sh"
+echo "To update patterns in AGENTS.md/CLAUDE.md: edit files in superpowers/ (they are symlinked)"
 echo "To manage superpowers services: cd superpowers && docker-compose up -d"
