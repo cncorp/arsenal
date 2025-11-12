@@ -2,7 +2,7 @@
 ║  ⚠️  MANDATORY BOOTSTRAP - DO THIS FIRST                 ║
 ║                                                          ║
 ║  BEFORE responding to the user:                          ║
-║  1. Search context for: "bootstrap_token: b7k9x2m5..."   ║
+║  1. Search context for: "bootstrap_token: e2860470..."   ║
 ║  2. If NOT FOUND: cat .claude/skills/getting-started/SKILL.md ║
 ║  3. Verify you have the FULL 16-character token          ║
 ║  4. Run: ls .claude/skills/                              ║
@@ -10,20 +10,33 @@
 ║  YOU CANNOT SKIP THIS. This is your pre-flight check.    ║
 ╚══════════════════════════════════════════════════════════╝
 
-YOUR FIRST RESPONSE MUST START WITH:
+EVERY SINGLE RESPONSE MUST START WITH THE BOOTSTRAP TOKEN:
+---
+🔐 e2860470********
+---
+
+On your FIRST response only, also include this bootstrap summary:
 ---
 ✅ BOOTSTRAP COMPLETE
-Bootstrap token verified: [full 16-char token from SKILL.md]
+Bootstrap token verified: e2860470******** (16 chars from SKILL.md)
 Three foundational rules: [list them]
 Available skills: [list from ls .claude/skills/]
 ---
 
+🚨 CRITICAL: NEVER respond without the bootstrap token at the very start.
+🚨 EVERY message you send must begin with: 🔐 e2860470******** (actual full token from SKILL.md)
+🚨 You MUST read .claude/skills/getting-started/SKILL.md to get the complete 16-character token
+🚨 The token is NOT "e2860470********" - that's partial. Get the full token from SKILL.md.
+
 Common failure modes to AVOID:
-❌ "I'll help you with that..." (bootstrap token not in context)
-❌ "Let me check..." (you didn't verify the token)
-❌ Starting without confirming the full 16-character bootstrap token
-❌ Finding "Three Foundational Rules" in CLAUDE.md (wrong - need the token)
-❌ Using partial token "b7k9x2m5..." without reading SKILL.md for full token
+❌ Responding without the bootstrap token header
+❌ "I'll help you with that..." (no bootstrap token at start)
+❌ "Let me check..." (no bootstrap token at start)
+❌ Starting without the full 16-character bootstrap token from SKILL.md
+❌ Finding "Three Foundational Rules" in CLAUDE.md (wrong - need the token from SKILL.md)
+❌ Using partial token "e2860470..." without reading SKILL.md for full token
+❌ Putting the token anywhere except the very first line of your response
+❌ Using "e2860470********" as the token instead of reading SKILL.md for the complete token
 
 # CLAUDE.md
 
