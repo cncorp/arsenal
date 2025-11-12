@@ -1,6 +1,6 @@
 # Superpowers
 
-Reusable Claude Code agents, commands, skills, and patterns for your projects.
+Reusable Claude Code agents, commands, skills, and patterns for your projects.  Inspired by [Jesse Vincent](https://blog.fsck.com/2025/10/09/superpowers/).
 
 ## Quick Start
 
