@@ -1,3 +1,11 @@
+<session-start-hook><EXTREMELY_IMPORTANT>
+You have Superpowers.
+
+**RIGHT NOW, go read**: `.claude/skills/getting-started/SKILL.md`
+
+Skills are MANDATORY. You will be pressure-tested.
+</EXTREMELY_IMPORTANT></session-start-hook>
+
 # CLAUDE.md
 
 This repository uses the **superpowers** submodule to provide AI coding agents (like Claude Code) with specialized capabilities through agents, commands, and skills.
@@ -6,11 +14,11 @@ This repository uses the **superpowers** submodule to provide AI coding agents (
 
 All assistant guidance is consolidated under `AGENTS.md` files:
 
-- **`AGENTS.md`** — Top-level rules for every AI coding agent (symlinked from `superpowers/system-prompts/AGENTS.md`)
-- **`api/tests/AGENTS.md`** — Testing strategy, fixtures, and patterns for agents (symlinked from `superpowers/system-prompts/testing/AGENTS.md`)
+- **`AGENTS.md`** — Top-level rules for every AI coding agent (copied from `superpowers/system-prompts/AGENTS.md`)
+- **`api/tests/AGENTS.md`** — Testing strategy, fixtures, and patterns for agents (copied from `superpowers/system-prompts/testing/AGENTS.md`)
 - **Project-specific guidance** — Files like `api/src/cli/AGENTS.md` remain in their original locations for repo-specific rules
 
-Keep these files in sync by updating them in the `superpowers/` submodule.
+Keep these files in sync by updating them in the `superpowers/` submodule and running `./superpowers/install.sh`.
 
 ## 🤖 When to Use Agents, Commands, and Skills
 
@@ -116,7 +124,7 @@ DO NOT jump to fixing bugs when the user is:
 ## 📚 Quick Reference
 
 For detailed development guidelines, architecture, and standards, see:
-- **Main project guidance**: `AGENTS.md` (symlinked from superpowers)
-- **Testing patterns**: `api/tests/AGENTS.md` (symlinked from superpowers)
+- **Main project guidance**: `AGENTS.md` (copied from superpowers)
+- **Testing patterns**: `api/tests/AGENTS.md` (copied from superpowers)
 - **CLI tool safety**: `api/src/cli/AGENTS.md` (project-specific)
 - **Current work**: `specifications/CURRENT_SPEC.md`
