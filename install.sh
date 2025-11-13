@@ -93,16 +93,16 @@ fi
 echo -e "\n${YELLOW}Step 3: Linking pre-commit scripts...${NC}"
 PRE_COMMIT_LINK="$PROJECT_ROOT/.pre-commit-scripts"
 
-if [ -L "$PRE_COMMIT_LINK" ]; then
-    echo "  ✓ .pre-commit-scripts symlink already exists"
-elif [ -d "$PRE_COMMIT_LINK" ]; then
+if [ -d "$PRE_COMMIT_LINK" ] && [ ! -L "$PRE_COMMIT_LINK" ]; then
     echo -e "${RED}  ✗ .pre-commit-scripts exists as a directory (not a symlink)${NC}"
     echo "    Move it first: mv $PRE_COMMIT_LINK ${PRE_COMMIT_LINK}.backup"
     exit 1
-else
-    ln -s "$SUPERPOWERS_DIR/pre-commit-scripts" "$PRE_COMMIT_LINK"
-    echo -e "${GREEN}  ✓ Created .pre-commit-scripts symlink${NC}"
 fi
+
+# Remove existing symlink if present, then create relative symlink
+[ -L "$PRE_COMMIT_LINK" ] && rm "$PRE_COMMIT_LINK"
+ln -s "arsenal/pre-commit-scripts" "$PRE_COMMIT_LINK"
+echo -e "${GREEN}  ✓ Created .pre-commit-scripts symlink${NC}"
 
 # 4. Install Node dependencies for skills
 echo -e "\n${YELLOW}Step 4: Installing Node dependencies for skills...${NC}"
