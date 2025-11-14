@@ -247,6 +247,9 @@ Your implementation is complete when ALL of the following are true:
 
 **2. Code Quality**
 - ✅ **DRY (Don't Repeat Yourself)**: Reuse existing patterns and utilities
+  - **BEFORE writing new functions/classes**: Use semantic search to verify similar implementations don't already exist
+  - Search for the conceptual behavior, not just exact names (e.g., "retry with exponential backoff" instead of "RetryHandler")
+  - Example: `docker exec arsenal-semantic-search-cli code-search find "your functionality description"`
 - ✅ **Clean & Readable**: Self-documenting code without unnecessary complexity
 - ✅ **Not Overly Defensive**: Let errors surface (except when handling external APIs)
 - ✅ **Strongly Typed**: All functions have proper type hints
@@ -278,6 +281,58 @@ Before marking any stage complete, verify:
 3. Does it handle errors appropriately (fail fast for internal, graceful for external)?
 4. Is it consistent with how similar problems are solved elsewhere in the codebase?
 5. Could it be simpler without losing functionality?
+
+#### Preventing Code Duplication with Semantic Search
+
+**MANDATORY: Before writing new functions or classes, search for similar implementations.**
+
+Semantic search finds conceptually similar code even with different names or implementations.
+
+**When to search:**
+- Before creating any new function, class, or utility
+- When adding error handling, retry logic, or common patterns
+- During refactoring to find all similar code
+
+**How to search:**
+```bash
+# Search by conceptual behavior, not exact names
+docker exec arsenal-semantic-search-cli code-search find "retry with exponential backoff"
+docker exec arsenal-semantic-search-cli code-search find "validate user input"
+docker exec arsenal-semantic-search-cli code-search find "parse webhook payload"
+```
+
+**Interpreting results:**
+- **Score > 0.5**: Highly similar - likely duplicate functionality
+- **Score 0.4-0.5**: Related concepts - review for reuse opportunities
+- **Score < 0.4**: May be tangential
+
+**Example workflow:**
+```bash
+# You're about to write a function to send SMS with retry logic
+docker exec arsenal-semantic-search-cli code-search find "send sms retry failed message"
+
+# Found: send_message_with_retry (score: 0.68) in src/messaging/utils.py
+# ✅ Reuse existing function instead of creating new one
+```
+
+**This is not optional** - semantic search is a required step in the DRY verification process.
+
+**If semantic search is unavailable:**
+```bash
+# Check if containers are running
+docker ps | grep arsenal-semantic-search-cli
+
+# If not running, start the containers
+cd arsenal && docker-compose up -d
+
+# Verify it's working
+docker exec arsenal-semantic-search-cli code-search stats
+```
+
+**If still unavailable:**
+- Proceed with manual DRY review using Grep/Read tools
+- Search for similar function names and patterns manually
+- Check related files for duplicate implementations
 
 ## CRITICAL RESTRICTIONS
 

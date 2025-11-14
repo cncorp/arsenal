@@ -17,6 +17,8 @@ Then analyze in priority order:
    - OK to interpret spec in a way that simplifies implementation
 
 2. **DRY**: Are the changes DRY with the rest of the codebase? Reuse existing functions?
+   - For each new function/class, run: `docker exec arsenal-semantic-search-cli code-search find "what it does"`
+   - Check for similar code (score > 0.4)
 
 3. **Non-defensive**:
    - Avoid patterns like try/except

@@ -39,7 +39,13 @@ Evaluate the code on ALL of these criteria in priority order and provide specifi
 2. **DRY (Don't Repeat Yourself)**:
    - Are the changes DRY with the rest of the codebase?
    - Do they reuse existing functions/patterns?
-   - **Report**: Point out any duplication, suggest what to reuse
+   - **REQUIRED**: For each new function/class, run semantic search to find similar implementations:
+     - `docker exec arsenal-semantic-search-cli code-search find "what this does"`
+     - Check results with similarity score > 0.4
+   - **Report**:
+     - List semantic search queries you ran
+     - Show any similar code found (with scores)
+     - Point out any duplication and suggest what to reuse
 
 3. **Non-defensive coding**:
    - Avoid patterns like try/except

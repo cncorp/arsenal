@@ -156,6 +156,8 @@ Execute systematic review of all changes:
 - [ ] Code is self-documenting
 - [ ] Complex logic is well-commented
 - [ ] No code duplication (DRY)
+  - For each new function/class: `docker exec arsenal-semantic-search-cli code-search find "description"`
+  - Verified no similar code exists (score > 0.4)
 - [ ] Functions/methods are focused (SRP)
 - [ ] Appropriate naming conventions
 
