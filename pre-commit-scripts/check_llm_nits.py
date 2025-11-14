@@ -5,12 +5,14 @@ Check for LLM-generated anti-patterns.
 1. Broad exception catching - catch specific exceptions instead
 2. pytest.skip - fix the test instead
 3. Late imports - move to top or fix circular dependencies
+4. Single-use functions - inline instead of creating one-off functions
 
 Any # noqa must include a comment explaining why it's necessary.
 """
 
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Iterable, List, Tuple
@@ -31,6 +33,10 @@ NOQA_PATTERN = re.compile(r"#\s*(?i:noqa):\s*")  # case agnostic
 NOQA_BLE001_PATTERN = re.compile(NOQA_PATTERN.pattern + r"BLE001")
 NOQA_SKIP001_PATTERN = re.compile(NOQA_PATTERN.pattern + r"SKIP001")
 NOQA_E402_PATTERN = re.compile(NOQA_PATTERN.pattern + r"E402")
+NOQA_SINGLE_USE_PATTERN = re.compile(NOQA_PATTERN.pattern + r"SINGLE001")
+
+# Pattern to match function definitions in diff output
+DIFF_FUNCTION_PATTERN = re.compile(r"^\+\s*def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(")
 
 
 def check_file(filepath: Path) -> List[Tuple[str, int, str]]:
@@ -139,6 +145,104 @@ def find_python_files(
     return python_files
 
 
+def _parse_count_output(stdout: str) -> int:
+    """Parse ripgrep/grep count output and sum the counts."""
+    total = 0
+    for line in stdout.strip().split("\n"):
+        if line and ":" in line:
+            count = int(line.split(":")[-1])
+            total += count
+    return total
+
+
+def check_single_use_functions(check_dirs: List[Path]) -> List[Tuple[str, str, int]]:
+    """
+    Check for newly added functions that are only used once.
+
+    Returns list of (filepath, function_name, usage_count) for single-use functions.
+    """
+    # Get git diff for staged and unstaged changes
+    staged_diff = subprocess.run(
+        ["git", "diff", "--staged"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+
+    unstaged_diff = subprocess.run(
+        ["git", "diff", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+
+    combined_diff = staged_diff + "\n" + unstaged_diff
+
+    # Parse diff to find new function definitions
+    new_functions = {}  # {function_name: filepath}
+    current_file = None
+
+    for line in combined_diff.split("\n"):
+        # Track which file we're in
+        if line.startswith("+++"):
+            # Extract filename from "+++ b/path/to/file.py"
+            match = re.match(r"^\+\+\+ b/(.+\.py)$", line)
+            if match:
+                current_file = match.group(1)
+
+        # Find new function definitions
+        if line.startswith("+") and current_file:
+            # Skip if line has noqa comment
+            if NOQA_SINGLE_USE_PATTERN.search(line):
+                continue
+
+            func_match = DIFF_FUNCTION_PATTERN.match(line)
+            if func_match:
+                func_name = func_match.group(1)
+                # Only check private functions (starting with _)
+                # Public functions might be part of an API
+                if func_name.startswith("_") and not func_name.startswith("__"):
+                    new_functions[func_name] = current_file
+
+    # For each new function, count usages in the codebase
+    issues = []
+    for func_name, filepath in new_functions.items():
+        usage_count = 0
+
+        for check_dir in check_dirs:
+            # Search for function calls: func_name( or self.func_name( or obj.func_name(
+            search_pattern = rf"\b{func_name}\s*\("
+
+            try:
+                # Try ripgrep first (faster, respects .gitignore)
+                result = subprocess.run(
+                    ["rg", "-c", search_pattern, str(check_dir), "--type", "py"],
+                    capture_output=True,
+                    text=True,
+                )
+                # ripgrep returns 0 if matches found, 1 if no matches
+                if result.returncode <= 1:
+                    usage_count += _parse_count_output(result.stdout)
+            except FileNotFoundError:
+                # ripgrep not installed, fall back to grep
+                grep_pattern = search_pattern.replace(r"\s", "[[:space:]]")
+                result = subprocess.run(
+                    ["grep", "-r", "-E", "-c", grep_pattern, str(check_dir), "--include=*.py"],
+                    capture_output=True,
+                    text=True,
+                )
+                # grep returns 0 if matches found, 1 if no matches
+                if result.returncode <= 1:
+                    usage_count += _parse_count_output(result.stdout)
+
+        # If function is only used once (just its definition), flag it
+        # We expect at least 2: the definition + at least one call
+        if usage_count == 1:
+            issues.append((filepath, func_name, usage_count))
+
+    return issues
+
+
 def main():
     """Main entry point for the checker."""
     # Check both api and slack-sidecar directories
@@ -174,8 +278,11 @@ def main():
         if issues:
             all_issues.append((filepath, issues))
 
+    # Check for single-use functions
+    single_use_functions = check_single_use_functions(check_dirs)
+
     # Report issues grouped by type
-    if all_issues:
+    if all_issues or single_use_functions:
         issue_types = {}
         for filepath, issues in all_issues:
             for issue_type, line_num, message in issues:
@@ -208,6 +315,18 @@ def main():
             print("=" * 70)
             for filepath, line_num, message in issue_types["late-import"]:
                 print(f"{filepath}:{line_num}: {message}")
+            exit_code = 1
+
+        if single_use_functions:
+            print("=" * 70)
+            print("SINGLE-USE FUNCTION ISSUES:")
+            print("=" * 70)
+            print("Functions that are only called once should be inlined.")
+            print("Add '# noqa: SINGLE001' to the function def line if this is intentional.")
+            print()
+            for filepath, func_name, usage_count in single_use_functions:
+                print(f"{filepath}: Function '{func_name}' is only used {usage_count} time(s)")
+                print(f"  → Consider inlining this function at its call site")
             exit_code = 1
 
         return exit_code
