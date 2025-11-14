@@ -17,7 +17,7 @@ Examples:
 
 Environment:
     Requires LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY environment variables.
-    Load with: set -a; source superpowers/.env; set +a
+    Auto-loads from arsenal/.env or set manually: set -a; source arsenal/.env; set +a
 """
 
 import json
@@ -45,7 +45,7 @@ def get_langfuse() -> Langfuse | None:
             print("ERROR: Missing required environment variables:")
             print("  - LANGFUSE_PUBLIC_KEY")
             print("  - LANGFUSE_SECRET_KEY")
-            print("\nLoad them with: set -a; source superpowers/.env; set +a")
+            print("\nLoad them with: set -a; source arsenal/.env; set +a")
             return None
 
         return Langfuse(public_key=public_key, secret_key=secret_key, host=host)

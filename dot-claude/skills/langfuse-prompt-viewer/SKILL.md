@@ -54,14 +54,14 @@ allowed-tools:
 
 **Setup:**
 ```bash
-# Add to superpowers/.env:
+# Add to arsenal/.env:
 LANGFUSE_PUBLIC_KEY=pk-lf-...  # pragma: allowlist-secret
 LANGFUSE_SECRET_KEY=sk-lf-...  # pragma: allowlist-secret
 LANGFUSE_HOST=https://your-langfuse-instance.com
 ENVIRONMENT=production
 ```
 
-**No manual environment loading needed!** The scripts automatically find and load `superpowers/.env` from anywhere in the project.
+**No manual environment loading needed!** The scripts automatically find and load `arsenal/.env` from anywhere in the project.
 
 ## Available Scripts
 
@@ -188,7 +188,7 @@ uv run python fetch_trace.py --help
 
 ```bash
 # Setup (one-time)
-# Add LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST to superpowers/.env
+# Add LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST to arsenal/.env
 # Make sure to add # pragma: allowlist-secret comments after secrets
 
 # Navigate to skill directory
@@ -221,7 +221,7 @@ uv run python fetch_trace.py TRACE_ID
 
 **Portability:**
 - Scripts are fully standalone with their own virtual environment via UV
-- Automatically find and load `superpowers/.env` from anywhere in the project
+- Automatically find and load `arsenal/.env` from anywhere in the project
 - No manual environment loading needed
 - Dependencies (langfuse==2.60.3, httpx==0.27.2) are pinned for compatibility
 - Work from any directory - the scripts locate project root automatically

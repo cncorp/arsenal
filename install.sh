@@ -345,9 +345,105 @@ else
     echo -e "${YELLOW}  ! Semantic code search skill not found - skipping${NC}"
 fi
 
-# 7. Copy CLAUDE.md
+# 7. Check for optional tool dependencies
+echo -e "\n${YELLOW}Step 7: Checking optional tool dependencies...${NC}"
+
+# Detect OS for platform-specific instructions
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    PKG_MANAGER="apt-get"
+    OS_NAME="Ubuntu/Debian"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    PKG_MANAGER="brew"
+    OS_NAME="macOS"
+else
+    PKG_MANAGER="unknown"
+    OS_NAME="$OSTYPE"
+fi
+
+# Track missing packages
+MISSING_PACKAGES=()
+
+# Check for psql (PostgreSQL client) - needed for db-query skill
+if ! command -v psql &> /dev/null; then
+    echo -e "${YELLOW}  ! psql (PostgreSQL client) not found${NC}"
+    echo "    The db-query skill requires psql to query the production database"
+    if [[ "$PKG_MANAGER" == "apt-get" ]]; then
+        MISSING_PACKAGES+=("postgresql-client")
+    elif [[ "$PKG_MANAGER" == "brew" ]]; then
+        MISSING_PACKAGES+=("postgresql")
+    fi
+else
+    echo -e "${GREEN}  ✓ psql found${NC}"
+fi
+
+# Check for jq (JSON processor) - needed for parsing AWS secrets
+if ! command -v jq &> /dev/null; then
+    echo -e "${YELLOW}  ! jq (JSON processor) not found${NC}"
+    echo "    jq is useful for parsing JSON output from AWS CLI and other tools"
+    MISSING_PACKAGES+=("jq")
+else
+    echo -e "${GREEN}  ✓ jq found${NC}"
+fi
+
+# Check for aws CLI - useful for AWS operations (optional)
+# Note: AWS CLI installation is platform-specific and not included in auto-install
+if ! command -v aws &> /dev/null; then
+    echo -e "${YELLOW}  ! aws CLI not found (optional)${NC}"
+    echo "    The AWS CLI is useful for refreshing credentials and managing AWS resources"
+    if [[ "$PKG_MANAGER" == "apt-get" ]]; then
+        echo "    Install on Ubuntu: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"
+    elif [[ "$PKG_MANAGER" == "brew" ]]; then
+        echo "    Install on macOS: brew install awscli"
+    fi
+else
+    echo -e "${GREEN}  ✓ aws CLI found${NC}"
+fi
+
+# Offer to install missing packages
+if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+    echo ""
+    echo -e "${YELLOW}Missing packages: ${MISSING_PACKAGES[*]}${NC}"
+
+    if [[ "$PKG_MANAGER" == "apt-get" ]]; then
+        read -p "  Install missing packages with apt-get? (requires sudo) [y/N]: " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "  Installing packages..."
+            sudo apt-get update -qq
+            sudo apt-get install -y "${MISSING_PACKAGES[@]}"
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}  ✓ Successfully installed packages${NC}"
+            else
+                echo -e "${RED}  ✗ Failed to install some packages${NC}"
+            fi
+        else
+            echo "  Skipped package installation"
+            echo "  To install manually: sudo apt-get install ${MISSING_PACKAGES[*]}"
+        fi
+    elif [[ "$PKG_MANAGER" == "brew" ]]; then
+        read -p "  Install missing packages with Homebrew? [y/N]: " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "  Installing packages..."
+            brew install "${MISSING_PACKAGES[@]}"
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}  ✓ Successfully installed packages${NC}"
+            else
+                echo -e "${RED}  ✗ Failed to install some packages${NC}"
+            fi
+        else
+            echo "  Skipped package installation"
+            echo "  To install manually: brew install ${MISSING_PACKAGES[*]}"
+        fi
+    else
+        echo "  Unknown package manager - please install manually:"
+        echo "    ${MISSING_PACKAGES[*]}"
+    fi
+fi
+
+# 8. Copy CLAUDE.md
 # Note: We copy instead of symlink because Claude Code doesn't reliably respect symlinks
-echo -e "\n${YELLOW}Step 7: Copying CLAUDE.md...${NC}"
+echo -e "\n${YELLOW}Step 8: Copying CLAUDE.md...${NC}"
 CLAUDE_MD="$PROJECT_ROOT/CLAUDE.md"
 SOURCE_CLAUDE_MD="$SUPERPOWERS_DIR/system-prompts/CLAUDE.md"
 
@@ -371,8 +467,8 @@ else
     echo -e "${GREEN}  ✓ Created CLAUDE.md${NC}"
 fi
 
-# 8. Setup SessionStart hook for getting-started skill
-echo -e "\n${YELLOW}Step 8: Setting up SessionStart hook...${NC}"
+# 9. Setup SessionStart hook for getting-started skill
+echo -e "\n${YELLOW}Step 9: Setting up SessionStart hook...${NC}"
 HOOKS_DIR="$CLAUDE_DIR/hooks"
 SOURCE_HOOK="$SUPERPOWERS_DIR/hooks/session_start.py"
 SETTINGS_JSON="$CLAUDE_DIR/settings.json"

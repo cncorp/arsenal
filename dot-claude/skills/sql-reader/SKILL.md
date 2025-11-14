@@ -1,0 +1,458 @@
+---
+name: sql-reader
+description: Query production PostgreSQL database with read-only credentials. Use for investigating data, debugging issues, or analyzing application state.
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+---
+
+# SQL Reader Skill
+
+Query production PostgreSQL database using read-only credentials stored in Arsenal environment configuration.
+
+## When to Use
+
+Use this skill when you need to:
+- Investigate data issues in production
+- Debug application state
+- Analyze user data or conversation history
+- Verify database schema or table contents
+- Count records or check data integrity
+- Understand database structure and relationships
+
+## Data Model Quickstart (Run These First!)
+
+**IMPORTANT**: When first exploring the database or debugging an issue, **ALWAYS run these 6 quickstart commands** to understand the data model:
+
+**⚠️ NOTE**: Command 3 shows 5 core tables. The deprecated `codel_conversations` and `codel_conversation_recipients` tables (stopped receiving data Aug 27, 2025) are NOT included in the bootstrap commands. For recent interventions, use `intervention` + `intervention_message` tables instead.
+
+### 1. See All Tables with Sizes
+```bash
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+SELECT table_name,
+       pg_size_pretty(pg_total_relation_size('public.' || table_name)) as size,
+       (SELECT COUNT(*) FROM information_schema.columns c
+        WHERE c.table_name = t.table_name) as columns
+FROM information_schema.tables t
+WHERE table_schema = 'public'
+  AND table_type = 'BASE TABLE'
+ORDER BY pg_total_relation_size('public.' || table_name) DESC
+LIMIT 20;
+"
+```
+
+### 2. See Foreign Key Columns (Relationships)
+```bash
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+SELECT DISTINCT
+    table_name,
+    column_name,
+    data_type
+FROM information_schema.columns
+WHERE column_name LIKE '%_id'
+  AND table_schema = 'public'
+ORDER BY table_name, column_name;
+"
+```
+
+### 3. Describe Key Table Structures
+```bash
+# Show structure of critical tables to answer common questions
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+-- persons table (user data)
+SELECT 'persons' as table_name, column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'persons'
+ORDER BY ordinal_position;
+"
+
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+-- conversation_participant table (who is in which conversation, with what role)
+SELECT 'conversation_participant' as table_name, column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'conversation_participant'
+ORDER BY ordinal_position;
+"
+
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+-- message table (all messages sent)
+SELECT 'message' as table_name, column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'message'
+ORDER BY ordinal_position;
+"
+
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+-- intervention table (intervention decisions/triggers - logs when AI decides intervention is needed)
+SELECT 'intervention' as table_name, column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'intervention'
+ORDER BY ordinal_position;
+"
+
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+-- intervention_message table (actual intervention messages sent to users)
+SELECT 'intervention_message' as table_name, column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'intervention_message'
+ORDER BY ordinal_position;
+"
+```
+
+### 4. Read the Enums (Types, States, Roles)
+```bash
+cat api/src/data/models/enums.py
+```
+
+### 5. See All Data Models
+```bash
+grep "^class.*Base" api/src/data -r --include="*.py" | grep -v test
+```
+
+### 6. View Intervention Logic (CRITICAL for Understanding Data Model)
+```bash
+# First refresh the prompt cache to get latest intervention conditions
+cd .claude/skills/langfuse-prompt-viewer
+uv run python refresh_prompt_cache.py group_message_intervention_conditions_yaml
+
+# Then view the intervention logic
+cat ../../docs/cached_prompts/group_message_intervention_conditions_yaml_production.txt
+```
+
+**Why this matters:**
+- Shows when interventions trigger
+- Explains timing rules (last minute, last 6 hours, etc.)
+- Maps intervention types to Langfuse prompts used
+- Reveals the SQL logic behind intervention decisions
+- Critical for understanding `intervention` and `intervention_message` tables
+
+**🚨 CRITICAL SCHEMA INSIGHT - Schema Migrations (Late August 2025):**
+
+Multiple schema migrations occurred in late August 2025. The old tables were NOT migrated - they contain historical data only.
+
+**INTERVENTION TRACKING MIGRATION (Aug 27-28, 2025):**
+
+**DEPRECATED (stopped being written Aug 27, 2025):**
+- ❌ `codel_conversations` table - frozen, contains 6,274 interventions from Feb 24 - Aug 27, 2025
+- ❌ `codel_conversation_recipients` table - related to old schema
+
+**CURRENT (active since Aug 28, 2025):**
+- ✅ `intervention` table - logs intervention decisions/triggers (has columns: id, source_message_id, type, status, created_at)
+- ✅ `intervention_message` table - tracks actual messages sent to users (has columns: id, intervention_id, message_id, conversation_id, status, role, created_at, prompt_key)
+
+**What this means for queries:**
+- For interventions **after Aug 27, 2025**: Use `intervention` + `intervention_message` tables
+- For interventions **before Aug 28, 2025**: Use `codel_conversations` table (historical data only)
+- For queries **spanning the migration**: Need UNION of both schemas
+- When investigating "recent interventions", ALWAYS query `intervention_message`, NOT `codel_conversations`
+- The `intervention_message` table links to the `message` table via `message_id` to get actual message content
+
+**PERSON FACTS MIGRATION (Aug 28, 2025):**
+
+**DEPRECATED (stopped being written Aug 28, 2025):**
+- ❌ `person_facts` table (plural) - frozen, contains 3,007 facts from Jul 2 - Aug 28, 2025
+
+**CURRENT (active since Aug 28, 2025):**
+- ✅ `person_fact` table (singular) - currently active, contains 7,440+ facts from Jul 2 onwards
+
+**What this means for queries:**
+- For facts **after Aug 28, 2025**: Use `person_fact` (singular)
+- For facts **before Aug 28, 2025**: Use `person_facts` (plural) for historical data
+- Both tables have identical schemas, but `person_fact` is more space-efficient
+- The singular form is the current active table
+
+**After running these 6 commands, you should be able to answer:**
+- What tables exist and their sizes? (Command 1)
+- Which tables relate to which? (Command 2 - look for person_id, message_id, etc.)
+- What columns does each core table have? (Command 3 - persons, conversation_participant, message, intervention, intervention_message)
+- What enums/types are used? (Command 4)
+- What SQLAlchemy models exist? (Command 5)
+- How do interventions work? (Command 6 - intervention conditions and timing)
+
+**Example questions you can now answer:**
+- "What is sam odio's user id?" → Query persons table, join conversation_participant to find relationships (Command 3)
+- "Who got the last intervention?" → Query intervention_message + join to message table with created_at timestamp (Command 3)
+- "What message triggered it?" → Join intervention.source_message_id to message.id (Commands 2 & 3)
+- "How many interventions yesterday?" → Count from intervention table with created_at filter (Command 3)
+- "What intervention types have been sent?" → Query intervention.type for distinct values (Commands 3 & 6)
+- "Show me recent timeout interventions" → Query intervention WHERE type = 'timeout_intervention_escalation' and join intervention_message (Command 3)
+
+## Prerequisites
+
+This skill requires:
+1. **psql** (PostgreSQL client) installed
+   - Ubuntu/Debian: `sudo apt-get install postgresql-client`
+   - macOS: `brew install postgresql`
+2. Database credentials configured in `arsenal/.env`
+
+The credentials should be set in `arsenal/.env`:
+```bash
+PGHOST=your-database-host.rds.amazonaws.com
+PGPORT=5432
+PGDATABASE=your_database_name
+PGUSER=readonly_user
+PGPASSWORD=your_readonly_password
+PGSSLMODE=require
+```
+
+## Primary Workflow
+
+### Use the Helper Script (Recommended)
+
+The easiest way to query the database:
+
+```bash
+# Interactive psql session
+arsenal/dot-claude/skills/sql-reader/connect.sh
+
+# Run a single query
+arsenal/dot-claude/skills/sql-reader/connect.sh "SELECT COUNT(*) FROM users;"
+
+# Complex query with formatting
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+SELECT
+  table_name,
+  pg_size_pretty(pg_total_relation_size('public.' || table_name)) as size
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY pg_total_relation_size('public.' || table_name) DESC
+LIMIT 10;
+"
+```
+
+### Load Environment Variables Manually
+
+If you prefer to work directly with psql:
+
+```bash
+# Load credentials from arsenal/.env
+set -a
+source arsenal/.env
+set +a
+
+# Now use psql directly
+psql
+```
+
+## Common Queries
+
+### List all tables
+```sql
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY table_name;
+```
+
+### Get table sizes
+```sql
+SELECT
+    table_name,
+    pg_size_pretty(pg_total_relation_size('public.' || table_name)) as size,
+    pg_size_pretty(pg_relation_size('public.' || table_name)) as table_size,
+    pg_size_pretty(pg_total_relation_size('public.' || table_name) - pg_relation_size('public.' || table_name)) as index_size
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY pg_total_relation_size('public.' || table_name) DESC
+LIMIT 20;
+```
+
+### Describe a table
+```sql
+-- Using psql command
+\d table_name
+
+-- Or using information_schema
+SELECT
+    column_name,
+    data_type,
+    character_maximum_length,
+    is_nullable,
+    column_default
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'your_table'
+ORDER BY ordinal_position;
+```
+
+### Count records
+```sql
+SELECT COUNT(*) FROM your_table;
+
+-- Count by group
+SELECT status, COUNT(*) as count
+FROM your_table
+GROUP BY status
+ORDER BY count DESC;
+```
+
+### View recent records
+```sql
+SELECT *
+FROM your_table
+ORDER BY created_at DESC
+LIMIT 10;
+```
+
+### Find table relationships
+```sql
+-- Find columns that look like foreign keys
+SELECT DISTINCT
+    table_name,
+    column_name
+FROM information_schema.columns
+WHERE column_name LIKE '%_id'
+  AND table_schema = 'public'
+ORDER BY table_name, column_name;
+```
+
+### Get database overview
+```sql
+-- Table count and total size
+SELECT
+    COUNT(*) as table_count,
+    pg_size_pretty(SUM(pg_total_relation_size('public.' || table_name))) as total_size
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_type = 'BASE TABLE';
+```
+
+## Safety Notes
+
+⚠️ **READ-ONLY ACCESS**: These credentials have SELECT-only permissions. You cannot:
+- INSERT, UPDATE, or DELETE data
+- CREATE or DROP tables
+- Modify schemas or permissions
+
+✅ **Safe to use**: This skill is safe for production investigation because:
+- Uses dedicated read-only credentials
+- Cannot modify data
+- Queries are logged in database audit logs
+- Connection requires SSL/TLS
+
+## psql Quick Reference
+
+When in interactive mode:
+
+```sql
+\dt              -- List all tables
+\d table_name    -- Describe a table
+\di              -- List indexes
+\df              -- List functions
+\dv              -- List views
+\du              -- List users/roles
+\l               -- List databases
+\c database      -- Connect to different database
+\q               -- Quit
+\?               -- Help
+\h SQL_COMMAND   -- Help on SQL command
+```
+
+## Troubleshooting
+
+### "command not found: psql"
+Install PostgreSQL client:
+```bash
+# macOS
+brew install postgresql
+
+# Ubuntu/Debian
+sudo apt-get install postgresql-client
+
+# Amazon Linux
+sudo yum install postgresql
+```
+
+### Connection timeout
+- Verify you're on a network that can reach the database (VPN may be required)
+- Check security groups allow your IP address
+- Verify database instance is running
+
+### "FATAL: password authentication failed"
+- Verify credentials in `arsenal/.env` are correct
+- Password may have been rotated in secrets manager
+- Check that PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD are all set
+
+### "arsenal/.env not found"
+- Ensure you're running the script from the project root
+- Verify the file exists: `ls -la arsenal/.env`
+- If missing, copy credentials from secrets manager
+
+## Integration with Claude Code
+
+When using this skill in Claude Code:
+
+1. **Announce usage**: "I'm using the sql-reader skill to investigate..."
+2. **Run Data Model Quickstart FIRST**: Always start by running the 6 quickstart commands to understand the data structure
+3. **Run targeted queries**: Use the helper script for specific investigations
+4. **Report findings**: Share relevant results with the user
+
+**Mandatory Workflow (ALWAYS start with this):**
+```bash
+# Step 1: See all tables with sizes
+# Step 2: See foreign key columns (relationships)
+# Step 3: Describe key table structures
+# Step 4: Read enums: cat api/src/data/models/enums.py
+# Step 5: See all models: grep "^class.*Base" api/src/data -r --include="*.py" | grep -v test
+# Step 6: View intervention logic (group_message_intervention_conditions_yaml)
+
+# Then investigate specific issues
+arsenal/dot-claude/skills/sql-reader/connect.sh "SELECT COUNT(*) FROM message WHERE created_at > NOW() - INTERVAL '24 hours';"
+```
+
+**Best practices:**
+- Always announce you're using the sql-reader skill
+- Be specific about what you're investigating
+- Use read-only queries (SELECT only)
+- Format results clearly for the user
+- Include relevant context (table names, counts, time ranges)
+
+## Examples
+
+### Investigate recent activity
+```bash
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+SELECT
+    DATE(created_at) as date,
+    COUNT(*) as message_count
+FROM messages
+WHERE created_at > NOW() - INTERVAL '7 days'
+GROUP BY DATE(created_at)
+ORDER BY date DESC;
+"
+```
+
+### Find table dependencies
+```bash
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+SELECT
+    tc.table_name as from_table,
+    kcu.column_name as from_column,
+    ccu.table_name AS to_table,
+    ccu.column_name AS to_column
+FROM information_schema.table_constraints AS tc
+JOIN information_schema.key_column_usage AS kcu
+    ON tc.constraint_name = kcu.constraint_name
+JOIN information_schema.constraint_column_usage AS ccu
+    ON ccu.constraint_name = tc.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY'
+  AND tc.table_schema = 'public'
+ORDER BY tc.table_name;
+"
+```
+
+### Analyze data distribution
+```bash
+arsenal/dot-claude/skills/sql-reader/connect.sh "
+SELECT
+    table_name,
+    (SELECT COUNT(*) FROM information_schema.columns c
+     WHERE c.table_name = t.table_name) as column_count,
+    pg_size_pretty(pg_total_relation_size('public.' || table_name)) as size
+FROM information_schema.tables t
+WHERE table_schema = 'public'
+ORDER BY pg_total_relation_size('public.' || table_name) DESC
+LIMIT 15;
+"
+```

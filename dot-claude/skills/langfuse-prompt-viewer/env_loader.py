@@ -1,38 +1,38 @@
 #!/usr/bin/env python3
 """
 Automatic environment loader for langfuse-prompt-viewer skill.
-Finds and loads superpowers/.env automatically.
+Finds and loads arsenal/.env automatically.
 """
 
 import os
 from pathlib import Path
 
 
-def find_superpowers_dir() -> Path | None:
+def find_arsenal_dir() -> Path | None:
     """
-    Find the superpowers directory by searching up from current directory.
+    Find the arsenal directory by searching up from current directory.
 
     Returns:
-        Path to superpowers directory, or None if not found
+        Path to arsenal directory, or None if not found
     """
     current = Path.cwd()
 
-    # First check if we're already in superpowers or its subdirectories
-    if current.name == "superpowers":
+    # First check if we're already in arsenal or its subdirectories
+    if current.name == "arsenal":
         return current
 
-    # Check if superpowers is a sibling or parent
+    # Check if arsenal is a sibling or parent
     for parent in [current, *current.parents]:
-        superpowers = parent / "superpowers"
-        if superpowers.is_dir() and (superpowers / ".env").exists():
-            return superpowers
+        arsenal = parent / "arsenal"
+        if arsenal.is_dir() and (arsenal / ".env").exists():
+            return arsenal
 
     return None
 
 
-def load_superpowers_env() -> bool:
+def load_arsenal_env() -> bool:
     """
-    Automatically find and load superpowers/.env file, or use existing environment variables.
+    Automatically find and load arsenal/.env file, or use existing environment variables.
 
     Returns:
         True if environment is available (either loaded or already set), False otherwise
@@ -45,14 +45,14 @@ def load_superpowers_env() -> bool:
         print("✓ Using existing environment variables")
         return True
 
-    # Try to find and load superpowers/.env
-    superpowers = find_superpowers_dir()
+    # Try to find and load arsenal/.env
+    arsenal = find_arsenal_dir()
 
-    if not superpowers:
-        print("⚠ Could not find superpowers/.env")
+    if not arsenal:
+        print("⚠ Could not find arsenal/.env")
         print(f"\nSearched from: {Path.cwd()}")
         print("\nTo use this skill, either:")
-        print("  1. Create superpowers/.env with Langfuse credentials:")
+        print("  1. Create arsenal/.env with Langfuse credentials:")
         print("     LANGFUSE_PUBLIC_KEY=pk-lf-...")
         print("     LANGFUSE_SECRET_KEY=sk-lf-...")
         print("     LANGFUSE_HOST=https://your-instance.com")
@@ -62,12 +62,12 @@ def load_superpowers_env() -> bool:
         print("     export LANGFUSE_HOST=https://your-instance.com")
         return False
 
-    env_file = superpowers / ".env"
+    env_file = arsenal / ".env"
 
     if not env_file.exists():
         print(f"⚠ {env_file} not found")
         print("\nCreate it with:")
-        print(f"  cp {superpowers}/.env.example {env_file}")
+        print(f"  cp {arsenal}/.env.example {env_file}")
         print("  # Then edit with your Langfuse credentials")
         print("\nOr set environment variables manually (see above)")
         return False
@@ -102,6 +102,9 @@ def load_superpowers_env() -> bool:
                         os.environ[key] = value
                         loaded_count += 1
 
+        # Select the right Langfuse environment based on LANGFUSE_ENVIRONMENT
+        select_langfuse_environment()
+
         print(f"✓ Loaded {loaded_count} variables from: {env_file}")
         return True
 
@@ -110,14 +113,49 @@ def load_superpowers_env() -> bool:
         return False
 
 
+def select_langfuse_environment(env: str | None = None) -> None:
+    """
+    Select Langfuse credentials based on LANGFUSE_ENVIRONMENT variable.
+
+    Args:
+        env: Override environment (staging or production). If None, uses LANGFUSE_ENVIRONMENT variable.
+    """
+    # Determine which environment to use
+    target_env = env or os.environ.get("LANGFUSE_ENVIRONMENT", "staging")
+    target_env = target_env.lower()
+
+    # Map to correct suffix
+    if target_env in ["prod", "production"]:
+        suffix = "PROD"
+        env_name = "production"
+    else:
+        suffix = "STAGING"
+        env_name = "staging"
+
+    # Set the base Langfuse variables from environment-specific ones
+    for key in ["PUBLIC_KEY", "SECRET_KEY", "HOST"]:
+        env_var = f"LANGFUSE_{key}_{suffix}"
+        if env_var in os.environ:
+            os.environ[f"LANGFUSE_{key}"] = os.environ[env_var]
+
+    # Print which environment is being used
+    if os.environ.get("LANGFUSE_HOST"):
+        print(f"  Using Langfuse {env_name} environment: {os.environ['LANGFUSE_HOST']}")
+
+
 def find_project_root() -> Path:
     """
-    Find the project root directory (parent of superpowers).
+    Find the project root directory (parent of arsenal).
 
     Returns:
         Path to project root
     """
-    superpowers = find_superpowers_dir()
-    if superpowers:
-        return superpowers.parent
+    arsenal = find_arsenal_dir()
+    if arsenal:
+        return arsenal.parent
     return Path.cwd()
+
+
+# Legacy aliases for backward compatibility
+find_superpowers_dir = find_arsenal_dir
+load_superpowers_env = load_arsenal_env

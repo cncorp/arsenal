@@ -104,6 +104,7 @@ Available commands include:
 - **getting-started** — Bootstrap skill, READ FIRST every session
 - **test-runner** — MANDATORY after every code change (ruff → lint → tests)
 - **langfuse-prompt-viewer** — MANDATORY when KeyError or schema errors occur
+- **sql-reader** — Query production PostgreSQL database with read-only credentials (investigation, debugging)
 - **playwright-tester** — Browser automation and screenshots
 - **docker-log-debugger** — Analyze Docker container logs
 - **semantic-code-search** — Search codebase semantically using embeddings

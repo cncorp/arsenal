@@ -34,7 +34,7 @@ from urllib.parse import parse_qs, urlparse
 
 # Add current directory to path to import env_loader
 sys.path.insert(0, str(Path(__file__).parent))
-from env_loader import load_superpowers_env
+from env_loader import load_superpowers_env, select_langfuse_environment
 
 from langfuse import Langfuse
 from langfuse.api.resources.commons.errors.not_found_error import NotFoundError
@@ -312,12 +312,21 @@ def main() -> None:
     parser.add_argument("trace_input", nargs="?", help="Trace ID or Langfuse URL")
     parser.add_argument("--list", action="store_true", help="List recent traces")
     parser.add_argument("--limit", type=int, default=10, help="Number of traces to list (default: 10)")
+    parser.add_argument(
+        "--env",
+        choices=["staging", "production", "prod"],
+        help="Langfuse environment to use (default: from LANGFUSE_ENVIRONMENT or staging)",
+    )
 
     args = parser.parse_args()
 
-    # Auto-load environment from superpowers/.env
+    # Auto-load environment from arsenal/.env
     if not load_superpowers_env():
         sys.exit(1)
+
+    # Override environment if --env flag provided
+    if args.env:
+        select_langfuse_environment(args.env)
 
     langfuse = get_langfuse()
     if not langfuse:
