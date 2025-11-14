@@ -1,0 +1,482 @@
+---
+description: Generate code implementation from a feature spec and create a GitHub PR
+---
+
+# Spec to PR Command
+
+**Purpose:** Transform a feature spec markdown file into working code and create a GitHub pull request.
+
+## When to Use
+
+Use this command to implement a feature spec:
+- **After /question-to-spec:** Creates spec → /spec-to-pr creates PR
+- **Manual specs:** You wrote a spec → /spec-to-pr implements it
+- **Automated workflow:** Cron job creates specs → cron job creates PRs
+
+**Target cron usage:**
+```bash
+# Step 1: 9am - Create spec from question
+0 9 * * * claude -p "/question-to-spec 'Was there any user feedback in the last 24 hours?'"
+
+# Step 2: 9:15am - Create PR from any new specs
+15 9 * * * claude -p "/spec-to-pr"
+```
+
+## Workflow
+
+**CRITICAL: This workflow generates real code and creates real PRs. Be thorough.**
+
+### Step 0: Find or Specify Spec File
+
+**Option A: Auto-find most recent spec**
+```bash
+/spec-to-pr
+→ Finds most recent specs/YYYY-MM-DD-*.md
+```
+
+**Option B: Specify spec file**
+```bash
+/spec-to-pr specs/user-feedback-2025-11-14.md
+→ Uses the specified file
+```
+
+### Step 1: Read and Understand the Spec
+
+1. **Read the spec file completely**
+   - Problem: What are we solving?
+   - Solution: What's the approach?
+   - Implementation: What files need changes?
+   - Testing: What test cases are needed?
+
+2. **Extract key information:**
+   - Title and feature name
+   - Priority and effort estimate
+   - Files to modify
+   - New files to create
+   - Dependencies and blockers
+   - Acceptance criteria
+
+3. **Validate the spec:**
+   - ✅ Has Problem section with evidence
+   - ✅ Has Solution with user experience
+   - ✅ Has Implementation with file paths
+   - ✅ Has Testing with test cases
+   - ❌ If incomplete, ask user to improve spec first
+
+### Step 2: Plan the Implementation
+
+**Before writing code, create an implementation plan:**
+
+1. **Break down the work:**
+   - Backend changes (models, API, logic)
+   - Frontend changes (UI, components, styling)
+   - Database migrations (if needed)
+   - Tests (unit, integration, e2e)
+   - Documentation updates
+
+2. **Identify dependencies:**
+   - What existing code/infrastructure is needed?
+   - Any blockers mentioned in the spec?
+   - Required external services or APIs?
+
+3. **Determine implementation order:**
+   1. Database schema changes (if any)
+   2. Backend logic
+   3. API endpoints
+   4. Frontend integration
+   5. Tests
+   6. Documentation
+
+**Announce the plan to user:**
+```
+📋 Implementation plan for "{Feature Title}":
+
+Backend:
+- [ ] Add streak_count, last_active_date to User model
+- [ ] Create update_streaks() function
+- [ ] Add cron job to run daily at 12:01am UTC
+
+Frontend:
+- [ ] Add streak display to user profile
+- [ ] Add notification for streak milestones
+
+Testing:
+- [ ] Unit tests for update_streaks()
+- [ ] Integration test for streak notification
+- [ ] E2E test for 7-day streak flow
+
+Estimated time: {effort from spec}
+```
+
+### Step 3: Implement the Code
+
+**Follow the project's coding standards from CLAUDE.md/AGENTS.md:**
+
+#### General Guidelines
+- **DRY (Don't Repeat Yourself):** Reuse existing patterns
+- **Type hints:** Use modern Python 3.9+ generics (`list[str]`, `dict[str, Any]`)
+- **No defensive programming:** Let errors surface (except for external APIs)
+- **Imports at top:** All imports at file top (unless TYPE_CHECKING)
+- **No try/except:** Unless handling external API errors
+- **Testing strategy:** Integration tests > unit tests (focus on robust e2e)
+
+#### For This Codebase Specifically
+
+**From CLAUDE.md:**
+- Avoid single-use functions (inline code unless reused)
+- Use Alembic for database migrations (don't generate manually)
+- Follow async architecture (use `@job` decorators for async processing)
+- Use modern type hints
+- Test files should use fixtures from api/tests/AGENTS.md patterns
+
+**Implementation steps:**
+
+1. **Backend changes:**
+   - Modify existing files per spec
+   - Create new files per spec
+   - Add type hints to all functions
+   - Follow existing patterns in codebase
+
+2. **Database migrations (if needed):**
+   - **DO NOT generate migration files**
+   - Provide the command for user to run:
+     ```bash
+     docker exec -it codel-api alembic revision --autogenerate -m "Description"
+     docker exec -it codel-api alembic upgrade head
+     ```
+
+3. **Tests:**
+   - Follow patterns from api/tests/AGENTS.md
+   - Use composable factory-style fixtures
+   - Focus on integration/e2e tests (not brittle unit tests)
+   - Test happy path + edge cases from spec
+
+4. **Documentation:**
+   - Update relevant README files (if needed)
+   - Add docstrings to new functions
+   - Comment complex logic (sparingly)
+
+### Step 4: Run Quality Checks
+
+**MANDATORY: Use the test-runner skill**
+
+Before creating PR, verify code quality:
+
+```bash
+# Step 0: Format code
+cd api && just ruff
+
+# Step 1: Type check
+cd api && just lint
+
+# Step 2: Run tests
+cd api && just test-all-mocked
+```
+
+**If any step fails:**
+1. Fix the issues
+2. Re-run the failing step
+3. Continue only when all pass
+
+**DO NOT create PR if quality checks fail.**
+
+### Step 5: Create GitHub PR
+
+**Use git commands to create PR:**
+
+1. **Create feature branch:**
+   ```bash
+   git checkout -b feature/{feature-slug}
+   ```
+
+2. **Stage and commit changes:**
+   ```bash
+   git add {files changed}
+   git commit -m "{commit message}
+
+   {Brief description of changes}
+
+   Implements: specs/{YYYY-MM-DD-feature-slug}.md
+
+   🤖 Generated with Claude Code
+   Co-Authored-By: Claude <noreply@anthropic.com>"
+   ```
+
+3. **Push to remote:**
+   ```bash
+   git push -u origin feature/{feature-slug}
+   ```
+
+4. **Create PR using gh CLI:**
+   ```bash
+   gh pr create \
+     --title "{Feature Title}" \
+     --body "$(cat <<'EOF'
+   ## Feature: {Title}
+
+   **Spec:** specs/{YYYY-MM-DD-feature-slug}.md
+   **Priority:** {P0/P1/P2/P3}
+   **Effort:** {XS/S/M/L/XL}
+
+   ## Problem
+   {Summary from spec}
+
+   ## Solution
+   {Summary from spec}
+
+   ## Changes Made
+   - {Change 1}
+   - {Change 2}
+   - {Change 3}
+
+   ## Testing
+   - [x] Tests pass locally (`just test-all-mocked`)
+   - [x] Linting passes (`just lint`)
+   - [x] Formatted (`just ruff`)
+
+   ## Acceptance Criteria
+   {Copy from spec}
+
+   ---
+   🤖 Auto-generated from spec by /spec-to-pr command
+   EOF
+   )"
+   ```
+
+5. **Capture PR URL**
+
+### Step 6: Update Spec File
+
+Append to the spec file:
+
+```markdown
+---
+
+## Pull Request Created
+
+✅ **PR:** https://github.com/{org}/{repo}/pull/{number}
+
+**Branch:** `feature/{feature-slug}`
+**Status:** Open
+**Created:** {YYYY-MM-DD HH:MM}
+
+**Next steps:**
+1. Review the PR
+2. Run additional tests if needed
+3. Merge when ready
+```
+
+### Step 7: Output Summary
+
+**For cron job logs:**
+
+```
+✅ PR created from spec
+
+📋 Spec: specs/2025-11-14-7-day-streak.md
+🎯 Feature: Build 7-day streak for new users
+⚙️ Priority: P1 (High)
+📏 Effort: M (1 sprint)
+
+🔧 Changes made:
+- Modified 3 files
+- Created 2 new files
+- Added 15 tests
+
+✅ Quality checks:
+- Formatting: ✅ Pass
+- Type checking: ✅ Pass
+- Tests: ✅ Pass (127/127 passed)
+
+🔀 Pull Request:
+Branch: feature/7-day-streak
+URL: https://github.com/odio/ct3/pull/456
+
+---
+Next: Review and merge PR
+```
+
+## Examples
+
+### Example 1: Auto-find most recent spec
+
+```bash
+$ claude -p "/spec-to-pr"
+
+Finding most recent spec in specs/...
+Found: specs/user-feedback-2025-11-14.md
+
+Reading spec: "Build 7-day streak for new users"
+Priority: P1, Effort: M (1 sprint)
+
+📋 Implementation plan:
+Backend:
+- Add streak_count, last_active_date to User model
+- Create update_streaks() function
+- Add cron job
+
+Frontend:
+- Add streak display to profile
+- Add streak notifications
+
+Testing:
+- 5 unit tests
+- 3 integration tests
+- 1 e2e test
+
+Implementing backend changes...
+[Writes code to specified files]
+
+Implementing frontend changes...
+[Writes code to specified files]
+
+Creating tests...
+[Writes test files]
+
+Running quality checks...
+✅ Formatting: Pass
+✅ Type checking: Pass
+✅ Tests: Pass (127/127)
+
+Creating PR...
+Branch: feature/7-day-streak
+Commit: "Add 7-day streak for new user onboarding"
+Push: ✅ Success
+
+PR created: https://github.com/odio/ct3/pull/456
+
+✅ PR created from spec
+
+📋 Spec: specs/user-feedback-2025-11-14.md
+🎯 Feature: Build 7-day streak for new users
+🔀 PR: https://github.com/odio/ct3/pull/456
+
+---
+Next: Review and merge PR
+```
+
+### Example 2: Specify spec file
+
+```bash
+$ claude -p "/spec-to-pr specs/funnel-2025-11-13.md"
+
+Reading spec: "Fix partner invitation email delivery"
+Priority: P0 (Critical), Effort: S (1-2 days)
+
+[Implementation workflow...]
+
+✅ PR created from spec
+
+📋 Spec: specs/funnel-2025-11-13.md
+🎯 Feature: Fix partner invitation email delivery
+🔀 PR: https://github.com/odio/ct3/pull/455
+
+---
+Next: Review and merge PR immediately (P0)
+```
+
+## Configuration
+
+### Spec File Location
+```bash
+# Default: Find most recent in specs/
+/spec-to-pr
+
+# Specify file (deterministic filename for cron)
+/spec-to-pr specs/user-feedback-2025-11-14.md
+
+# Specify directory
+/spec-to-pr --spec-dir=archived-specs/
+```
+
+### Branch Naming
+```bash
+# Default: feature/{slug}
+/spec-to-pr
+
+# Custom branch prefix
+/spec-to-pr --branch-prefix=implement-
+
+# Results in: implement-7-day-streak
+```
+
+## Edge Cases
+
+### Spec File Not Found
+**Action:** Return error with instructions
+```
+❌ Spec file not found
+
+Searched: specs/
+No specs found matching YYYY-MM-DD-*.md
+
+Did you mean:
+- Run /question-to-spec first to create a spec
+- Specify file: /spec-to-pr path/to/spec.md
+```
+
+### Multiple Recent Specs
+**Action:** Implement the most recent, list others
+```
+Found 3 specs from today:
+1. specs/user-feedback-2025-11-14.md (most recent)
+2. specs/funnel-2025-11-14.md
+3. specs/retention-2025-11-14.md
+
+Implementing most recent: specs/user-feedback-2025-11-14.md
+
+To implement others:
+- /spec-to-pr specs/funnel-2025-11-14.md
+- /spec-to-pr specs/retention-2025-11-14.md
+```
+
+### Quality Checks Fail
+**Action:** DO NOT create PR, report errors
+```
+❌ Quality checks failed - PR not created
+
+✅ Formatting: Pass
+❌ Type checking: 3 errors
+  - api/src/models/user.py:42: Missing type hint
+  - api/src/cron/streaks.py:15: Incompatible types
+  - api/src/cron/streaks.py:23: Undefined name 'datetime'
+
+❌ Tests: 2 failures
+  - test_update_streaks_daily
+  - test_streak_notification_sent
+
+Fix these issues and run /spec-to-pr again.
+```
+
+### Database Migration Needed
+**Action:** Provide commands, DO NOT create migration
+```
+⚠️ Database migration needed
+
+This spec requires schema changes:
+- Add columns: streak_count, last_active_date to users table
+
+Run these commands to create and apply migration:
+
+docker exec -it codel-api alembic revision --autogenerate -m "Add streak fields to User"
+docker exec -it codel-api alembic upgrade head
+
+After migration is created, re-run: /spec-to-pr
+```
+
+## Skills Used
+
+1. **test-runner** (skill) - Run quality checks (ruff, lint, tests)
+2. **Project patterns** (from CLAUDE.md/AGENTS.md) - Coding standards
+
+## Notes
+
+- **Code quality matters:** Always run test-runner before creating PR
+- **Follow existing patterns:** Look at similar code in the codebase
+- **Don't over-engineer:** Implement exactly what the spec says (no extras)
+- **Type everything:** All functions need type hints
+- **Test thoroughly:** Cover happy path + edge cases from spec
+- **Commit messages:** Include spec reference and emoji
+- **PR descriptions:** Link to spec, include summary, list changes
+
+Remember: The goal is to turn a **feature spec** into **working code** with a **reviewable PR**.
