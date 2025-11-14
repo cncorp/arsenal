@@ -145,20 +145,33 @@ LANGFUSE_ENVIRONMENT=staging  # or 'production'
 
 Downloads Langfuse prompts to `docs/cached_prompts/` for offline viewing.
 
+**IMPORTANT: Can fetch from BOTH staging and production servers**
+
 **Usage:**
 ```bash
 # Navigate to the skill directory
 cd .claude/skills/langfuse-prompt-and-trace-debugger
 
-# Fetch specific prompt
+# Fetch from STAGING (default)
 uv run python refresh_prompt_cache.py PROMPT_NAME
 
-# Fetch all prompts
+# Fetch from PRODUCTION (explicit flag)
+uv run python refresh_prompt_cache.py PROMPT_NAME --production
+
+# Fetch all prompts from staging
 uv run python refresh_prompt_cache.py
 
-# Fetch multiple prompts
-uv run python refresh_prompt_cache.py prompt1 prompt2 prompt3
+# Fetch all prompts from production
+uv run python refresh_prompt_cache.py --production
+
+# Fetch multiple prompts from production
+uv run python refresh_prompt_cache.py prompt1 prompt2 prompt3 --production
 ```
+
+**Environment Selection:**
+- **Default:** Fetches from STAGING server (safe)
+- **With `--production` flag:** Fetches from PRODUCTION server
+- Clearly indicates which server is being used in output
 
 **Cached Location:**
 - `docs/cached_prompts/{prompt_name}_production.txt` - Prompt content + version

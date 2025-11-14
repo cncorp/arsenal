@@ -9,15 +9,19 @@ INSTRUCTIONS FOR CLAUDE/AI AGENTS:
 - This is strictly for local development reference only
 
 Usage:
-    python refresh_prompt_cache.py [prompt_name]
+    python refresh_prompt_cache.py [prompt_name ...] [--production]
 
 Examples:
-    python refresh_prompt_cache.py                    # Download all prompts for viewing
-    python refresh_prompt_cache.py message_enricher   # Download specific prompt for viewing
+    python refresh_prompt_cache.py                    # Download all prompts from STAGING
+    python refresh_prompt_cache.py message_enricher   # Download specific prompt from STAGING
+    python refresh_prompt_cache.py --production       # Download all prompts from PRODUCTION
+    python refresh_prompt_cache.py message_enricher --production  # Download from PRODUCTION
 
 Environment:
     Requires LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY environment variables.
     Auto-loads from arsenal/.env or set manually: set -a; source arsenal/.env; set +a
+
+    Defaults to STAGING unless --production flag is used.
 """
 
 import json
@@ -28,7 +32,7 @@ from pathlib import Path
 
 # Add current directory to path to import env_loader
 sys.path.insert(0, str(Path(__file__).parent))
-from env_loader import load_superpowers_env, find_project_root
+from env_loader import load_superpowers_env, find_project_root, select_langfuse_environment
 
 from langfuse import Langfuse
 from langfuse.api.resources.commons.errors.not_found_error import NotFoundError
@@ -149,19 +153,39 @@ def refresh_prompt_cache(
 
 def main() -> None:
     """Main function."""
-    # Auto-load environment from superpowers/.env
+    # Parse arguments
+    args = sys.argv[1:]
+    use_production = "--production" in args
+
+    # Remove --production flag from prompt names
+    prompt_names = [arg for arg in args if arg != "--production"]
+    if not prompt_names:
+        prompt_names = None
+
+    # Auto-load environment from arsenal/.env
     if not load_superpowers_env():
         sys.exit(1)
+
+    # Override environment selection if --production flag is used
+    if use_production:
+        print("=" * 60)
+        print("📍 PRODUCTION MODE - Fetching from PRODUCTION server")
+        print("=" * 60)
+        select_langfuse_environment("production")
+    else:
+        print("=" * 60)
+        print("📍 STAGING MODE - Fetching from STAGING server (default)")
+        print("=" * 60)
+        select_langfuse_environment("staging")
 
     langfuse = get_langfuse()
     if not langfuse:
         sys.exit(1)
 
-    prompt_names = sys.argv[1:] if len(sys.argv) > 1 else None
     if prompt_names:
-        print(f"Refreshing specific prompts: {', '.join(prompt_names)}")
+        print(f"\nRefreshing specific prompts: {', '.join(prompt_names)}")
     else:
-        print("Refreshing ALL prompts in the system")
+        print("\nRefreshing ALL prompts in the system")
 
     cache_dir = refresh_prompt_cache(langfuse, prompt_names)
     project_root = find_project_root()
