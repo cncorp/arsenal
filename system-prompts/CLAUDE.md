@@ -103,7 +103,7 @@ Available commands include:
 **Available skills:**
 - **getting-started** — Bootstrap skill, READ FIRST every session
 - **test-runner** — MANDATORY after every code change (ruff → lint → tests)
-- **langfuse-prompt-viewer** — MANDATORY when KeyError or schema errors occur. Views prompts from Langfuse servers (staging or production)
+- **langfuse-prompt-and-trace-debugger** — MANDATORY when KeyError or schema errors occur. Views prompts and debugs traces from Langfuse servers (staging or production)
 - **update-langfuse-staging-server-prompt** — Push prompt updates to Langfuse STAGING SERVER ONLY (langfuse.staging.cncorp.io). Does NOT sync to production server
 - **sql-reader** — Query production PostgreSQL database with read-only credentials (investigation, debugging)
 - **playwright-tester** — Browser automation and screenshots

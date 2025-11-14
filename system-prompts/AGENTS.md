@@ -99,7 +99,7 @@ cd arsenal && git log --oneline -1
 **Available Tools in Your Arsenal:**
 - **Agents**: Auto-invoked specialized agents (git-reader, pytest-test-reviewer, mypy-error-fixer, test-fixture-reviewer, task-complete-enforcer)
 - **Commands**: Slash commands like `/buildit`, `/planit`, `/review-code`, `/mypy`, `/research`, and more
-- **Skills**: Specialized capabilities (langfuse-prompt-viewer, playwright-tester, docker-log-debugger, test-runner, twilio-test-caller)
+- **Skills**: Specialized capabilities (langfuse-prompt-and-trace-debugger, playwright-tester, docker-log-debugger, test-runner, twilio-test-caller)
 
 ## Key files
 

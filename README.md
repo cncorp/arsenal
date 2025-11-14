@@ -29,7 +29,7 @@ arsenal/
 ├── dot-claude/           # Claude Code configurations
 │   ├── agents/          # Custom agents (mypy-error-fixer, pytest-test-reviewer, etc.)
 │   ├── commands/        # Slash commands (/buildit, /planit, /review-code, etc.)
-│   ├── skills/          # Skills (docker-log-debugger, langfuse-prompt-viewer, etc.)
+│   ├── skills/          # Skills (docker-log-debugger, langfuse-prompt-and-trace-debugger, etc.)
 │   └── settings.local.json
 ├── pre-commit-scripts/  # Pre-commit hooks and linting scripts
 │   └── check_llm_nits.py # LLM anti-pattern detection
@@ -123,7 +123,7 @@ Invoke with `/command-name` in Claude Code:
 **Core skills:**
 - **`getting-started`** - Bootstrap skill, READ FIRST every session
 - **`test-runner`** - MANDATORY after every code change (4-step workflow)
-- **`langfuse-prompt-viewer`** - MANDATORY when KeyError or schema errors occur
+- **`langfuse-prompt-and-trace-debugger`** - MANDATORY when KeyError or schema errors occur
 
 **Additional skills:**
 - **`playwright-tester`** - Browser automation and screenshots
@@ -165,9 +165,9 @@ docker exec superpowers-semantic-search-cli python /app/src/cli.py find "send me
 
 # It will run (portable - works from any directory):
 set -a; source superpowers/.env; set +a
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/refresh_prompt_cache.py message_enricher
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/check_prompts.py
-python superpowers/dot-claude/skills/langfuse-prompt-viewer/fetch_trace.py trace_id
+python superpowers/dot-claude/skills/langfuse-prompt-and-trace-debugger/refresh_prompt_cache.py message_enricher
+python superpowers/dot-claude/skills/langfuse-prompt-and-trace-debugger/check_prompts.py
+python superpowers/dot-claude/skills/langfuse-prompt-and-trace-debugger/fetch_trace.py trace_id
 ```
 
 **Playwright Tester** - Browser automation and testing

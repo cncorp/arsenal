@@ -124,7 +124,7 @@ def read_prompt_from_cache(prompt_name: str, cache_dir: Path) -> dict | None:
         print(f"❌ ERROR: Prompt file not found: {prompt_file}")
         print(f"  Expected: {prompt_file.relative_to(find_project_root())}")
         print("\nCreate it manually or fetch from Langfuse using:")
-        print("  cd .claude/skills/langfuse-prompt-viewer")
+        print("  cd .claude/skills/langfuse-prompt-and-trace-debugger")
         print(f"  uv run python refresh_prompt_cache.py {prompt_name}")
         return None
 

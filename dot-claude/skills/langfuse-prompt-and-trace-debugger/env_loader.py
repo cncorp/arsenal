@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Automatic environment loader for langfuse-prompt-viewer skill.
+Automatic environment loader for langfuse-prompt-and-trace-debugger skill.
 Finds and loads arsenal/.env automatically.
 """
 

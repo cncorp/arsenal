@@ -100,7 +100,7 @@ allowed-tools:
 - **NEVER assume production** - always prefer staging unless very clear
 
 **DO NOT use for:**
-- Reading/viewing prompts (use `langfuse-prompt-viewer` skill instead)
+- Reading/viewing prompts (use `langfuse-prompt-and-trace-debugger` skill instead)
 - One-off experiments (use Langfuse UI for quick tests)
 
 **Decision Tree:**
@@ -326,7 +326,7 @@ uv run python push_to_staging.py my_new_prompt
 
 ```bash
 # First, fetch current version from staging
-cd .claude/skills/langfuse-prompt-viewer
+cd .claude/skills/langfuse-prompt-and-trace-debugger
 uv run python refresh_prompt_cache.py message_enricher
 
 # Edit the cached file

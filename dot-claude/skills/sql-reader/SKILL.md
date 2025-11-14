@@ -152,7 +152,7 @@ grep "^class.*Base" api/src/data -r --include="*.py" | grep -v test
 ### 6. View Intervention Logic (CRITICAL for Understanding Data Model)
 ```bash
 # First refresh the prompt cache to get latest intervention conditions
-cd .claude/skills/langfuse-prompt-viewer
+cd .claude/skills/langfuse-prompt-and-trace-debugger
 uv run python refresh_prompt_cache.py group_message_intervention_conditions_yaml
 
 # Then view the intervention logic

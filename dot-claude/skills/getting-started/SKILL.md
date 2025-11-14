@@ -62,7 +62,7 @@ This provides transparency and helps debug the workflow.
 
 **Examples:**
 - ✅ "I'm using the test-runner skill to validate these changes..."
-- ✅ "Let me use the langfuse-prompt-viewer skill to fetch the actual schema..."
+- ✅ "Let me use the langfuse-prompt-and-trace-debugger skill to fetch the actual schema..."
 - ✅ "Using the git-reader agent to check repository status..."
 
 **DO NOT:**
@@ -77,7 +77,7 @@ This provides transparency and helps debug the workflow.
 
 ```bash
 ls .claude/skills/
-# Shows available skills: test-runner/, langfuse-prompt-viewer/, etc.
+# Shows available skills: test-runner/, langfuse-prompt-and-trace-debugger/, etc.
 ```
 
 **When you start a task, ask yourself:**
@@ -152,25 +152,65 @@ git stash pop                # Restore your changes
 
 **NEVER say "that test was already broken" without running stash/pop first.**
 
-### 🔥 langfuse-prompt-viewer
-**MANDATORY when KeyError or prompt schema issues occur**
+### 🔥 langfuse-prompt-and-trace-debugger
+**MANDATORY when KeyError, schema errors, OR production debugging occurs**
 
-When to use: Tests fail with KeyError, need to understand prompt schemas
-Where: `.claude/skills/langfuse-prompt-viewer/SKILL.md`
+When to use: Tests fail with KeyError, need to understand prompt schemas, investigating production issues
+Where: `.claude/skills/langfuse-prompt-and-trace-debugger/SKILL.md`
 
-**Example queries where you MUST run langfuse-prompt-viewer:** "How do group_message_intervention_conditions_yaml interventions work?" • "What fields does cronjobs_yaml expect for scheduled messages?" • "Show me the actual intervention logic from production"
+**🔥 CRITICAL: Proactive triggers (MUST use this skill):**
+
+1. **Prompt Schema Questions** (fetch prompts)
+   - "How do group_message_intervention_conditions_yaml interventions work?"
+   - "What fields does cronjobs_yaml expect for scheduled messages?"
+   - "Show me the actual intervention logic from production"
+   - Any KeyError involving prompt response fields
+
+2. **Production Debugging** (fetch error traces)
+   - "Why didn't this user get a message?"
+   - "Why did this intervention not fire?"
+   - "What errors happened in production today?"
+   - "Debug trace ID: abc123..." (from Slack alerts)
+   - User reports missing/unexpected AI behavior
+
+3. **Performance Investigation** (fetch traces)
+   - "Why are OpenAI costs high this week?"
+   - "Which prompts are slowest?"
+   - "Show me traces from 2pm-3pm when users complained"
+   - Job timeout errors in logs
+
+4. **Response Validation Failures**
+   - "_validation_error" appears in logs
+   - "LLM returned unexpected structure"
+   - Pydantic validation errors on AI responses
 
 **YOU MUST:**
-- cd to `.claude/skills/langfuse-prompt-viewer`
+
+**For prompt schemas:**
+- cd to `.claude/skills/langfuse-prompt-and-trace-debugger`
 - Run `uv run python refresh_prompt_cache.py PROMPT_NAME`
 - Read the cached prompt to understand the actual schema
 - Fix code to match the actual schema (not assumptions)
+
+**For production errors:**
+- cd to `.claude/skills/langfuse-prompt-and-trace-debugger`
+- Run `uv run python fetch_error_traces.py --hours 24` (or --days 7)
+- Investigate error patterns in the output
+- Use `fetch_trace.py <trace_id>` for specific traces
+
+**For performance/cost analysis:**
+- cd to `.claude/skills/langfuse-prompt-and-trace-debugger`
+- Run `uv run python fetch_traces_by_time.py "2025-11-14T14:00:00Z" "2025-11-14T15:00:00Z"`
+- Analyze usage, latency, and cost data in traces
 
 **Violations:**
 - ❌ Guessing at prompt schemas
 - ❌ Assuming field names without checking
 - ❌ Not fetching the prompt when KeyError occurs
 - ❌ Making assumptions about optional vs required fields
+- ❌ **NEW:** Saying "I need to check production" without using fetch_error_traces.py
+- ❌ **NEW:** Debugging "why didn't user get X" without checking traces
+- ❌ **NEW:** Investigating costs/performance without fetching actual trace data
 
 ### 🔥 git-reader (Agent)
 **MANDATORY for ALL git operations**

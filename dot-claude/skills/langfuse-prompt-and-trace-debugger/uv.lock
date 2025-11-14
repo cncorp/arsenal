@@ -232,7 +232,7 @@ wheels = [
 ]
 
 [[package]]
-name = "langfuse-prompt-viewer"
+name = "langfuse-prompt-and-trace-debugger"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

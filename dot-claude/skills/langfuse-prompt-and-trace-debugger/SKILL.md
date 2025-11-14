@@ -1,5 +1,5 @@
 ---
-name: langfuse-prompt-viewer
+name: langfuse-prompt-and-trace-debugger
 description: MANDATORY skill when KeyError or schema errors occur. Fetch actual prompt schemas instead of guessing. Use for debugging traces and understanding AI model behavior.
 allowed-tools:
   - Bash
@@ -7,7 +7,7 @@ allowed-tools:
   - Glob
 ---
 
-# Langfuse Prompt & Trace Viewer - MANDATORY FOR KEYERRORS
+# Langfuse Prompt & Trace Debugger - MANDATORY FOR KEYERRORS
 
 ## 🔥 CRITICAL: Use This Skill Immediately When:
 
@@ -24,6 +24,47 @@ allowed-tools:
 - Debugging Langfuse traces
 - Analyzing model output in production
 
+**🚀 PROACTIVE TRIGGERS (non-obvious scenarios where you should automatically use this skill):**
+
+1. **Production Debugging Queries:**
+   - "Why didn't user X get a message?"
+   - "Why did this intervention not fire?"
+   - "What errors happened in production [timeframe]?"
+   - "Debug this trace ID from Slack alert"
+   - User reports: "AI didn't respond" or "got wrong response"
+   - **→ Use `fetch_error_traces.py` to find error traces automatically**
+
+2. **Performance & Cost Investigation:**
+   - "Why are OpenAI costs high this week?"
+   - "Which prompts are slowest?"
+   - "Show me what happened during [time window]"
+   - Job timeout errors in CloudWatch/logs
+   - **→ Use `fetch_traces_by_time.py` to analyze patterns**
+
+3. **Response Validation Issues:**
+   - Logs show `_validation_error` metadata
+   - "LLM returned unexpected structure"
+   - Pydantic validation errors on AI responses
+   - **→ Use `fetch_trace.py` with trace ID to see actual vs expected**
+
+4. **Intervention Logic Questions:**
+   - "How does X intervention condition work?"
+   - "What fields does cronjobs_yaml expect?"
+   - "Show me actual intervention logic from production"
+   - **→ Use `refresh_prompt_cache.py` to fetch YAML configs as prompts**
+
+5. **Error Pattern Analysis:**
+   - "Are users hitting a specific error frequently?"
+   - "Find all traces with 'timeout' errors"
+   - "Search for traces containing [error message]"
+   - **→ Use `search_trace_errors.py` to grep across traces**
+
+**❌ ANTI-PATTERNS (violations of this skill):**
+- Saying "I need to check production" without actually fetching traces
+- Debugging "why didn't user get X" by reading code instead of checking actual traces
+- Investigating costs/performance by guessing instead of analyzing real trace data
+- Answering "how does X work?" about prompts without fetching the actual prompt
+
 ## 🚨 VIOLATION: Guessing at Schemas
 
 **WRONG:** "The prompt probably returns {field_name}, let me add that to the code"
@@ -36,7 +77,7 @@ allowed-tools:
 - ❌ Look at old code and assume it's current
 
 **DO THIS:**
-1. ✅ cd to `.claude/skills/langfuse-prompt-viewer`
+1. ✅ cd to `.claude/skills/langfuse-prompt-and-trace-debugger`
 2. ✅ Run `uv run python refresh_prompt_cache.py PROMPT_NAME`
 3. ✅ Read `docs/cached_prompts/PROMPT_NAME_production.txt`
 4. ✅ Read `docs/cached_prompts/PROMPT_NAME_production_config.json`
@@ -107,7 +148,7 @@ Downloads Langfuse prompts to `docs/cached_prompts/` for offline viewing.
 **Usage:**
 ```bash
 # Navigate to the skill directory
-cd .claude/skills/langfuse-prompt-viewer
+cd .claude/skills/langfuse-prompt-and-trace-debugger
 
 # Fetch specific prompt
 uv run python refresh_prompt_cache.py PROMPT_NAME
@@ -130,7 +171,7 @@ Lists all prompts available in Langfuse and checks their availability in the cur
 **Usage:**
 ```bash
 # Navigate to the skill directory
-cd .claude/skills/langfuse-prompt-viewer
+cd .claude/skills/langfuse-prompt-and-trace-debugger
 
 # Check all prompts
 uv run python check_prompts.py
@@ -149,7 +190,7 @@ Fetch and display Langfuse traces for debugging AI model behavior.
 **Usage:**
 ```bash
 # Navigate to the skill directory
-cd .claude/skills/langfuse-prompt-viewer
+cd .claude/skills/langfuse-prompt-and-trace-debugger
 
 # Fetch specific trace by ID
 uv run python fetch_trace.py db29520b-9acb-4af9-a7a0-1aa005eb7b24
@@ -171,6 +212,47 @@ uv run python fetch_trace.py --help
 - Timing information
 - Hierarchical display of nested observations
 - Useful for debugging AI workflows
+
+### 4. fetch_error_traces.py - Find Traces with Errors
+
+Fetch traces that contain ERROR-level observations from a specified time range. Useful for investigating production issues and error patterns.
+
+**Usage:**
+```bash
+# Navigate to the skill directory
+cd .claude/skills/langfuse-prompt-and-trace-debugger
+
+# Fetch error traces from last 24 hours (default)
+uv run python fetch_error_traces.py
+
+# Fetch error traces from last 48 hours
+uv run python fetch_error_traces.py --hours 48
+
+# Fetch error traces from last 7 days
+uv run python fetch_error_traces.py --days 7
+
+# Limit results to 5 traces
+uv run python fetch_error_traces.py --limit 5
+
+# Query production server for errors
+uv run python fetch_error_traces.py --env production
+
+# View help
+uv run python fetch_error_traces.py --help
+```
+
+**What it shows:**
+- Traces that contain observations with ERROR level
+- Trace metadata (ID, name, timestamp, user)
+- Error messages from failed observations
+- Direct links to view traces in Langfuse UI
+- Time-filtered results (last N hours/days)
+
+**Common use cases:**
+- Monitor production errors from the last day
+- Investigate error patterns across multiple traces
+- Find traces related to specific failure modes
+- Debug issues reported by users
 
 ## Understanding Prompt Configs
 
@@ -219,6 +301,13 @@ uv run python fetch_trace.py --help
 3. Examine inputs, outputs, and intermediate steps
 4. Check for unexpected model responses
 
+### Investigating Production Errors
+1. Use `fetch_error_traces.py` to find recent error traces
+2. Review error messages and trace metadata
+3. Use `fetch_trace.py` with specific trace ID for detailed analysis
+4. Identify patterns across multiple error traces
+5. Check for common error causes (API failures, schema issues, etc.)
+
 ## Quick Reference
 
 ```bash
@@ -227,7 +316,7 @@ uv run python fetch_trace.py --help
 # Make sure to add # pragma: allowlist-secret comments after secrets
 
 # Navigate to skill directory
-cd .claude/skills/langfuse-prompt-viewer
+cd .claude/skills/langfuse-prompt-and-trace-debugger
 
 # List all available prompts
 uv run python check_prompts.py
@@ -244,6 +333,15 @@ uv run python fetch_trace.py --list --limit 5
 
 # Fetch specific trace
 uv run python fetch_trace.py TRACE_ID
+
+# Find error traces from last 24 hours
+uv run python fetch_error_traces.py
+
+# Find error traces from last 7 days
+uv run python fetch_error_traces.py --days 7
+
+# Find error traces in production
+uv run python fetch_error_traces.py --env production
 ```
 
 ## Important Notes

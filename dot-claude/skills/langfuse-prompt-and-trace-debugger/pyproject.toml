@@ -1,5 +1,5 @@
 [project]
-name = "langfuse-prompt-viewer"
+name = "langfuse-prompt-and-trace-debugger"
 version = "0.1.0"
 description = "Standalone Langfuse prompt and trace viewer skill"
 requires-python = ">=3.9"
