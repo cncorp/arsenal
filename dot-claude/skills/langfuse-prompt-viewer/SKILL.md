@@ -42,23 +42,58 @@ allowed-tools:
 4. ✅ Read `docs/cached_prompts/PROMPT_NAME_production_config.json`
 5. ✅ Use the ACTUAL schema you just read
 
+## 🏢 Understanding Langfuse Servers vs Labels
+
+**CRITICAL: We have TWO separate Langfuse servers:**
+
+1. **Staging Langfuse Server** (`https://langfuse.staging.cncorp.io`)
+   - Separate database/instance on staging ECS cluster
+   - Used for development and testing
+   - Has prompts tagged with "production" label - these are DEFAULT prompts for staging tests
+   - ⚠️ "production" label here does NOT mean real user-facing prompts
+
+2. **Production Langfuse Server** (`https://langfuse.prod.cncorp.io`)
+   - Separate database/instance on production ECS cluster
+   - Used for real user-facing application
+   - Has prompts tagged with "production" label - these ARE the real prompts shown to users
+   - ✅ "production" label here means actual live prompts
+
+**Key Points:**
+- The two servers are **completely independent** - no automatic sync between them
+- Both servers use the same label system (`production`, `development`, `staging`, etc.)
+- A prompt with "production" label on **staging server** ≠ prompt with "production" label on **prod server**
+- Labels control which prompt version is served within each server
+- Server selection is controlled by `LANGFUSE_HOST` environment variable
+
 ## Environment Setup
 
 **Required environment variables:**
 - `LANGFUSE_PUBLIC_KEY` - Langfuse API public key
 - `LANGFUSE_SECRET_KEY` - Langfuse API secret key
-- `LANGFUSE_HOST` - Langfuse instance URL (optional, defaults to https://cloud.langfuse.com)
+- `LANGFUSE_HOST` - Langfuse server URL
+  - Staging: `https://langfuse.staging.cncorp.io`
+  - Production: `https://langfuse.prod.cncorp.io`
 
 **Optional:**
-- `ENVIRONMENT` - Environment label (defaults to "production") - used by `check_prompts.py` to check prompt availability
+- `ENVIRONMENT` - Label to fetch within the server (defaults to "production")
+  - This is the LABEL/TAG within whichever server you're connected to
+  - NOT the same as which Langfuse server you're querying
 
 **Setup:**
 ```bash
 # Add to arsenal/.env:
-LANGFUSE_PUBLIC_KEY=pk-lf-...  # pragma: allowlist-secret
-LANGFUSE_SECRET_KEY=sk-lf-...  # pragma: allowlist-secret
-LANGFUSE_HOST=https://your-langfuse-instance.com
-ENVIRONMENT=production
+# For STAGING Langfuse server (default for development):
+LANGFUSE_PUBLIC_KEY_STAGING=pk-lf-...  # pragma: allowlist-secret
+LANGFUSE_SECRET_KEY_STAGING=sk-lf-...  # pragma: allowlist-secret
+LANGFUSE_HOST_STAGING=https://langfuse.staging.cncorp.io
+
+# For PRODUCTION Langfuse server (real user-facing prompts):
+LANGFUSE_PUBLIC_KEY_PROD=pk-lf-...  # pragma: allowlist-secret
+LANGFUSE_SECRET_KEY_PROD=sk-lf-...  # pragma: allowlist-secret
+LANGFUSE_HOST_PROD=https://langfuse.prod.cncorp.io
+
+# Select which server to use:
+LANGFUSE_ENVIRONMENT=staging  # or 'production'
 ```
 
 **No manual environment loading needed!** The scripts automatically find and load `arsenal/.env` from anywhere in the project.

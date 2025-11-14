@@ -103,12 +103,24 @@ Available commands include:
 **Available skills:**
 - **getting-started** — Bootstrap skill, READ FIRST every session
 - **test-runner** — MANDATORY after every code change (ruff → lint → tests)
-- **langfuse-prompt-viewer** — MANDATORY when KeyError or schema errors occur
+- **langfuse-prompt-viewer** — MANDATORY when KeyError or schema errors occur. Views prompts from Langfuse servers (staging or production)
+- **update-langfuse-staging-server-prompt** — Push prompt updates to Langfuse STAGING SERVER ONLY (langfuse.staging.cncorp.io). Does NOT sync to production server
 - **sql-reader** — Query production PostgreSQL database with read-only credentials (investigation, debugging)
 - **playwright-tester** — Browser automation and screenshots
 - **docker-log-debugger** — Analyze Docker container logs
 - **semantic-code-search** — Search codebase semantically using embeddings
 - **twilio-test-caller** — Test voice call flows
+
+**IMPORTANT: Langfuse Server Architecture**
+We have TWO completely separate Langfuse servers:
+1. **Staging Langfuse Server** (`langfuse.staging.cncorp.io`) - For development/testing
+2. **Production Langfuse Server** (`langfuse.prod.cncorp.io`) - For real users
+
+Both servers have prompts tagged with "production" label, but they mean different things:
+- Staging server "production" label = default prompts for staging tests (NOT user-facing)
+- Production server "production" label = actual live prompts shown to users
+
+There is NO automated sync between these servers. Changes must be manually propagated.
 
 **How skills work:**
 - Each skill is a SKILL.md file containing mandatory instructions
