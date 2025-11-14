@@ -107,6 +107,7 @@ Available commands include:
 
 **Available skills:**
 - **getting-started** — Bootstrap skill, READ FIRST every session
+- **skill-writer** — Use when creating or editing Claude Code skills (teaches arsenal workflow)
 - **test-writer** — 🚨 MANDATORY before writing ANY test code (YOU CANNOT WRITE TESTS WITHOUT THIS SKILL)
 - **test-runner** — MANDATORY after every code change (ruff → lint → tests)
 - **langfuse-prompt-and-trace-debugger** — MANDATORY when KeyError or schema errors occur. Views prompts and debugs traces from Langfuse servers (staging or production)

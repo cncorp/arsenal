@@ -28,6 +28,59 @@ Skills teach you proven, battle-tested patterns for common tasks. They prevent:
 - Missing critical debugging tools
 - Repeating mistakes from previous sessions
 
+## 🚨 CRITICAL: .claude/ is READ-ONLY
+
+**NEVER MODIFY FILES IN .claude/ DIRECTORY**
+
+The `.claude/` directory is a COPY created by `./arsenal/install.sh`. It is NOT the source of truth.
+
+```
+arsenal/
+  dot-claude/              ← SOURCE OF TRUTH (edit here)
+    skills/
+    agents/
+    commands/
+
+.claude/                   ← COPY (DO NOT EDIT!)
+  skills/                  ← Created by install.sh
+  agents/                  ← Synced from arsenal
+  commands/                ← Read-only copy
+```
+
+**If you need to create or edit skills, agents, or commands:**
+
+1. **STOP** - Do not edit `.claude/` directly
+2. **Use the skill-writer skill** - Read `.claude/skills/skill-writer/SKILL.md`
+3. **Edit in arsenal/dot-claude/** - Make changes in the source directory
+4. **Run ./arsenal/install.sh** - Sync changes to `.claude/`
+5. **Test the changes** - Verify they work
+6. **Commit to arsenal** - Git commit the changes in `arsenal/`
+
+**BANNED OPERATIONS:**
+- ❌ **NEVER:** `vim .claude/skills/SKILL_NAME/SKILL.md` (edit source instead)
+- ❌ **NEVER:** `Write` tool with file_path in `.claude/` (use arsenal/dot-claude/)
+- ❌ **NEVER:** `Edit` tool with file_path in `.claude/` (use arsenal/dot-claude/)
+- ❌ **NEVER:** `git add .claude/` (this is a generated directory)
+
+**CORRECT OPERATIONS:**
+- ✅ **ALWAYS:** `vim arsenal/dot-claude/skills/SKILL_NAME/SKILL.md`
+- ✅ **ALWAYS:** `Write` tool with `arsenal/dot-claude/skills/SKILL_NAME/SKILL.md`
+- ✅ **ALWAYS:** Run `./arsenal/install.sh` after editing arsenal files
+- ✅ **ALWAYS:** `git add arsenal/` (commit the source, not the copy)
+
+**Why this matters:**
+- Changes to `.claude/` are LOST when install.sh runs
+- The install script OVERWRITES `.claude/` with arsenal contents
+- Skills must be maintained in ONE place (arsenal) to prevent drift
+- Git commits should only include source files, not generated copies
+
+**If you catch yourself about to edit a file in `.claude/`:**
+1. STOP immediately
+2. Read `.claude/skills/skill-writer/SKILL.md`
+3. Follow the arsenal-first workflow
+4. Edit `arsenal/dot-claude/` instead
+5. Run `./arsenal/install.sh` to sync
+
 ## 🚨 BANNED ACTIONS - NEVER DO THESE
 
 **The following actions are FORBIDDEN unless you have completed the specified conditions:**
@@ -365,6 +418,47 @@ git stash pop                # Restore your changes
 ```
 
 **NEVER say "that test was already broken" without running stash/pop first.**
+
+### 🔥 skill-writer
+**MANDATORY when creating or editing skills, agents, or commands**
+
+When to use: Creating new skills, editing existing skills, modifying arsenal content
+Where: `.claude/skills/skill-writer/SKILL.md`
+
+**🚨 NEVER EDIT .claude/ DIRECTLY - USE THIS SKILL INSTEAD 🚨**
+
+**WHEN TO USE (Automatic Triggers):**
+
+You MUST use this skill if ANY of these are true:
+1. **About to create a new skill** - User asks to create a skill
+2. **About to edit a skill** - Modifying SKILL.md files
+3. **About to create agents or commands** - Adding .claude content
+4. **About to use Write/Edit tools with `.claude/` path** - STOP and use arsenal instead
+5. **User says:** "create a skill" OR "edit this skill" OR "add a new skill"
+6. **You think:** "I should modify this skill documentation"
+
+**IF ANY TRIGGER ABOVE → STOP → READ .claude/skills/skill-writer/SKILL.md**
+
+**YOU MUST:**
+- NEVER edit files in `.claude/` directory (read-only copy)
+- ALWAYS edit files in `arsenal/dot-claude/` (source of truth)
+- Run `./arsenal/install.sh` after editing arsenal files
+- Test changes after syncing
+- Commit to `arsenal/`, not `.claude/`
+
+**Critical violations:**
+- ❌ **BANNED:** Using Write tool with `.claude/skills/SKILL_NAME/SKILL.md`
+- ❌ **BANNED:** Using Edit tool with `.claude/` paths
+- ❌ **BANNED:** `git add .claude/` (it's a generated directory)
+- ❌ **BANNED:** Modifying `.claude/` without using skill-writer skill
+- ✅ **CORRECT:** Edit `arsenal/dot-claude/`, run `./arsenal/install.sh`, test, commit
+
+**Why this matters:**
+- `.claude/` is OVERWRITTEN by install.sh - your changes will be LOST
+- Arsenal is the single source of truth for all skills
+- Skills must be versioned in git via arsenal, not .claude
+
+**This skill is MANDATORY when working with .claude content. NO EXCEPTIONS.**
 
 ### 🔥 langfuse-prompt-and-trace-debugger
 **MANDATORY when KeyError, schema errors, OR production debugging occurs**
