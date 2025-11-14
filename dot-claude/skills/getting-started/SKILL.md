@@ -79,6 +79,8 @@ ls .claude/skills/
 When to use: After ANY code modification
 Where: `.claude/skills/test-runner/SKILL.md`
 
+**Example queries where you MUST run test-runner:** "I modified the auth logic, verify it works" • "Run tests to make sure nothing broke" • "Check if my changes pass linting"
+
 **YOU MUST (Steps 0-2 for quick iteration):**
 - Step 0: Run `cd api && just ruff` (formatting)
 - Step 1: Run `cd api && just lint` (type checking)
@@ -113,6 +115,8 @@ Where: `.claude/skills/test-runner/SKILL.md`
 When to use: Tests fail with KeyError, need to understand prompt schemas
 Where: `.claude/skills/langfuse-prompt-viewer/SKILL.md`
 
+**Example queries where you MUST run langfuse-prompt-viewer:** "How do group_message_intervention_conditions_yaml interventions work?" • "What fields does cronjobs_yaml expect for scheduled messages?" • "Show me the actual intervention logic from production"
+
 **YOU MUST:**
 - cd to `.claude/skills/langfuse-prompt-viewer`
 - Run `uv run python refresh_prompt_cache.py PROMPT_NAME`
@@ -144,8 +148,12 @@ How to use: `Task tool → subagent_type: "git-reader"`
 ### playwright-tester
 **Use for browser automation and screenshots**
 
-When to use: Need to verify UI, capture screenshots, test frontend
+**🚨 If user's query contains http:// or https://, seriously consider using this skill**
+
+When to use: UI verification, screenshots, visual debugging, when user provides URLs
 Where: `.claude/skills/playwright-tester/SKILL.md`
+
+**Example queries where you MUST run playwright-tester:** "Check out https://linear.app and tell me what you see" • "Screenshot localhost:3000/login" • "Go to staging and verify the new feature appears"
 
 ### docker-log-debugger
 **Use for analyzing Docker container logs**
@@ -153,17 +161,23 @@ Where: `.claude/skills/playwright-tester/SKILL.md`
 When to use: Debugging containerized services
 Where: `.claude/skills/docker-log-debugger/SKILL.md`
 
+**Example queries where you MUST run docker-log-debugger:** "Worker container keeps crashing, check the logs" • "Find errors in API docker logs from last 15 min" • "Why is postgres container restarting?"
+
 ### semantic-code-search
 **Use for finding code by meaning**
 
 When to use: Need to find code semantically, not by text matching
 Where: `.claude/skills/semantic-code-search/SKILL.md`
 
+**Example queries where you MUST run semantic-code-search:** "Where do we handle user authentication?" • "Find code that processes webhook messages" • "Show me functions that query the database"
+
 ### tailscale-manager
 **Use for managing Tailscale funnels**
 
 When to use: Starting/stopping Tailscale funnels, switching between ct projects, exposing local services to internet
 Where: `.claude/skills/tailscale-manager/SKILL.md`
+
+**Example queries where you MUST run tailscale-manager:** "Start a funnel for ct3 to test webhooks" • "Switch funnel from ct2 to ct4" • "What port is the current funnel on?"
 
 **YOU MUST:**
 - Check funnel status before starting: `sudo tailscale funnel status`
@@ -187,22 +201,17 @@ When to use: Testing voice features and call flows
 Where: `.claude/skills/twilio-test-caller/SKILL.md`
 **Dependencies:** Requires tailscale-manager skill (funnel must be running)
 
-### sql-reader
-**Query production PostgreSQL database with read-only credentials**
+**Example queries where you MUST run twilio-test-caller:** "Place a test call to verify voice pipeline" • "Trigger a call to test VAD integration" • "Test the Twilio voice flow end-to-end"
 
-When to use: Investigating data issues, debugging application state, analyzing user data
+### sql-reader
+**Query production PostgreSQL with read-only credentials**
+
+When to use: Investigating data, debugging issues, analyzing application state
 Where: `.claude/skills/sql-reader/SKILL.md`
 
-**YOU MUST:**
-- Always run the 6 Data Model Quickstart commands first
-- Use the helper script: `arsenal/dot-claude/skills/sql-reader/connect.sh`
-- Read-only access - safe for production queries
-- Check schema migrations (intervention tracking changed Aug 27, person_facts changed Aug 28)
+**YOU MUST:** Run the 6 Data Model Quickstart commands first
 
-**Violations:**
-- ❌ Guessing at table names without running quickstart
-- ❌ Not checking for schema migrations when querying historical data
-- ❌ Forgetting that messages join through person_contacts table
+**Example queries where you MUST run sql-reader:** "How many interventions were sent yesterday?" • "Show me all messages from user ID 123" • "What's the most recent conversation?"
 
 ### therapist-data-scientist
 **Calculate Gottman SPAFF affect ratios and therapeutic insights**
@@ -212,27 +221,17 @@ Where: `.claude/skills/therapist-data-scientist/SKILL.md`
 
 **Note:** Employee-facing tool for HIPAA-certified team members only
 
+**Example queries where you MUST run therapist-data-scientist:** "Calculate SPAFF ratio for this couple's last week" • "Analyze affect distribution for user 456" • "What's the Gottman ratio for conversation 789?"
+
 ### linear-manager
 **Create, update, search, and manage Linear issues**
 
-When to use: Creating issues for bugs/features, updating issue status, searching issues, adding comments
+When to use: Creating issues, updating status, searching issues, adding comments
 Where: `.claude/skills/linear-manager/SKILL.md`
 
-**YOU MUST:**
-- Run `get_teams.sh` first to find your team ID
-- Announce usage: "I'm using the linear-manager skill to..."
-- Use helper scripts (get_issue.sh, create_issue.sh, etc.)
-- Include issue URLs in responses
+**YOU MUST:** Run `get_teams.sh` first to find team ID, include issue URLs in responses
 
-**Common workflows:**
-- Creating issues: Use create_issue.sh with --title, --team-id, --description
-- Working on tickets: Use get_issue.sh to fetch details, update_issue.sh to change status
-- After completing work: Add comment with add_comment.sh, mark done with update_issue.sh
-
-**Violations:**
-- ❌ Creating issues without getting team ID first
-- ❌ Not including issue URL in response to user
-- ❌ Forgetting to update issue status when work is complete
+**Example queries where you MUST run linear-manager:** "Create a Linear issue for this auth bug" • "Show me my open Linear tickets" • "Update CODEL-123 to done with a comment"
 
 ## Enforcement: You Will Be Tested
 
