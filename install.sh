@@ -7,6 +7,15 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Cross-platform sed in-place function (macOS requires -i '', Linux requires -i)
+sed_inplace() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
 echo -e "${GREEN}Installing/Updating Arsenal...${NC}\n"
 
 # Get the directory where this script lives
@@ -112,8 +121,8 @@ if ! command -v npm &> /dev/null; then
     echo -e "${YELLOW}  ! npm not found - skipping skill dependency installation${NC}"
     echo "    Skills requiring Node.js will need manual 'npm install' in their directories"
 else
-    # Find all package.json files in skills directories
-    SKILL_DIRS=$(find "$SUPERPOWERS_DIR/dot-claude/skills" -name "package.json" -exec dirname {} \;)
+    # Find all package.json files in skills directories (excluding node_modules)
+    SKILL_DIRS=$(find "$SUPERPOWERS_DIR/dot-claude/skills" -path "*/node_modules" -prune -o -name "package.json" -type f -print | xargs -n1 dirname)
 
     if [ -z "$SKILL_DIRS" ]; then
         echo "  ✓ No Node.js skills require installation"
@@ -179,7 +188,7 @@ if [ -f "$SUPERPOWERS_ENV" ]; then
             read -p "  Copy OPENAI_API_KEY from parent project? [y/N]: " -n 1 -r
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
-                sed -i "s|OPENAI_API_KEY=.*|OPENAI_API_KEY=$PARENT_API_KEY|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|OPENAI_API_KEY=.*|OPENAI_API_KEY=$PARENT_API_KEY|" "$SUPERPOWERS_ENV"
                 echo -e "${GREEN}    ✓ Copied OPENAI_API_KEY${NC}"
             fi
         else
@@ -217,33 +226,33 @@ if [ -f "$SUPERPOWERS_ENV" ]; then
 
             if [[ $REPLY =~ ^[Ss]$ ]]; then
                 # Save as staging credentials
-                sed -i "s|LANGFUSE_PUBLIC_KEY_STAGING=.*|LANGFUSE_PUBLIC_KEY_STAGING=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
-                sed -i "s|LANGFUSE_SECRET_KEY_STAGING=.*|LANGFUSE_SECRET_KEY_STAGING=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_PUBLIC_KEY_STAGING=.*|LANGFUSE_PUBLIC_KEY_STAGING=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_SECRET_KEY_STAGING=.*|LANGFUSE_SECRET_KEY_STAGING=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
                 if [ -n "$PARENT_LANGFUSE_HOST" ]; then
-                    sed -i "s|LANGFUSE_HOST_STAGING=.*|LANGFUSE_HOST_STAGING=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
+                    sed_inplace "s|LANGFUSE_HOST_STAGING=.*|LANGFUSE_HOST_STAGING=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
                 fi
                 # Also update legacy variables to point to staging
-                sed -i "s|LANGFUSE_PUBLIC_KEY=.*|LANGFUSE_PUBLIC_KEY=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
-                sed -i "s|LANGFUSE_SECRET_KEY=.*|LANGFUSE_SECRET_KEY=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_PUBLIC_KEY=.*|LANGFUSE_PUBLIC_KEY=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_SECRET_KEY=.*|LANGFUSE_SECRET_KEY=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
                 if [ -n "$PARENT_LANGFUSE_HOST" ]; then
-                    sed -i "s|LANGFUSE_HOST=.*|LANGFUSE_HOST=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
+                    sed_inplace "s|LANGFUSE_HOST=.*|LANGFUSE_HOST=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
                 fi
-                sed -i "s|LANGFUSE_ENVIRONMENT=.*|LANGFUSE_ENVIRONMENT=staging|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_ENVIRONMENT=.*|LANGFUSE_ENVIRONMENT=staging|" "$SUPERPOWERS_ENV"
                 echo -e "${GREEN}    ✓ Saved as STAGING credentials${NC}"
             elif [[ $REPLY =~ ^[Pp]$ ]]; then
                 # Save as production credentials
-                sed -i "s|LANGFUSE_PUBLIC_KEY_PROD=.*|LANGFUSE_PUBLIC_KEY_PROD=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
-                sed -i "s|LANGFUSE_SECRET_KEY_PROD=.*|LANGFUSE_SECRET_KEY_PROD=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_PUBLIC_KEY_PROD=.*|LANGFUSE_PUBLIC_KEY_PROD=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_SECRET_KEY_PROD=.*|LANGFUSE_SECRET_KEY_PROD=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
                 if [ -n "$PARENT_LANGFUSE_HOST" ]; then
-                    sed -i "s|LANGFUSE_HOST_PROD=.*|LANGFUSE_HOST_PROD=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
+                    sed_inplace "s|LANGFUSE_HOST_PROD=.*|LANGFUSE_HOST_PROD=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
                 fi
                 # Also update legacy variables to point to production
-                sed -i "s|LANGFUSE_PUBLIC_KEY=.*|LANGFUSE_PUBLIC_KEY=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
-                sed -i "s|LANGFUSE_SECRET_KEY=.*|LANGFUSE_SECRET_KEY=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_PUBLIC_KEY=.*|LANGFUSE_PUBLIC_KEY=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_SECRET_KEY=.*|LANGFUSE_SECRET_KEY=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
                 if [ -n "$PARENT_LANGFUSE_HOST" ]; then
-                    sed -i "s|LANGFUSE_HOST=.*|LANGFUSE_HOST=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
+                    sed_inplace "s|LANGFUSE_HOST=.*|LANGFUSE_HOST=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
                 fi
-                sed -i "s|LANGFUSE_ENVIRONMENT=.*|LANGFUSE_ENVIRONMENT=production|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_ENVIRONMENT=.*|LANGFUSE_ENVIRONMENT=production|" "$SUPERPOWERS_ENV"
                 echo -e "${GREEN}    ✓ Saved as PRODUCTION credentials${NC}"
             else
                 echo "  Skipped Langfuse credential configuration"
@@ -284,13 +293,13 @@ else
     # Offer to configure OpenAI API key
     if [ -n "$OPENAI_API_KEY" ]; then
         echo "  Using OPENAI_API_KEY from environment"
-        sed -i "s|OPENAI_API_KEY=.*|OPENAI_API_KEY=$OPENAI_API_KEY|" "$SUPERPOWERS_ENV"
+        sed_inplace "s|OPENAI_API_KEY=.*|OPENAI_API_KEY=$OPENAI_API_KEY|" "$SUPERPOWERS_ENV"
         echo -e "${GREEN}  ✓ Set OPENAI_API_KEY${NC}"
     elif [ -n "$PARENT_API_KEY" ]; then
         read -p "  Copy OPENAI_API_KEY from parent project? [y/N]: " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            sed -i "s|OPENAI_API_KEY=.*|OPENAI_API_KEY=$PARENT_API_KEY|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|OPENAI_API_KEY=.*|OPENAI_API_KEY=$PARENT_API_KEY|" "$SUPERPOWERS_ENV"
             echo -e "${GREEN}  ✓ Copied OPENAI_API_KEY${NC}"
         else
             echo -e "${YELLOW}  ! OPENAI_API_KEY not set - edit arsenal/.env to add it${NC}"
@@ -312,33 +321,33 @@ else
 
         if [[ $REPLY =~ ^[Ss]$ ]]; then
             # Save as staging credentials
-            sed -i "s|LANGFUSE_PUBLIC_KEY_STAGING=.*|LANGFUSE_PUBLIC_KEY_STAGING=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
-            sed -i "s|LANGFUSE_SECRET_KEY_STAGING=.*|LANGFUSE_SECRET_KEY_STAGING=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_PUBLIC_KEY_STAGING=.*|LANGFUSE_PUBLIC_KEY_STAGING=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_SECRET_KEY_STAGING=.*|LANGFUSE_SECRET_KEY_STAGING=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
             if [ -n "$PARENT_LANGFUSE_HOST" ]; then
-                sed -i "s|LANGFUSE_HOST_STAGING=.*|LANGFUSE_HOST_STAGING=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_HOST_STAGING=.*|LANGFUSE_HOST_STAGING=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
             fi
             # Also update legacy variables to point to staging
-            sed -i "s|LANGFUSE_PUBLIC_KEY=.*|LANGFUSE_PUBLIC_KEY=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
-            sed -i "s|LANGFUSE_SECRET_KEY=.*|LANGFUSE_SECRET_KEY=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_PUBLIC_KEY=.*|LANGFUSE_PUBLIC_KEY=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_SECRET_KEY=.*|LANGFUSE_SECRET_KEY=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
             if [ -n "$PARENT_LANGFUSE_HOST" ]; then
-                sed -i "s|LANGFUSE_HOST=.*|LANGFUSE_HOST=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_HOST=.*|LANGFUSE_HOST=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
             fi
-            sed -i "s|LANGFUSE_ENVIRONMENT=.*|LANGFUSE_ENVIRONMENT=staging|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_ENVIRONMENT=.*|LANGFUSE_ENVIRONMENT=staging|" "$SUPERPOWERS_ENV"
             echo -e "${GREEN}  ✓ Saved as STAGING credentials${NC}"
         elif [[ $REPLY =~ ^[Pp]$ ]]; then
             # Save as production credentials
-            sed -i "s|LANGFUSE_PUBLIC_KEY_PROD=.*|LANGFUSE_PUBLIC_KEY_PROD=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
-            sed -i "s|LANGFUSE_SECRET_KEY_PROD=.*|LANGFUSE_SECRET_KEY_PROD=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_PUBLIC_KEY_PROD=.*|LANGFUSE_PUBLIC_KEY_PROD=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_SECRET_KEY_PROD=.*|LANGFUSE_SECRET_KEY_PROD=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
             if [ -n "$PARENT_LANGFUSE_HOST" ]; then
-                sed -i "s|LANGFUSE_HOST_PROD=.*|LANGFUSE_HOST_PROD=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_HOST_PROD=.*|LANGFUSE_HOST_PROD=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
             fi
             # Also update legacy variables to point to production
-            sed -i "s|LANGFUSE_PUBLIC_KEY=.*|LANGFUSE_PUBLIC_KEY=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
-            sed -i "s|LANGFUSE_SECRET_KEY=.*|LANGFUSE_SECRET_KEY=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_PUBLIC_KEY=.*|LANGFUSE_PUBLIC_KEY=$PARENT_LANGFUSE_PUBLIC_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_SECRET_KEY=.*|LANGFUSE_SECRET_KEY=$PARENT_LANGFUSE_SECRET_KEY  # pragma: allowlist-secret|" "$SUPERPOWERS_ENV"
             if [ -n "$PARENT_LANGFUSE_HOST" ]; then
-                sed -i "s|LANGFUSE_HOST=.*|LANGFUSE_HOST=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
+                sed_inplace "s|LANGFUSE_HOST=.*|LANGFUSE_HOST=$PARENT_LANGFUSE_HOST|" "$SUPERPOWERS_ENV"
             fi
-            sed -i "s|LANGFUSE_ENVIRONMENT=.*|LANGFUSE_ENVIRONMENT=production|" "$SUPERPOWERS_ENV"
+            sed_inplace "s|LANGFUSE_ENVIRONMENT=.*|LANGFUSE_ENVIRONMENT=production|" "$SUPERPOWERS_ENV"
             echo -e "${GREEN}  ✓ Saved as PRODUCTION credentials${NC}"
         else
             echo "  Skipped Langfuse credential configuration"
