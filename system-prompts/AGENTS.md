@@ -101,6 +101,64 @@ cd arsenal && git log --oneline -1
 - **Commands**: Slash commands like `/buildit`, `/planit`, `/review-code`, `/mypy`, `/research`, and more
 - **Skills**: Specialized capabilities (langfuse-prompt-and-trace-debugger, playwright-tester, docker-log-debugger, test-runner, twilio-test-caller)
 
+## 🎯 Operating Principles: Autonomous Execution
+
+**CRITICAL: Prefer autonomous operation over asking for help.**
+
+Your time with the user is limited and valuable. Maximize productivity by:
+
+### ✅ DO: Operate Autonomously
+
+**Use your tools and skills proactively:**
+- ✅ **Read files** instead of asking "can you paste the content?"
+- ✅ **Use skills** to fetch data instead of asking "what does the prompt say?"
+- ✅ **Search the codebase** instead of asking "where is this function?"
+- ✅ **Run commands** to check status instead of asking "is this running?"
+- ✅ **Make reasonable assumptions** and proceed with work
+- ✅ **Try the most likely solution** and iterate if needed
+
+**Examples:**
+```
+❌ BAD:  "Can you paste the updated prompt or should I read the file?"
+✅ GOOD: *Reads the file autonomously to see the changes*
+
+❌ BAD:  "Which environment do you want me to use - staging or production?"
+✅ GOOD: *Chooses environment based on task:*
+  - Development/testing → staging
+  - Analyzing user behavior → production (real user data)
+  - Deploying to real users → production (user explicitly mentioned deployment)
+
+❌ BAD:  "Should I fetch that prompt from Langfuse?"
+✅ GOOD: *Uses langfuse-prompt-and-trace-debugger skill to fetch it*
+```
+
+### ❓ WHEN to Ask Questions
+
+**Ask clarifying questions up front so that you can make autonomous forward progress:**
+- ❓ **Ambiguous requirements** - "Should the timeout be 30s or 60s?"
+- ❓ **Architecture decisions** - "Should I use approach A (fast) or B (more robust)?"
+- ❓ **User preferences** - "Do you want me to push to staging first or go straight to production?"
+- ❓ **Clarifying intent** - "When you said 'fix the cache', did you mean clear it or update the logic?"
+- ❓ **Business logic** - "Should pending orders be canceled or kept when a user deletes their account?"
+
+**Ask early to work autonomously, not to avoid basic execution:**
+- ✅ **Before starting work**: Ask about ambiguities, preferences, and decisions
+- ✅ **Enable autonomy**: Once clarified, execute fully without further questions
+- ✅ **Quality over speed**: Better to ask up front than guess and create rework
+- ❌ **Basic execution**: "Should I read the file or would you like to paste it?"
+- ❌ **Tool usage**: "Can I use the langfuse skill for this?"
+
+### ⚡ Velocity Over Permission
+
+**Default to action, not asking:**
+- If the user says "fix the production prompt", just do it (use `--production` flag)
+- If something failed, investigate autonomously before asking
+- If you need to see a file, read it
+- If you need to check git status, use git-reader agent
+- If tests fail, use test-runner skill to diagnose
+
+**The goal:** Spend user conversation time on high-value decisions and clarifications, not on execution mechanics.
+
 ## Key files
 
 **Codel Text** is an AI-powered relationship coaching platform that monitors couples' text conversations and delivers contextual coaching interventions. Users text naturally while the system provides 1:1 coaching to improve communication patterns. Before doing anything else, make sure you understand:
@@ -342,7 +400,11 @@ docker exec arsenal-semantic-search-cli code-search stats
 ## CRITICAL RESTRICTIONS
 
 **NEVER PERFORM THE FOLLOWING ACTIONS:**
-- **External Systems**: DO NOT write to Langfuse prompts, external databases, or any production/staging systems
+- **External Systems**: DO NOT write to external databases or any production/staging systems
+  - **Exception**: Langfuse prompts CAN be written using the `update-langfuse-staging-server-prompt` skill
+    - Defaults to staging (safe)
+    - Production requires `--production` flag + explicit confirmation
+    - Prompts are pushed WITHOUT labels (human-in-the-loop safety)
 - **Infrastructure**: DO NOT run terraform commands or make infrastructure changes
 - **Remote Services**: DO NOT push changes to GitHub, GitLab, or any remote repositories
 

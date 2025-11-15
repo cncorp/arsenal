@@ -1,10 +1,10 @@
 # test-writer Skill
 
-## 🚨 CRITICAL: MANDATORY FOR ALL TEST WRITING
+## 🚨 CRITICAL: MANDATORY FOR ALL TEST WRITING AND UPDATING
 
-**YOU CANNOT WRITE TESTS WITHOUT THIS SKILL.**
+**YOU CANNOT WRITE OR UPDATE TESTS WITHOUT THIS SKILL.**
 
-If you write tests without following this skill, you will:
+If you write or update tests without following this skill, you will:
 - Write brittle tests with hardcoded library outputs
 - Create self-evident tests that provide zero value
 - Use fixtures incorrectly (overuse for simple cases, underuse for complex)
@@ -22,8 +22,36 @@ Use this skill when:
 - ✅ You're adding tests to an existing test file
 - ✅ User says "test this" or "add test coverage"
 - ✅ You've just written code and need to test it
+- ✅ **You're updating/modifying existing tests** (e.g., when test-fixer needs to update test expectations)
+- ✅ **Tests are failing and need to be fixed** (use this skill to understand what to change)
 
-**DO NOT write tests without using this skill. PERIOD.**
+**DO NOT write or update tests without using this skill. PERIOD.**
+
+---
+
+## 🔄 How This Skill Interacts With Other Skills
+
+1. **Called by test-fixer** when modifying test files - determines if code or contract is wrong
+2. **Can call sql-reader** to query production data model and design realistic fixtures
+3. **Works autonomously** but flags UX contract changes: "⚠️ UX contract change: [explain]"
+
+## 🚨 CRITICAL: Don't Encode Broken Behavior
+
+**When updating tests, ask:**
+1. Is the CODE wrong? → Fix code, keep test
+2. Is the TEST wrong? → Update test (legitimate contract change)
+3. Is this encoding BROKEN behavior? → Flag to user and continue
+
+**Red flags:**
+- "Code changed so I'll update the test" ← DANGER
+- Test passed → code changed → test fails → changing test instead of code ← DANGER
+
+**Safe updates:**
+- Intentional contract change (documented in spec)
+- Refactoring (same behavior, different implementation)
+- Fixing brittle tests (testing implementation not contract)
+
+**When in doubt:** Flag it and continue autonomously: "⚠️ This may encode broken behavior: [explain]"
 
 ---
 

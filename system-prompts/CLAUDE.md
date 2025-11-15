@@ -157,7 +157,11 @@ There is NO automated sync between these servers. Changes must be manually propa
 - **Git Write Operations**: DO NOT commit, push, pull, merge, reset, rebase, or run ANY git commands that modify repository state
   - Exception: Read-only git commands are allowed (status, diff, log, show) via the git-reader agent
   - If the user asks to "revert", "undo", or "rollback" changes, explain what git commands would be needed but DO NOT run them
-- **External Systems**: DO NOT write to Langfuse prompts, external databases, or any production/staging systems
+- **External Systems**: DO NOT write to external databases or any production/staging systems
+  - **Exception**: Langfuse prompts CAN be written using the `update-langfuse-staging-server-prompt` skill
+    - Defaults to staging (safe)
+    - Production requires `--production` flag + explicit confirmation
+    - Prompts are pushed WITHOUT labels (human-in-the-loop safety)
 - **Infrastructure**: DO NOT run terraform commands or make infrastructure changes
 - **Remote Services**: DO NOT push changes to GitHub, GitLab, or any remote repositories
 

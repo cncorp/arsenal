@@ -288,6 +288,43 @@ ls .claude/skills/
 
 **This workflow is MANDATORY. Violations will be caught through pressure testing.**
 
+## 🔄 How Test Skills Interact
+
+### Skill Responsibilities
+
+**test-fixer** (orchestrates):
+- Manages git (stash/backup/checkout), investigates failures, iterates on fixes
+- Calls test-writer when modifying tests, calls test-runner to verify, can call sql-reader for context
+
+**test-writer** (guards quality):
+- Prevents encoding broken behavior, determines if code/contract is wrong
+- Can call sql-reader for production data, flags UX changes autonomously
+
+**test-runner** (validates):
+- Runs ruff → lint → test-all-mocked (Steps 0-2), full parallel suite (Step 3)
+- Called by test-fixer after each fix attempt
+
+**sql-reader** (provides context):
+- Shows production data model reality for test-fixer and test-writer
+
+### Complete Workflow
+
+**Normal development:**
+```
+Code change → test-runner validates → done
+```
+
+**When tests fail:**
+```
+Tests fail → test-fixer: backup → investigate → fix (calls test-writer if modifying tests,
+may call sql-reader for context) → test-runner verifies → iterate until passing
+```
+
+**Key principles:**
+1. test-fixer orchestrates, test-writer guards quality, test-runner validates
+2. Work autonomously, flag UX contract changes explicitly
+3. sql-reader provides production context when needed
+
 ## Available Skills
 
 ### 🔥 test-writer (CRITICAL)
@@ -392,13 +429,21 @@ Where: `.claude/skills/test-runner/SKILL.md`
 - **"all tests pass"** = Step 3 passed (NEVER say this without Step 3)
 
 **Violations:**
-- ❌ **CRITICAL:** Claiming test failures are "unrelated" to your changes (ALWAYS stash and verify)
+- ❌ **CRITICAL:** Claiming test failures are "unrelated" without using test-fixer skill
+- ❌ **CRITICAL:** ANY test failures without invoking test-fixer skill (no exceptions!)
 - ❌ Saying "all tests pass" without running parallel script (Step 3)
 - ❌ Saying "tests are passing" after only running Step 2
 - ❌ Skipping ruff "because lint will catch it"
 - ❌ Skipping linting "because it's a small change"
 - ❌ Assuming tests pass without verification
 - ❌ Not reading the actual test output
+
+**🚨 ABSOLUTE RULE: ANY TEST FAILURE = INVOKE TEST-FIXER SKILL**
+- Tests fail after your changes? → test-fixer skill
+- Tests fail after merge/pull? → test-fixer skill
+- CI reports failures? → test-fixer skill
+- User says "tests broken"? → test-fixer skill
+- **NO EXCEPTIONS** - do not investigate manually
 
 **🚨 FUNDAMENTAL HYGIENE RULE:**
 
@@ -417,7 +462,47 @@ just test-all-mocked         # Run the failing suite
 git stash pop                # Restore your changes
 ```
 
-**NEVER say "that test was already broken" without running stash/pop first.**
+**When tests fail after your changes:**
+- ✅ **Use test-fixer skill** - it handles investigation and iterative fixing
+- ❌ DO NOT manually investigate or guess at fixes
+
+### 🔥 test-fixer (CRITICAL)
+**MANDATORY when tests fail**
+
+When to use: When tests fail after code changes, merges, or CI reports failures
+Where: `.claude/skills/test-fixer/SKILL.md`
+
+**Example queries where you MUST use test-fixer:** "Tests are failing" • "CI reports test failures" • "Fix the broken tests" • "3 tests failing after my changes"
+
+**YOU MUST:**
+- Systematically investigate where tests pass (current / branch HEAD / main)
+- Identify root cause of failure
+- Write targeted fixes (not guesses)
+- Iterate: fix → verify → repeat until all tests pass
+- Return code to passing state with minimal changes
+
+**Violations:**
+- ❌ **CRITICAL:** Guessing at fixes without investigation
+- ❌ Reporting findings without fixing
+- ❌ Stopping after one failed fix attempt
+- ❌ Leaving code in broken state
+- ❌ Claiming "unrelated" without proof
+
+**This skill DOGGEDLY ITERATES to fix:**
+- **Phase 0:** Create git diff backup (NEVER lose code)
+- **Phase 1:** Investigation - Find where tests pass
+- **Phase 2:** Fix iteration loop - write fix → test → verify → repeat
+- **Up to 10 different fix approaches** (be creative, don't give up!)
+- Always restore to working state before reporting
+- **GOAL:** Return working code with all tests passing
+
+**Pattern:**
+```
+Tests fail → test-fixer skill investigates → identifies cause →
+writes fix → tests → fix works? →
+  YES: cleanup and report success
+  NO: revert fix, try different approach → repeat
+```
 
 ### 🔥 skill-writer
 **MANDATORY when creating or editing skills, agents, or commands**

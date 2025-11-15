@@ -7,6 +7,7 @@ Follow these steps:
 3. Understand the problem described in the issue
 4. Search the codebase for relevant files
 5. Implement the necessary changes to fix the issue
-6. Write and run tests to verify the fix
-7. Ensure code passes linting and type checking
-8. Create a descriptive commit message, with the ticket number as a prefix.
+6. Write tests (use **test-writer skill**) and run them (use **test-runner skill**)
+7. If tests fail, use **test-fixer skill** to iterate until passing
+8. Ensure code passes linting and type checking (test-runner handles this)
+9. Create a descriptive commit message, with the ticket number as a prefix.

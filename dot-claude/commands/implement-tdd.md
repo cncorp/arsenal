@@ -24,9 +24,9 @@ Execute a Test-Driven Development plan from `specs/*.md` or create implementatio
 
 #### Phase 1: Test Setup & Validation
 - Create or load test specifications
-- Write factory-style pytest fixtures following `api/tests/AGENTS.md` patterns
+- Use **test-writer skill** to write factory-style pytest fixtures following `api/tests/AGENTS.md` patterns
 - Implement test scenarios with proper parametrization
-- **CHECKPOINT**: Run tests to ensure they FAIL (not ERROR)
+- **CHECKPOINT**: Use **test-runner skill** to ensure tests FAIL (not ERROR)
 - **SUBAGENT**: Invoke `test-fixture-reviewer` for fixture validation
 - **SUBAGENT**: Invoke `pytest-test-reviewer` for test quality
 - Fix any issues identified by subagents
@@ -36,17 +36,17 @@ Execute a Test-Driven Development plan from `specs/*.md` or create implementatio
 #### Phase 2: Iterative Implementation (Strangler-Fig Pattern)
 For each iteration defined in the plan:
 - Implement minimal code to make target tests pass
-- Run only the target tests for this iteration
+- Use **test-runner skill** to run only the target tests for this iteration
 - Refactor if needed while keeping tests green
 - **CHECKPOINT**: Verify target tests pass, others still fail
 - **AUTO-PROCEED**: Continue to next iteration automatically until all iterations complete
 
 #### Phase 3: Integration & Refinement
-- Run full test suite to verify all tests pass
-- Address any unexpected failures
+- Use **test-runner skill** to run full test suite
+- If tests fail, use **test-fixer skill** to iterate until all pass
 - Refactor for code quality while maintaining green tests
 - Add error handling and edge cases as needed
-- **CHECKPOINT**: All tests must pass
+- **CHECKPOINT**: All tests must pass (verified by test-runner)
 - **AUTO-PROCEED**: If all tests pass, continue to Phase 4
 
 #### Phase 4: Quality Enforcement
@@ -88,9 +88,9 @@ Use TodoWrite tool to track progress through phases:
 ## Error Recovery
 
 ### Test Failures
-- If tests ERROR instead of FAIL: Fix test implementation
-- If wrong tests pass: Review test logic and assertions
-- If all tests pass initially: Tests aren't testing the right thing
+- If tests ERROR instead of FAIL: Use **test-fixer skill** to investigate and fix
+- If wrong tests pass: Use **test-writer skill** to review test logic
+- If all tests pass initially: Tests aren't testing the right thing - use **test-writer skill** to fix
 
 ### Quality Failures
 - **Mypy errors**: Invoke `mypy-error-fixer` subagent

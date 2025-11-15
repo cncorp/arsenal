@@ -27,14 +27,15 @@ You MUST execute the following validation pipeline in this exact order:
 - Do NOT proceed until MyPy passes cleanly
 
 ### 3. Test Suite Validation
-- Run `just test-all-mocked` to execute the full mocked test suite
-- Carefully analyze any test failures
-- Create a comprehensive list of failing tests with:
-  - Test file path and test name
-  - Failure reason/error message
-  - Any relevant context about why the test might be failing
-- You are NOT responsible for fixing the tests yourself
-- Return this list to the orchestrating agent for delegation to appropriate test-fixing agents
+- **Use test-runner skill** to run tests (`just ruff` → `just lint` → `just test-all-mocked`)
+- If ANY tests fail, you MUST invoke the **test-fixer skill** immediately
+- The test-fixer skill will:
+  - Systematically investigate failures
+  - Iterate on fixes until all tests pass
+  - Return when code is in passing state
+- **DO NOT** manually analyze test failures - delegate to test-fixer
+- Wait for test-fixer to complete before proceeding
+- Re-run test-runner to verify all tests now pass
 
 ## Execution Protocol
 
@@ -66,16 +67,16 @@ Status: [PASS/FAIL/FIXED]
 Details: [what happened, whether mypy-error-fixer was invoked]
 
 ### 3. Test Suite
-Status: [PASS/FAIL]
-Passing: X tests
-Failing: Y tests
+Status: [PASS/FAIL/FIXING]
+Details: [Used test-runner skill, invoked test-fixer if failures detected]
 
-Failing Tests:
-1. path/to/test.py::test_name - Reason: [error message]
-2. ...
+If failures detected:
+- Invoked test-fixer skill
+- test-fixer completed: [YES/IN_PROGRESS]
+- All tests now pass: [YES/NO]
 
 ### Overall Status
-[COMPLETE/BLOCKED/NEEDS_TEST_FIXES]
+[COMPLETE/BLOCKED]
 ```
 
 ## Important Constraints

@@ -1,6 +1,6 @@
 ---
 name: test-runner
-description: MANDATORY skill for running tests and lint after EVERY code change. If you modify code, you MUST use this skill to verify it works.
+description: MANDATORY skill for running tests and lint after EVERY code change. Focuses on adherence to just commands and running tests in parallel. If tests fail, use test-fixer skill.
 allowed-tools:
   - Bash
   - BashOutput
@@ -70,7 +70,12 @@ git stash pop
 - ✅ Stash changes first
 - ✅ Verify tests pass without your changes
 - ✅ Only then claim pre-existing issue (if true)
-- ✅ Otherwise: fix your code
+- ✅ Otherwise: use test-fixer skill to diagnose and fix
+
+**If tests fail after your changes:**
+- DO NOT guess at fixes
+- DO NOT investigate manually
+- ✅ **Use the test-fixer skill** - it will systematically investigate, identify root cause, and iterate on fixes until tests pass
 
 ## ⚠️ Always Use `just` Commands
 
@@ -199,20 +204,17 @@ done
 - WRONG: "The smoke test failure is unrelated to our changes"
 - WRONG: "That test was already failing"
 - WRONG: "This failure is just a flaky test"
-- RIGHT: **Stash your changes, run tests, verify they pass WITHOUT your changes**
+- RIGHT: **Use test-fixer skill to systematically investigate and fix**
 
 **FUNDAMENTAL RULE: Tests ALWAYS pass on main/merge base. If a test fails after your changes, YOUR changes broke it.**
 
-**To verify a failure is truly unrelated:**
-```bash
-git stash                    # Remove your changes
-just test-all-mocked         # Or whichever suite is failing
-# If tests PASS → your changes broke them
-# If tests FAIL → pre-existing issue (rare!)
-git stash pop                # Restore your changes
-```
+**When tests fail:**
+- ✅ **Use test-fixer skill** - it will investigate, identify root cause, and iterate on fixes
+- ❌ DO NOT manually investigate
+- ❌ DO NOT guess at fixes
+- ❌ DO NOT claim "unrelated" without proof
 
-**NEVER assume. ALWAYS verify with stash/pop.**
+**NEVER assume. ALWAYS use test-fixer skill.**
 
 ❌ **CRITICAL: Saying "all tests pass" without running the full suite**
 - WRONG: "I ran `just test-all-mocked`, all tests pass"
