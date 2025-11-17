@@ -11,6 +11,23 @@ allowed-tools:
 
 Calculate accurate Gottman SPAFF (Specific Affect) affect ratios and extract therapeutic insights from relationship coaching data using SQL queries.
 
+## 🚨 MANDATORY: Read Data Quirks First
+
+**BEFORE running any analysis or queries, you MUST read the data quirks documentation:**
+
+```bash
+cat docs/sql/DATA_QUIRKS.md
+```
+
+**Why:** The database has critical semantic quirks for relationship data:
+- NULL repair rates = stonewalling behavior (not missing data)
+- Affect ratio 100:1 can mean perfect OR avoidance
+- Conflict state capitalization inconsistencies
+
+**DO NOT skip this step. Read the file before every analysis.**
+
+---
+
 ## When to Use
 
 Use this skill when you need to:

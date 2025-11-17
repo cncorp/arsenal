@@ -243,6 +243,146 @@ Now executing improved approach...
 
 ---
 
+## 🚨 Common Mistakes (Check EVERY Response)
+
+**These mistakes occur in >50% of responses. Check for them systematically:**
+
+### Mistake #1: Wrote Code Without Running Tests
+
+**Pattern:**
+- User asks to implement feature
+- Claude writes code
+- Claude responds "Done! Here's the implementation..."
+- **MISSING:** No test-runner execution
+
+**What manager should check:**
+```
+Did I write/modify any code? → YES
+Did I run test-runner skill after? → NO
+→ ITERATE: Run test-runner skill now
+```
+
+**Correct action:**
+```bash
+# Must run after EVERY code change
+cd api && just ruff     # Formatting
+cd api && just lint     # Type checking
+cd api && just test-all-mocked  # Quick tests
+```
+
+**Don't respond until tests actually run and output is verified.**
+
+---
+
+### Mistake #2: Claimed Tests Pass Without Verification
+
+**Pattern:**
+- Claude says "tests are passing" or "all tests pass"
+- **MISSING:** No actual test output shown
+- **OR:** Only ran one test suite, not all
+
+**What manager should check:**
+```
+Did I claim tests pass? → YES
+Did I show actual test output? → NO
+→ ITERATE: Actually run tests and show output
+
+Did I say "all tests pass"? → YES
+Did I run parallel test suite? → NO
+→ ITERATE: Use correct terminology ("quick tests pass") or run full suite
+```
+
+**Verification required:**
+- Must show actual pytest output
+- Must show line like: "===== X passed in Y.YYs ====="
+- If said "all tests", must run `.claude/skills/test-runner/scripts/run_tests_parallel.sh`
+
+**Common false claims:**
+- ❌ "Tests should pass" (didn't run them)
+- ❌ "Tests are passing" (no evidence)
+- ❌ "All tests pass" (only ran mocked tests)
+
+---
+
+### Mistake #3: Didn't Validate Data Model Assumptions
+
+**Pattern:**
+- User asks question about production data
+- Claude makes assumptions about schema/data
+- **MISSING:** No sql-reader or langfuse skill usage to verify
+
+**Examples of unvalidated assumptions:**
+
+**Example A: Database schema**
+```
+User: "How many interventions were sent yesterday?"
+Claude: "Based on the schema, approximately 50..."
+         ^^^^^^^^^^^^^^^^^ UNVALIDATED ASSUMPTION
+```
+
+**What manager should check:**
+```
+Did I make claims about production data? → YES
+Did I use sql-reader to query actual data? → NO
+→ ITERATE: Use sql-reader skill to get real numbers
+```
+
+**Example B: Langfuse prompt schema**
+```
+User: "What fields does the prompt return?"
+Claude: "The prompt returns 'should_send' and 'message'..."
+                                ^^^^^^^^^^^^^^^^^^^^^ GUESSED
+```
+
+**What manager should check:**
+```
+Did I describe Langfuse prompt fields? → YES
+Did I use langfuse-prompt-and-trace-debugger to fetch actual prompt? → NO
+→ ITERATE: Fetch actual prompt schema
+```
+
+**Example C: Data model relationships**
+```
+Claude: "Users are linked to conversations via the user_id field..."
+                                                      ^^^^^^^ ASSUMED
+```
+
+**What manager should check:**
+```
+Did I describe database relationships? → YES
+Did I read actual schema with sql-reader? → NO
+→ ITERATE: Query information_schema or use sql-reader Data Model Quickstart
+```
+
+---
+
+## 🔍 Manager Review Checklist (Expanded)
+
+When reviewing your proposed response, verify:
+
+### Code Changes
+- [ ] Did I write/modify code?
+- [ ] If YES: Did I run test-runner skill after?
+- [ ] If YES: Did I show actual test output?
+- [ ] If I claimed "tests pass": Do I have pytest output proving it?
+- [ ] If I said "all tests": Did I run the parallel suite?
+
+### Data Claims
+- [ ] Did I make claims about production data?
+- [ ] If YES: Did I use sql-reader to verify?
+- [ ] Did I describe Langfuse prompt schemas?
+- [ ] If YES: Did I use langfuse-prompt-and-trace-debugger to fetch actual schema?
+- [ ] Did I make assumptions about table relationships/fields?
+- [ ] If YES: Did I query information_schema or read actual code?
+
+### Evidence Quality
+- [ ] Did I show actual command output (not "should work")?
+- [ ] Did I read actual files (not "based on the structure")?
+- [ ] Did I verify current state (not rely on memory)?
+- [ ] Can I prove every claim with evidence?
+
+---
+
 ## ⚠️ Critical Violations (Immediate ITERATE)
 
 These automatically require iteration:
@@ -266,6 +406,14 @@ These automatically require iteration:
 5. **Said "tests pass" without running test-runner**
    - Severity: HIGH
    - Action: Run actual tests with test-runner skill
+
+6. **Wrote code without running tests**
+   - Severity: HIGH
+   - Action: Run test-runner skill now, show output
+
+7. **Made Langfuse schema assumptions**
+   - Severity: HIGH
+   - Action: Use langfuse-prompt-and-trace-debugger to fetch actual schema
 
 ---
 

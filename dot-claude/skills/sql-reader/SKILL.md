@@ -7,6 +7,23 @@ description: Query production PostgreSQL database with read-only credentials. Us
 
 Query production PostgreSQL database using read-only credentials stored in Arsenal environment configuration.
 
+## 🚨 MANDATORY: Read Data Quirks First
+
+**BEFORE querying the database, you MUST read the data quirks documentation:**
+
+```bash
+cat docs/sql/DATA_QUIRKS.md
+```
+
+**Why:** The database has critical semantic quirks that will cause incorrect queries if not understood:
+- NULL values have clinical meaning (not "missing data")
+- Data inconsistencies require special query patterns
+- Volume normalization is required for accuracy
+
+**DO NOT skip this step. Read the file every time before querying.**
+
+---
+
 ## When to Use
 
 Use this skill when you need to:
