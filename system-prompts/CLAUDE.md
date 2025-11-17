@@ -60,10 +60,23 @@ Keep these files in sync by updating them in the `arsenal/` submodule and runnin
 
 #### Git Operations
 
-**For ALL git queries** (diffs, status, history, branches, logs): **Use the git-reader agent**
-- The git-reader agent has read-only access and can safely execute git inspection commands
-- Examples: `git status`, `git diff`, `git log`, `git show`, `git branch`
-- **For destructive git operations** (commit, push, reset, rebase, etc.): Describe the command but **never execute it yourself**
+**For ALL git operations, use the appropriate skill or agent:**
+
+**git-reader agent** (read-only git operations):
+- Use for: `git status`, `git diff`, `git log`, `git show`, `git branch`
+- The git-reader agent has read-only access and safely executes git inspection commands
+- Proactively invoke for ANY git query
+
+**git-writer skill** (safe git write operations):
+- Use for: `git rm` (removing files from git)
+- Location: `.claude/skills/git-writer/SKILL.md`
+- Example: User asks "git rm api/commit.diff" → Use git-writer skill
+- Currently supports ONLY `git rm` - other write operations coming later
+
+**Restricted git operations** (commit, push, reset, rebase, etc.):
+- You CANNOT run these operations
+- Explain the command to user but **never execute it yourself**
+- User must run: `git commit`, `git push`, `git reset`, `git rebase`, etc.
 
 #### Code Quality & Testing
 
@@ -108,6 +121,7 @@ Available commands include:
 **Available skills:**
 - **getting-started** — Bootstrap skill, READ FIRST every session
 - **skill-writer** — Use when creating or editing Claude Code skills (teaches arsenal workflow)
+- **git-writer** — Safe git write operations (git rm). NEVER destroys uncommitted data. Use when removing files from git.
 - **test-writer** — 🚨 MANDATORY before writing ANY test code (YOU CANNOT WRITE TESTS WITHOUT THIS SKILL)
 - **test-runner** — MANDATORY after every code change (ruff → lint → tests)
 - **langfuse-prompt-and-trace-debugger** — MANDATORY when KeyError or schema errors occur. Views prompts and debugs traces from Langfuse servers (staging or production)
@@ -154,8 +168,11 @@ There is NO automated sync between these servers. Changes must be manually propa
 ## ⚠️ Critical Restrictions
 
 **NEVER perform these operations yourself:**
-- **Git Write Operations**: DO NOT commit, push, pull, merge, reset, rebase, or run ANY git commands that modify repository state
-  - Exception: Read-only git commands are allowed (status, diff, log, show) via the git-reader agent
+- **Git Write Operations**: DO NOT commit, push, pull, merge, reset, rebase, or run git commands that destroy uncommitted data
+  - ✅ **ALLOWED**: Read-only git commands via git-reader agent (status, diff, log, show)
+  - ✅ **ALLOWED**: Safe git write operations via git-writer skill (git rm - ONLY if no uncommitted changes)
+  - ❌ **BANNED**: git commit, git push, git reset --hard, git clean -fd, git checkout -f
+  - ❌ **BANNED**: ANY operation that destroys uncommitted data (changes not in git history)
   - If the user asks to "revert", "undo", or "rollback" changes, explain what git commands would be needed but DO NOT run them
 - **External Systems**: DO NOT write to external databases or any production/staging systems
   - **Exception**: Langfuse prompts CAN be written using the `update-langfuse-staging-server-prompt` skill
