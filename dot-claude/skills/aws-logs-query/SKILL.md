@@ -1,10 +1,6 @@
 ---
 name: aws-logs-query
 description: Query AWS CloudWatch logs for staging and production environments. Use for debugging errors, investigating incidents, or monitoring application behavior. PRIMARY - aws logs tail "/ecs/codel-staging" --follow --profile codel --format short | grep -iE "error|exception"
-allowed-tools:
-  - Bash
-  - Read
-  - Grep
 ---
 
 # AWS Logs Query Skill

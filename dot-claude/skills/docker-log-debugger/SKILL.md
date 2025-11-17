@@ -1,10 +1,6 @@
 ---
 name: docker-log-debugger
 description: Find and debug errors using Docker Compose logs. Use proactively when tests fail or services misbehave. PRIMARY - docker compose logs --since 15m | grep -iE -B 10 -A 10 "error|fail|exception"
-allowed-tools:
-  - Bash
-  - Read
-  - Grep
 ---
 
 # Docker Log Debugger

@@ -1,10 +1,6 @@
 ---
 name: langfuse-prompt-and-trace-debugger
 description: MANDATORY skill when KeyError or schema errors occur. Fetch actual prompt schemas instead of guessing. Use for debugging traces and understanding AI model behavior.
-allowed-tools:
-  - Bash
-  - Read
-  - Glob
 ---
 
 # Langfuse Prompt & Trace Debugger - MANDATORY FOR KEYERRORS

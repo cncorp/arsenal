@@ -1,10 +1,6 @@
 ---
 name: semantic-code-search
 description: Semantic code search using vector embeddings. Find functions/classes by meaning, not exact text. Use when exploring codebases or when grep doesn't find what you need.
-allowed-tools:
-  - Bash
-  - Read
-  - Grep
 ---
 
 # Semantic Code Search

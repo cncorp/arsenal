@@ -4,11 +4,6 @@ description: Complete E2E workflow for voice calls - database setup, user creati
 dependencies:
   - tailscale-manager
   - twilio-test-caller
-allowed-tools:
-  - Bash
-  - Read
-  - Glob
-  - Skill
 ---
 
 # Voice E2E Testing Workflow

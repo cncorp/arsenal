@@ -1,10 +1,6 @@
 ---
 name: feature-spec-writer
 description: PM framework for writing product specs from insights. Use when translating analysis into actionable feature requirements.
-allowed-tools:
-  - Read
-  - Write
-  - Edit
 ---
 
 # Feature Spec Writer Skill

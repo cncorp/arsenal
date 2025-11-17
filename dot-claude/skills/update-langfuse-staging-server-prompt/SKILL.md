@@ -1,10 +1,6 @@
 ---
 name: update-langfuse-staging-server-prompt
 description: Push prompt updates to Langfuse (staging or production). Defaults to STAGING (safe). Production requires explicit --production flag + confirmation. NEVER assigns labels (human-in-the-loop safety).
-allowed-tools:
-  - Bash
-  - Read
-  - Glob
 ---
 
 # Update Langfuse Prompts - Write Prompts to Langfuse (Staging or Production)

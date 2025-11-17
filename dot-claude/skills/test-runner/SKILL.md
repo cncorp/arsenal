@@ -1,10 +1,6 @@
 ---
 name: test-runner
 description: MANDATORY skill for running tests and lint after EVERY code change. Focuses on adherence to just commands and running tests in parallel. If tests fail, use test-fixer skill.
-allowed-tools:
-  - Bash
-  - BashOutput
-  - Grep
 ---
 
 # Test Runner - MANDATORY WORKFLOW

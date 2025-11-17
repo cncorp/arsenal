@@ -3,10 +3,6 @@ name: twilio-test-caller
 description: Place test voice calls via Twilio. Use when testing voice features or debugging voice pipeline. Only works if twilio_place_call.py exists in branch.
 dependencies:
   - tailscale-manager
-allowed-tools:
-  - Bash
-  - Read
-  - Glob
 ---
 
 # Twilio Test Caller

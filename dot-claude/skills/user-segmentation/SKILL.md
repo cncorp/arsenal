@@ -1,10 +1,6 @@
 ---
 name: user-segmentation
 description: Framework for clustering users into behavioral segments and personas. Use when analyzing user cohorts, identifying patterns, and personalizing product features.
-allowed-tools:
-  - Bash
-  - Read
-  - Write
 ---
 
 # User Segmentation Skill

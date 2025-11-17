@@ -1,10 +1,6 @@
 ---
 name: sql-reader
 description: Query production PostgreSQL database with read-only credentials. Use for investigating data, debugging issues, or analyzing application state.
-allowed-tools:
-  - Bash
-  - Read
-  - Write
 ---
 
 # SQL Reader Skill

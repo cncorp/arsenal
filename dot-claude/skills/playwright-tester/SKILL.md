@@ -1,11 +1,6 @@
 ---
 name: playwright-tester
 description: Capture screenshots and run E2E tests with Playwright. Use for frontend debugging, visual inspection, or user flow validation. (project)
-allowed-tools:
-  - Bash
-  - Read
-  - Write
-  - Glob
 ---
 
 # Playwright Tester for Codel Text

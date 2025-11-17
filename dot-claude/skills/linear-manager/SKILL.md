@@ -1,10 +1,6 @@
 ---
 name: linear-manager
 description: Create, update, search, and comment on Linear issues. Use for project management and issue tracking during development.
-allowed-tools:
-  - Bash
-  - Read
-  - Write
 ---
 
 # Linear Manager Skill

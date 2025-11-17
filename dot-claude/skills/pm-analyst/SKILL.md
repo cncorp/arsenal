@@ -1,13 +1,6 @@
 ---
 name: pm-analyst
 description: End-to-end PM workflow - from data analysis to pragmatic Linear tickets. Analyzes user behavior, identifies opportunities, creates specs, and audits for simplicity.
-allowed-tools:
-  - Bash
-  - Read
-  - Write
-  - Grep
-  - Glob
-  - Edit
 ---
 
 # PM Analyst Skill
