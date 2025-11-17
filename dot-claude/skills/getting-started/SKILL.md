@@ -14,6 +14,34 @@ You have an arsenal of tools at your disposal. Here's how they work:
 2. **Search for skills first** - Before ANY task, search for skills by running: `ls .claude/skills/`
 3. **If a skill exists, you MUST use it** - Skills are mandatory, not optional.
 
+---
+
+## 🚨 CRITICAL: NEVER Respond to User Directly
+
+**Before responding to the user, you MUST run the manager-review skill.**
+
+```
+User asks question
+    ↓
+You do work/research
+    ↓
+You prepare response
+    ↓
+⚠️ STOP - DO NOT RESPOND YET ⚠️
+    ↓
+Run manager-review skill (.claude/skills/manager-review/SKILL.md)
+    ↓
+Manager reviews:
+  - APPROVE → Respond to user
+  - ITERATE → Improve and review again
+```
+
+**Why:** 50% of initial responses are inaccurate and can be improved through better skill usage. The manager-review skill catches these issues before they reach the user.
+
+**This is NOT optional. Every response must go through manager-review.**
+
+---
+
 ## Core Principle: Skills Are Mandatory
 
 **If a skill exists for what you're doing, you MUST use it.**

@@ -113,6 +113,34 @@ Available commands include:
 
 **🚨 CRITICAL: Skills are NOT optional tools. They are required patterns.**
 
+---
+
+## 🚨 MANDATORY: Manager Review Before Every Response
+
+**YOU MUST run the manager-review skill before responding to the user.**
+
+```
+User asks question → You do work → Prepare response → STOP
+                                                        ↓
+                            Run manager-review skill ←
+                                    ↓
+                            Review & Decide:
+                            - APPROVE → Respond
+                            - ITERATE → Improve & review again
+```
+
+**Why this matters:**
+- 50% of initial responses are inaccurate
+- Better skill usage dramatically improves accuracy
+- Manager-review catches missed skills and assumptions
+- Iteration is expected and normal
+
+**Read:** `.claude/skills/manager-review/SKILL.md`
+
+**This is NOT optional. NEVER respond to the user without manager-review approval.**
+
+---
+
 **The Three Foundational Rules:**
 1. **Skills give you capabilities** - You have skills. Arsenal gives you powers you previously didn't have.
 2. **Search for skills first** - Before ANY task: `ls .claude/skills/`
@@ -120,6 +148,7 @@ Available commands include:
 
 **Available skills:**
 - **getting-started** — Bootstrap skill, READ FIRST every session
+- **manager-review** — 🚨 MANDATORY before EVERY user response. Quality gate that reviews your work, assumes 50% error rate, iterates for accuracy.
 - **skill-writer** — Use when creating or editing Claude Code skills (teaches arsenal workflow)
 - **git-writer** — Safe git write operations (git rm). NEVER destroys uncommitted data. Use when removing files from git.
 - **test-writer** — 🚨 MANDATORY before writing ANY test code (YOU CANNOT WRITE TESTS WITHOUT THIS SKILL)
