@@ -24,21 +24,32 @@ Use this command to implement a feature spec:
 
 ## Workflow
 
-**CRITICAL: This workflow generates real code and creates real PRs. Be thorough.**
+**🚨 CRITICAL: Work completely autonomously. This workflow generates real code and creates real PRs. Do NOT ask questions - just execute the workflow.**
 
 ### Step 0: Find or Specify Spec File
 
-**Option A: Auto-find most recent spec**
-```bash
-/spec-to-pr
-→ Finds most recent *-YYYY-MM-DD.md in project root
-```
+**Execute immediately (DO NOT ASK):**
 
-**Option B: Specify spec file**
-```bash
-/spec-to-pr user-feedback-2025-11-14.md
-→ Uses the specified file
-```
+**If user provided a filename argument:**
+- Use the specified file
+- Example: `/spec-to-pr user-feedback-2025-11-14.md`
+
+**If NO filename argument provided:**
+- Automatically find the most recent `*-YYYY-MM-DD.md` file:
+  ```bash
+  # Search in order of preference:
+  # 1. docs/temp/specs/ (from /eng-prioritize workflow)
+  # 2. Project root
+  ls -t docs/temp/specs/*-20*.md 2>/dev/null || ls -t *-20*.md 2>/dev/null | head -1
+  ```
+- If FINAL_SPEC.md exists in docs/temp/specs/, use that (highest priority)
+- If no dated specs found: Search docs/specifications/ for dated files
+- Announce what you found: "Found spec: {filename}"
+- Proceed immediately to Step 1
+
+**If no spec files found anywhere:**
+- Report error: "No spec files found. Run /question-to-spec or /proposal-to-spec first."
+- Exit (DO NOT ask user to choose)
 
 **IMPORTANT:** Spec will be automatically copied to `docs/specifications/` and committed with the PR.
 

@@ -23,22 +23,29 @@ description: Select best engineering spec, improve it, and distribute as FINAL_S
 
 ## Workflow
 
+**🚨 CRITICAL: Work completely autonomously. DO NOT ask questions. DO NOT explain the workflow. Just execute it.**
+
 ### Step 1: Parse Directories
 
-Accept 1 or more directory paths:
+**Execute immediately (DO NOT ASK):**
+
+Accept directory paths from user's command argument:
 - If relative paths: resolve from current working directory
 - If absolute paths: use as-is
-- Validate each directory exists
+- Validate each directory exists using Bash
+- If directory doesn't exist: Report error "Directory not found: {path}" and skip it
+- Proceed immediately to Step 2 with valid directories
 
 ### Step 2: Discover Specs
 
-For each directory:
+**Execute immediately (DO NOT ASK):**
+
+For each valid directory, find all spec markdown files:
 ```bash
-# Find all spec markdown files
 find {directory} -name "*.md" -not -name "README.md" -not -name "FINAL_SPEC.md"
 ```
 
-List all specs found:
+Announce what you found:
 ```
 Found 5 specs:
 - ct6/docs/temp/specs/user-retention-2025-11-18.md
@@ -47,6 +54,10 @@ Found 5 specs:
 - ct7/docs/temp/specs/user-retention-2025-11-18.md
 - ct8/docs/temp/specs/message-templates-2025-11-15.md
 ```
+
+If no specs found: Report "No specs found in provided directories" and exit.
+
+Proceed immediately to Step 3.
 
 ### Step 3: Review Each Spec
 
@@ -74,7 +85,7 @@ For each spec, extract and analyze:
 **3. Score the spec:**
 
 ```
-Score = (Feasibility × 4) + (Simplicity × 3) + (Safety × 3)
+Score = (Feasibility × 4) + (Simplicity × 3) + (Safety × 3) + (Code Quality × 3)
 
 Feasibility (from review):
 - High = 4 points
@@ -95,8 +106,57 @@ Safety (inverse of risk):
 - High risk = 2 points
 - No review = 2 points (assume medium)
 
-Max score: 11/10 (4+4+3 when adjusted for priority)
+Code Quality (implementation considerations):
+- Excellent = 4 points (all criteria met)
+- Good = 3 points (most criteria met)
+- Fair = 2 points (some criteria met)
+- Poor = 1 point (few criteria met)
+- No review = 2 points (assume fair)
+
+Max score: 15/13 (4+4+4+4-1 when adjusted for priority)
 ```
+
+**Code Quality Criteria (in priority order):**
+
+Evaluate the spec's proposed implementation against:
+
+1. **LOC (Lines of Code):**
+   - ✅ Concise & elegant approach vs overly verbose
+   - ✅ Clean & readable without unnecessary code
+   - ✅ Prefers "cutting corners" to simplify code and align user experiences
+   - ✅ Interprets spec in ways that simplify implementation
+
+2. **DRY (Don't Repeat Yourself):**
+   - ✅ Reuses existing functions from codebase
+   - ✅ Avoids duplicating logic that already exists
+   - ✅ References specific existing code to reuse
+
+3. **Non-defensive coding:**
+   - ✅ Avoids try/except patterns unless truly necessary
+   - ✅ Doesn't catch edge cases that never actually happen in logic
+   - ✅ Lets errors surface instead of hiding them
+
+4. **Regression analysis:**
+   - ✅ Clear understanding of business logic changes
+   - ✅ Documents how existing behavior will change
+   - ✅ Identifies potential breaking changes
+
+5. **Spec alignment:**
+   - ✅ Implementation matches requirements exactly
+   - ✅ No unnecessary features added beyond spec
+   - ✅ All requirements addressed
+
+6. **Test quality:**
+   - ✅ Tests aligned with `docs/TEST_PATTERNS.md`
+   - ✅ Tests follow patterns in `./tests/README.md`
+   - ✅ Tests focus on business logic, not library behavior
+   - ✅ Uses factory-style fixtures appropriately
+
+**Scoring code quality:**
+- **Excellent (4):** Meets all 6 criteria, exemplary code practices
+- **Good (3):** Meets 4-5 criteria, minor improvements possible
+- **Fair (2):** Meets 2-3 criteria, significant improvements needed
+- **Poor (1):** Meets 0-1 criteria, major refactoring required
 
 **Priority bonus:**
 - P0: +1 point to final score
@@ -133,7 +193,50 @@ If multiple specs have the same score:
 
 Take the best spec and enhance it by addressing weaknesses:
 
-#### 5.1: Address Feasibility Concerns
+#### 5.1: Improve Code Quality
+
+**If code quality is Fair or Poor:**
+- Simplify the implementation approach
+- Remove unnecessary abstraction layers
+- Identify existing code to reuse (DRY)
+- Eliminate defensive try/except patterns
+- Clarify regression impacts
+- Align tests with test patterns
+
+**Example improvements:**
+```markdown
+## CODE QUALITY IMPROVEMENTS
+
+**LOC Reduction:**
+- Original: 5 new utility functions
+- Simplified: Reuse existing `format_phone_number()` from `src/utils/phone.py`
+- Original: Custom date parser (200 LOC)
+- Simplified: Use built-in `datetime.fromisoformat()` (1 LOC)
+
+**DRY Improvements:**
+- Original: New timezone validation logic
+- Improved: Reuse `validate_timezone()` from `src/utils/time.py:45`
+- Original: Custom error handling for API calls
+- Improved: Use existing `@retry_on_failure` decorator from `src/decorators.py`
+
+**Non-defensive Coding:**
+- Removed: `try/except` around database queries (let errors surface to monitoring)
+- Removed: Edge case handling for "user has 1000+ facts" (never happens in prod)
+- Kept: `try/except` for external Twilio API only (genuinely unreliable)
+
+**Regression Analysis Added:**
+- ✅ Change: Phone formatting now strips +1 prefix for US numbers
+- ✅ Impact: Existing users with +1 stored will see different display format
+- ✅ Breaking: API response format changes from "phoneNumber" to "phone"
+
+**Test Improvements:**
+- Removed: Tests for `phonenumbers` library behavior (not our code)
+- Added: Tests for our `format_for_display()` contract
+- Updated: Use `person_factory()` instead of hardcoded test data
+- Aligned: All tests follow patterns in `tests/README.md`
+```
+
+#### 5.2: Address Feasibility Concerns
 
 **If feasibility is Medium or Low:**
 - Review feasibility assessment from engineering review
@@ -159,7 +262,7 @@ Take the best spec and enhance it by addressing weaknesses:
 - Add fallback to degraded mode if rate limited
 ```
 
-#### 5.2: Reduce Complexity
+#### 5.3: Reduce Complexity
 
 **If complexity is High or Very High:**
 - Simplify the architecture
@@ -185,7 +288,7 @@ Take the best spec and enhance it by addressing weaknesses:
 - Reduces integration complexity, easier debugging
 ```
 
-#### 5.3: Mitigate Risks
+#### 5.4: Mitigate Risks
 
 **If risk level is High or Medium:**
 - Add mitigation strategies for top risks
@@ -213,7 +316,7 @@ Take the best spec and enhance it by addressing weaknesses:
 - Implement graceful degradation if lock acquisition fails
 ```
 
-#### 5.4: Validate Effort Estimate
+#### 5.5: Validate Effort Estimate
 
 **Review the effort estimate:**
 - Compare with complexity score
@@ -229,7 +332,7 @@ Take the best spec and enhance it by addressing weaknesses:
 
 Update effort if needed based on improvements.
 
-#### 5.5: Synthesize from Other Specs
+#### 5.6: Synthesize from Other Specs
 
 **If multiple specs address the same feature:**
 - Compare approaches across specs
