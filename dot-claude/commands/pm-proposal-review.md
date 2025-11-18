@@ -21,9 +21,13 @@ description: Review feature proposal with data validation and infrastructure ana
 ### Step 1: Find Proposal
 
 Search `docs/temp/proposals/` for the proposal file:
-- If exact filename provided: `{topic}-YYYY-MM-DD.md`
-- If search term provided: Find matching proposal by content/title
-- If multiple matches: Ask user to clarify
+- **If no filename provided:** Auto-select the most recent proposal (by modification time)
+  ```bash
+  ls -t docs/temp/proposals/*.md | head -1
+  ```
+- **If exact filename provided:** Use `{topic}-YYYY-MM-DD.md`
+- **If search term provided:** Find matching proposal by content/title
+- **If multiple matches:** Ask user to clarify
 
 ### Step 2: Read Proposal
 
