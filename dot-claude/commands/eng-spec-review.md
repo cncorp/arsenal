@@ -22,14 +22,26 @@ description: Review engineering spec with feasibility, complexity, and risk anal
 
 ### Step 1: Find Specification
 
+**🚨 IMPORTANT: Work autonomously. Do NOT ask the user which option they prefer.**
+
 Search `docs/temp/specs/` for the spec file:
-- **If no filename provided:** Auto-select the most recent spec (by modification time)
+
+**If no arguments provided by user:**
+- Automatically find and select the most recent spec (DO NOT ASK):
   ```bash
   ls -t docs/temp/specs/*.md | head -1
   ```
-- **If exact filename provided:** Use `{topic}-YYYY-MM-DD.md`
-- **If search term provided:** Find matching spec by content/title
-- **If multiple matches:** Ask user to clarify
+- Announce what you found: "Found most recent spec: {filename}"
+- Proceed immediately to Step 2
+
+**If exact filename provided:**
+- Use `{topic}-YYYY-MM-DD.md`
+- Example: `user-retention-2025-11-18.md`
+
+**If search term provided:**
+- Find matching spec by content/title using grep
+- If multiple matches: Show list and ask user to clarify
+- If single match: Proceed with that spec
 
 ### Step 2: Read Specification
 
