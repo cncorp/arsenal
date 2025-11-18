@@ -33,6 +33,34 @@ dependencies:
 
 See `api/src/data/models/conversation.py:220-236` for the implementation.
 
+### 🚨 CRITICAL: Provider Requirements
+
+**Each conversation type MUST use the correct provider:**
+
+| Conversation Type | Required Provider | Why |
+|------------------|-------------------|-----|
+| GROUP | `'system'` | Group conversations are system-managed |
+| ONE_ON_ONE | `'sendblue'` | **CRITICAL**: `get_conversation()` skips all `provider='twilio_voice'` conversations |
+| VOICE | `'twilio_voice'` | Voice calls are handled by Twilio |
+
+**⚠️ COMMON BUG - Wrong ONE_ON_ONE Provider:**
+
+If ONE_ON_ONE uses `provider='twilio_voice'`, you will see:
+```
+ValueError: No conversation found with exactly these participants: self.id=X, other_ids=[Y]
+```
+
+**Root Cause**: The `get_conversation()` method in `api/src/data/helpers/models.py` (lines 185-186) explicitly skips conversations with `provider='twilio_voice'`:
+
+```python
+if conversation.provider == "twilio_voice":
+    continue  # Skip voice conversations when looking up ONE_ON_ONE
+```
+
+**Fix**: ONE_ON_ONE conversations MUST use `provider='sendblue'`. This is already handled correctly in the setup script below (line 335).
+
+**📚 For complete documentation, see:** `api/docs/VOICE_CONVERSATION_SETUP.md`
+
 ## Prerequisites
 
 1. ✅ Docker running (`docker compose ps`)
@@ -209,10 +237,11 @@ SRC_PATH = Path(__file__).resolve().parent / "src"
 sys.path.insert(0, str(SRC_PATH))
 
 from config.database import get_session
-from data.helpers.models import PersonContacts, Persons
+from data.helpers.models import PersonContacts, Persons, MessagesPreferences
 from data.helpers.user_management import create_person_with_contact
 from data.models.conversation import Conversation, ConversationParticipant
 from data.models.enums import ConversationType, ConversationState, ParticipantRole
+from constants import InterventionLevel
 from logger import get_logger
 
 logger = get_logger()
@@ -332,7 +361,7 @@ def setup_voice_e2e_users():
         if not one_on_one_conv:
             logger.info("Creating ONE_ON_ONE conversation for Jake...")
             one_on_one_conv = Conversation(
-                provider='sendblue',
+                provider='sendblue',  # ONE_ON_ONE MUST use 'sendblue' (get_conversation skips twilio_voice)
                 provider_key=f'jake_coach_121_e2e',
                 type=ConversationType.ONE_ON_ONE,
                 state=ConversationState.ACTIVE
@@ -361,11 +390,27 @@ def setup_voice_e2e_users():
         else:
             logger.info(f"ONE_ON_ONE conversation exists: {one_on_one_conv.id}")
 
+        # Ensure Jake has message preferences
+        jake_prefs = session.query(MessagesPreferences).filter_by(person_id=jake_person.id).first()
+        if not jake_prefs:
+            logger.info(f"Creating message preferences for Jake (Person {jake_person.id})...")
+            jake_prefs = MessagesPreferences(
+                person_id=jake_person.id,
+                withhold_interventions_enabled=False,
+                intervention_level=InterventionLevel.INTERVENTIONS_ONLY.value
+            )
+            session.add(jake_prefs)
+            session.commit()
+            logger.info(f"Created message preferences for Jake")
+        else:
+            logger.info(f"Jake already has message preferences")
+
         print("\n✅ Voice E2E users ready:")
         print(f"  Jake: +16504850071 (Person {jake_person.id})")
         print(f"  Mary: +13607896822 (Person {mary_person.id})")
         print(f"  GROUP conversation: {group_conv.id}")
         print(f"  ONE_ON_ONE conversation: {one_on_one_conv.id}")
+        print(f"  Message preferences: {jake_prefs.id}")
         print("\nJake can now call +16503977712 for E2E testing.")
 
 if __name__ == "__main__":
