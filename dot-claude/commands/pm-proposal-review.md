@@ -82,12 +82,29 @@ Analyze the proposed infrastructure changes for brittleness:
 - ❌ Assumes user behavior (e.g., "users will always select an option")
 - ❌ No error handling for edge cases
 
+**AI/LLM-Specific Brittleness (RED FLAGS):**
+- ❌ **Regex/keyword detection for semantic intent** (use LLM classification instead)
+- ❌ **Hard-coded prompts in code** (use Langfuse for iteration)
+- ❌ **No confidence scoring** on LLM decisions (can't detect uncertainty)
+- ❌ **Single-shot prompts** for complex decisions (use chain-of-thought or structured outputs)
+- ❌ **No few-shot examples** in prompts (LLMs need examples to understand edge cases)
+- ❌ **Brittle output parsing** (use OpenAI structured outputs / JSON mode)
+
 **Robustness indicators:**
 - ✅ Pattern detection with confidence scoring
 - ✅ Graceful degradation (falls back to existing behavior)
 - ✅ Multiple prompts for different scenarios
 - ✅ User can exit/override the flow
 - ✅ Error handling and logging
+
+**AI/LLM-Specific Robustness (BEST PRACTICES):**
+- ✅ **LLM-based intent classification** (few-shot examples in prompt)
+- ✅ **Structured outputs** (OpenAI JSON schema for reliable parsing)
+- ✅ **Chain-of-thought reasoning** (LLM explains its decision)
+- ✅ **Confidence scoring** (LLM rates certainty 0-1)
+- ✅ **Prompt versioning** (Langfuse tracks iterations, A/B tests)
+- ✅ **Fallback prompts** (if primary fails, use simpler backup)
+- ✅ **Context window management** (handles long conversations)
 
 **Review process:**
 1. List each infrastructure component from proposal

@@ -28,6 +28,34 @@ Save comprehensive analysis to: `docs/temp/analysis/analysis_{topic}_{YYYY-MM-DD
 - Include all data, patterns, insights
 - This is for reference, not the proposal
 
+### Step 2.5: Envision the Future, Build One Step
+
+**🎯 Philosophy: Incremental Progress Toward an Ideal Future**
+
+Before writing the proposal, think in two parts:
+
+**Part A: The Ideal Future State** (2-3 years from now)
+- Given this user feedback and modern LLM best practices (structured outputs, confidence scoring, chain-of-thought, A/B testing), what would the ideal solution look like?
+- What would a fully-realized, production-grade system do?
+- Don't constrain yourself here - imagine the best possible experience
+
+**Part B: One Concrete Step Toward That Future** (this proposal)
+- What is the **minimal change** that moves us in that direction?
+- What is the **smallest proof-of-concept** that validates the approach?
+- What can we ship **this sprint** that demonstrates value?
+
+**Key principles:**
+- ✅ **Proposal = ONE step, not the full vision**
+- ✅ **Future iterations** will add A/B testing, confidence scoring, etc.
+- ✅ **Start simple:** Basic LLM classification > Perfect structured outputs
+- ✅ **Prove the concept** before building infrastructure
+- ❌ **Don't try to solve everything** in one diff
+- ❌ **Don't build A/B testing** before validating the core idea
+
+**Example:**
+- **Future vision:** LLM-based intent classification with confidence scoring, structured outputs, A/B testing framework, fallback prompts, and comprehensive observability
+- **This proposal:** Add few-shot examples to existing intervention prompt to detect help requests, return simple true/false, trigger options mode when true. No new infrastructure. Ships in 3 days. Validates if users actually want options.
+
 ### Step 3: Create Proposal (≤250 Words)
 Save concise proposal to: `docs/temp/proposals/{topic}-YYYY-MM-DD.md`
 

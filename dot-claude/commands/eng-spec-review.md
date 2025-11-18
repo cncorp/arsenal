@@ -72,6 +72,42 @@ cat api/pyproject.toml | grep -i "proposed_library"
 - ⚠️ **Medium:** Requires new library but well-documented, team has similar experience
 - ❌ **Low:** Requires unfamiliar tech, experimental libraries, significant learning curve
 
+#### AI/LLM Architecture Feasibility
+
+**For specs involving LLM-based features, assess:**
+
+**Prompt Engineering Approach:**
+- ✅ **High:** Uses structured outputs, few-shot examples, chain-of-thought
+- ⚠️ **Medium:** Uses basic prompts with Langfuse versioning
+- ❌ **Low:** Hard-codes prompts in code, no versioning
+
+**Intent Detection Method:**
+- ✅ **High:** LLM-based classification with confidence scoring
+- ⚠️ **Medium:** Embeddings similarity or simple LLM classification
+- ❌ **Low:** Regex patterns, keyword matching (brittle!)
+
+**Error Handling:**
+- ✅ **High:** Confidence thresholds, fallback prompts, graceful degradation
+- ⚠️ **Medium:** Basic error catching, logs failures
+- ❌ **Low:** No error handling, assumes LLM always succeeds
+
+**Context Management:**
+- ✅ **High:** Sliding window, semantic compression, retrieval-augmented
+- ⚠️ **Medium:** Simple truncation, recent N messages
+- ❌ **Low:** No context limits (will hit token limits)
+
+**Observability:**
+- ✅ **High:** Langfuse tracing, confidence metrics, failure analysis
+- ⚠️ **Medium:** Basic logging of LLM calls
+- ❌ **Low:** No visibility into LLM decision-making
+
+**Red flags for AI/LLM specs:**
+- ❌ Spec says "use regex to detect X" for semantic tasks
+- ❌ No mention of confidence scoring or uncertainty handling
+- ❌ No prompt versioning strategy (hard-coded in code)
+- ❌ No fallback behavior when LLM fails
+- ❌ No A/B testing infrastructure for prompt iterations
+
 #### Infrastructure Feasibility
 
 **Can our infrastructure support this?**
