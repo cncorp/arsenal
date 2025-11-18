@@ -35,15 +35,22 @@ Use this command to implement a feature spec:
 - Example: `/spec-to-pr user-feedback-2025-11-14.md`
 
 **If NO filename argument provided:**
-- Automatically find the most recent `*-YYYY-MM-DD.md` file:
+- Automatically find the most recent spec in this order:
   ```bash
   # Search in order of preference:
-  # 1. docs/temp/specs/ (from /eng-prioritize workflow)
-  # 2. Project root
-  ls -t docs/temp/specs/*-20*.md 2>/dev/null || ls -t *-20*.md 2>/dev/null | head -1
+  # 1. FINAL_SPEC.md (from /eng-prioritize workflow) - HIGHEST PRIORITY
+  # 2. Most recent dated spec in docs/temp/specs/
+  # 3. Most recent dated spec in project root
+  # 4. Most recent dated spec in docs/specifications/
+
+  if [ -f docs/temp/specs/FINAL_SPEC.md ]; then
+    echo "docs/temp/specs/FINAL_SPEC.md"
+  else
+    ls -t docs/temp/specs/*-20*.md 2>/dev/null | head -1 || \
+    ls -t *-20*.md 2>/dev/null | head -1 || \
+    ls -t docs/specifications/*-20*.md 2>/dev/null | head -1
+  fi
   ```
-- If FINAL_SPEC.md exists in docs/temp/specs/, use that (highest priority)
-- If no dated specs found: Search docs/specifications/ for dated files
 - Announce what you found: "Found spec: {filename}"
 - Proceed immediately to Step 1
 
@@ -51,7 +58,9 @@ Use this command to implement a feature spec:
 - Report error: "No spec files found. Run /question-to-spec or /proposal-to-spec first."
 - Exit (DO NOT ask user to choose)
 
-**IMPORTANT:** Spec will be automatically copied to `docs/specifications/` and committed with the PR.
+**IMPORTANT:**
+- `FINAL_SPEC.md` from `/eng-prioritize` IS implementation-ready - proceed with implementation
+- Spec will be automatically copied to `docs/specifications/` and committed with the PR
 
 ### Step 1: Read and Understand the Spec
 
@@ -60,6 +69,7 @@ Use this command to implement a feature spec:
    - Solution: What's the approach?
    - Implementation: What files need changes?
    - Testing: What test cases are needed?
+   - Phases: If multi-phase spec, identify Phase 0 or Phase 1
 
 2. **Extract key information:**
    - Title and feature name
@@ -68,19 +78,37 @@ Use this command to implement a feature spec:
    - New files to create
    - Dependencies and blockers
    - Acceptance criteria
+   - **If multi-phase:** Identify the first implementable phase
 
 3. **Validate the spec:**
    - ✅ Has Problem section with evidence
    - ✅ Has Solution with user experience
    - ✅ Has Implementation with file paths
    - ✅ Has Testing with test cases
-   - ❌ If incomplete, ask user to improve spec first
+   - ✅ **Accept all effort sizes:** XS, S, M, L, XL (do NOT reject L/XL specs)
+   - ✅ **Accept multi-phase specs:** Implement first phase if spec has phases
+   - ❌ If incomplete (missing required sections), ask user to improve spec first
+
+**🚨 DO NOT REJECT SPECS based on:**
+- Effort size (L, XL are acceptable - implement first phase)
+- Number of phases (multi-phase is acceptable - implement Phase 0 or Phase 1)
+- Source workflow (specs from /eng-prioritize are implementation-ready)
 
 ### Step 2: Plan the Implementation
 
-**Before writing code, create an implementation plan:**
+**🚨 CRITICAL: DO NOT ask about scope, size, or phases. Just create the plan and proceed to implementation.**
 
-1. **Break down the work:**
+**Automatically create an implementation plan (NO USER QUESTIONS):**
+
+**If spec has multiple phases:**
+- Identify Phase 0 or Phase 1 (first implementable phase)
+- Plan ONLY that phase for this PR
+- Note remaining phases in PR description for future work
+
+**If spec is single-phase:**
+- Plan the entire spec
+
+1. **Break down the work (for the phase being implemented):**
    - Backend changes (models, API, logic)
    - Frontend changes (UI, components, styling)
    - Database migrations (if needed)
@@ -100,9 +128,10 @@ Use this command to implement a feature spec:
    5. Tests
    6. Documentation
 
-**Announce the plan to user:**
+**Announce the plan to user (then proceed immediately to Step 3):**
 ```
 📋 Implementation plan for "{Feature Title}":
+{If multi-phase: "Implementing Phase 0/1: {phase description}"}
 
 Backend:
 - [ ] Add streak_count, last_active_date to User model
@@ -118,10 +147,18 @@ Testing:
 - [ ] Integration test for streak notification
 - [ ] E2E test for 7-day streak flow
 
+{If multi-phase:
+Estimated time for Phase 0/1: {phase effort}
+Remaining phases: Phase 2, Phase 3, Phase 4 (will be implemented in future PRs)
+}
+{If single-phase:
 Estimated time: {effort from spec}
+}
 ```
 
 ### Step 3: Implement the Code
+
+**🚨 CRITICAL: Proceed directly to implementation. DO NOT ask if user wants to implement, DO NOT ask about phases, DO NOT ask about scope. The spec says what to build - build it.**
 
 **Follow the project's coding standards from CLAUDE.md/AGENTS.md:**
 
