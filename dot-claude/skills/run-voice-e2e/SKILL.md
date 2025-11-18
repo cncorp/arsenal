@@ -44,6 +44,15 @@ See `api/src/data/models/conversation.py:220-236` for the implementation.
 
 **Understand the flow from script → logs to debug issues:**
 
+**⚠️ DETECT YOUR ENVIRONMENT FIRST**:
+
+Before running any commands, detect which ct directory you're in:
+
+```bash
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+echo "Current environment: ct${CT_DIR}"
+```
+
 **⚠️ PORT PATTERN - CRITICAL**: We use parallel dev environments (ct1, ct2, ct3, ct4). **THE LAST DIGIT IN EVERY PORT NUMBER MUST MATCH THE LAST DIGIT IN THE DIRECTORY NAME**:
 
 | Directory | API Port | Postgres Port | Redis Port | Vite Port |
@@ -51,52 +60,64 @@ See `api/src/data/models/conversation.py:220-236` for the implementation.
 | ct1       | 8081     | 5431          | 6371       | 5171      |
 | ct2       | 8082     | 5432          | 6372       | 5172      |
 | ct3       | 8083     | 5433          | 6373       | 5173      |
-| **ct4**   | **8084** | **5434**      | **6374**   | **5174**  |
+| ct4       | 8084     | 5434          | 6374       | 5174      |
 
-**YOU ARE IN ct4 → ALL PORTS MUST END IN 4**
+**Port calculation: ct${CT_DIR} → All ports end in ${CT_DIR}**
 
 This pattern applies to:
-- Tailscale funnel: `tailscale funnel --https=443 808X` where X = directory number
-- API health check: `http://localhost:808X/health`
-- Frontend URL: `http://100.93.144.78:517X/`
-- Database connection: `localhost:543X`
-- Redis connection: `localhost:637X`
+- Tailscale funnel: `tailscale funnel --https=443 808${CT_DIR}`
+- API health check: `http://localhost:808${CT_DIR}/health`
+- Frontend URL: `http://100.93.144.78:517${CT_DIR}/`
+- Database connection: `localhost:543${CT_DIR}`
+- Redis connection: `localhost:637${CT_DIR}`
 
 **🚨 COMMON MISTAKE - VITE DEFAULT PORT**: Vite defaults to port 5173. You MUST configure the port via environment variable in `frontend/.env.local`:
 
 ```bash
-VITE_PORT=5174  # MUST match ct4 directory!
+# Detect your environment and set the correct port
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+echo "VITE_PORT=517${CT_DIR}" > frontend/.env.local
 ```
 
 The `vite.config.ts` reads this environment variable:
 ```typescript
-const port = env.VITE_PORT ? parseInt(env.VITE_PORT, 10) : 5174;
+const port = env.VITE_PORT ? parseInt(env.VITE_PORT, 10) : 5173;
 ```
 
-**If you see Vite running on 5173, it's WRONG for ct4.** Check your `.env.local` file and restart Vite.
+**Always verify the port matches your directory!**
 
 | Step | Component | What Happens | Required Configuration | Expected Feedback/Logs | How to Verify |
 |------|-----------|--------------|----------------------|----------------------|---------------|
 | 1 | **Script Execution** | `twilio_place_call.py` sends API request to Twilio | `.env` has TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN | Terminal: `Started call CA... from +18643997362 to +16503977712` | Script runs without error |
 | 2 | **Twilio Places Call** | Twilio initiates outbound call FROM +18643997362 TO +16503977712 | Phone number +16503977712 exists in Twilio account | Terminal: `status: in-progress` | Call connects (not busy/failed) |
 | 3 | **Twilio Checks Webhook** | +16503977712 has webhook configured, Twilio POSTs to that URL | Twilio console: Voice URL = `https://wakeup.tail3b4b7f.ts.net/webhook/voice/twilio` | Twilio makes HTTP POST request | Check Twilio debugger console |
-| 4 | **Tailscale Receives Request** | Public HTTPS request hits Tailscale funnel | `tailscale funnel status` shows `https://wakeup.tail3b4b7f.ts.net` → `http://127.0.0.1:808X` **(X = ct directory number, e.g. 8084 for ct4)** | Funnel proxies request to localhost | `tailscale funnel status` |
-| 5 | **Docker API Receives** | FastAPI container receives POST on port 808X | `docker compose ps` shows ct4-api-1 running, listening on **port 8084** (ct4) | **API LOG**: `Received Twilio voice webhook call_sid=CA...` | `docker logs ct4-api-1 \| grep "Received Twilio"` |
-| 6 | **Webhook Processes** | API looks up conversation, returns TwiML | Database has registered voice users with GROUP+ONE_ON_ONE+VOICE convos | **API LOG**: `Resolved existing voice caller`, `Using caller's voice contact` | `docker logs ct4-api-1 \| grep "voice caller"` |
+| 4 | **Tailscale Receives Request** | Public HTTPS request hits Tailscale funnel | `tailscale funnel status` shows `https://wakeup.tail3b4b7f.ts.net` → `http://127.0.0.1:808${CT_DIR}` | Funnel proxies request to localhost | `tailscale funnel status` |
+| 5 | **Docker API Receives** | FastAPI container receives POST on port 808${CT_DIR} | `docker compose ps` shows ct${CT_DIR}-api-1 running, listening on port 808${CT_DIR} | **API LOG**: `Received Twilio voice webhook call_sid=CA...` | `docker logs ct${CT_DIR}-api-1 \| grep "Received Twilio"` |
+| 6 | **Webhook Processes** | API looks up conversation, returns TwiML | Database has registered voice users with GROUP+ONE_ON_ONE+VOICE convos | **API LOG**: `Resolved existing voice caller`, `Using caller's voice contact` | `docker logs ct${CT_DIR}-api-1 \| grep "voice caller"` |
 | 7 | **TwiML Response** | FastAPI returns XML: `<Response><Say>...</Say><Connect><Stream url="wss://..."/></Connect></Response>` | TwiML includes WebSocket URL: `wss://wakeup.tail3b4b7f.ts.net/webhook/voice/twilio/stream` | Twilio receives 200 OK with TwiML body | API logs show HTTP 200 response |
-| 8 | **Twilio → WebSocket** | Twilio opens WebSocket connection to stream endpoint, starts streaming audio | WebSocket endpoint `/webhook/voice/twilio/stream` implemented, Tailscale funnel supports WebSocket upgrade | **API LOG**: `connection open`, `Twilio media stream started` | `docker logs ct4-api-1 \| grep "media stream started"` |
+| 8 | **Twilio → WebSocket** | Twilio opens WebSocket connection to stream endpoint, starts streaming audio | WebSocket endpoint `/webhook/voice/twilio/stream` implemented, Tailscale funnel supports WebSocket upgrade | **API LOG**: `connection open`, `Twilio media stream started` | `docker logs ct${CT_DIR}-api-1 \| grep "media stream started"` |
 | 9 | **Stream Processing** | StreamingTranscriptProcessor + RealtimeProcessor initialized, VAD starts | Silero VAD model cached, OpenAI API key configured, Langfuse configured | **API LOG**: `VAD model loaded`, `OpenAI Realtime WebSocket connected`, `Langfuse configuration loaded` | VAD and Realtime processor logs appear |
 | 10 | **Audio Processing** | Twilio streams mulaw audio → decoded → VAD segments → queued for transcription | Worker container running, Redis available | **API LOG**: `Running VAD over audio chunk`, `Queueing streaming segment`, `Enqueued streaming segment` | Audio segments detected and queued |
-| 11 | **Worker/Transcription** | RQ worker picks up transcription job, calls OpenAI Whisper API | ct4-worker-1 running, OPENAI_API_KEY valid | **WORKER LOG**: transcription results | `docker logs ct4-worker-1` shows job processing |
+| 11 | **Worker/Transcription** | RQ worker picks up transcription job, calls OpenAI Whisper API | ct${CT_DIR}-worker-1 running, OPENAI_API_KEY valid | **WORKER LOG**: transcription results | `docker logs ct${CT_DIR}-worker-1` shows job processing |
 | 12 | **End Call** | Call duration expires or hangup, WebSocket closes, cleanup | - | **API LOG**: `Persisted Twilio media stream to WAV`, `Finalizing Realtime processor`, `OpenAI WebSocket closed` | Cleanup logs, WAV file saved to `/app/tmp/twilio_streams/` |
 
 **Use this table to diagnose issues: If you don't see logs at step N, check the configuration for step N.**
 
 ## Step 1: Verify Infrastructure
 
+### Detect Your Environment
+First, determine which ct directory you're in:
+```bash
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+echo "Current environment: ct${CT_DIR}"
+echo "API Port: 808${CT_DIR}"
+echo "Worker container: ct${CT_DIR}-worker-1"
+```
+
 ### Check Docker Services
 ```bash
-cd /home/odio/Hacking/codel/ct4
+# Navigate to your ct directory
+cd ~/Hacking/codel/ct${CT_DIR}
 docker compose ps
 ```
 
@@ -111,15 +132,16 @@ Use the `tailscale-manager` skill to verify:
 sudo tailscale funnel status
 ```
 
-Expected output:
+Expected output (port should match your ct directory):
 ```
 https://wakeup.tail3b4b7f.ts.net (Funnel on)
-|-- / proxy http://127.0.0.1:8084
+|-- / proxy http://127.0.0.1:808${CT_DIR}
 ```
 
-If funnel is not running, start it:
+If funnel is not running, start it with the correct port:
 ```bash
-sudo tailscale funnel --https=443 8084
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+sudo tailscale funnel --https=443 808${CT_DIR}
 ```
 
 ### Verify API Health
@@ -135,7 +157,10 @@ Expected: `{"status":"healthy"}`
 
 ### Check Existing Users
 ```bash
-cd /home/odio/Hacking/codel/ct4/api
+# Detect your environment
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+cd ~/Hacking/codel/ct${CT_DIR}/api
+
 set -a && source .env && set +a && PYTHONPATH=src uv run python -c "
 from config.database import get_session
 from data.helpers.models import PersonContacts
@@ -169,7 +194,10 @@ with get_session() as session:
 Create a setup script:
 
 ```bash
-cd /home/odio/Hacking/codel/ct4/api
+# Detect your environment
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+cd ~/Hacking/codel/ct${CT_DIR}/api
+
 cat > setup_voice_e2e_users.py << 'EOF'
 #!/usr/bin/env python3
 """Setup complete voice E2E testing users with all required conversations."""
@@ -349,7 +377,9 @@ chmod +x setup_voice_e2e_users.py
 
 Run the setup:
 ```bash
-cd /home/odio/Hacking/codel/ct4/api
+# Detect environment and run setup
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+cd ~/Hacking/codel/ct${CT_DIR}/api
 set -a && source .env && set +a && uv run python setup_voice_e2e_users.py
 ```
 
@@ -358,7 +388,10 @@ set -a && source .env && set +a && uv run python setup_voice_e2e_users.py
 Check that all conversations exist:
 
 ```bash
-cd /home/odio/Hacking/codel/ct4/api
+# Detect environment
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+cd ~/Hacking/codel/ct${CT_DIR}/api
+
 set -a && source .env && set +a && PYTHONPATH=src uv run python -c "
 from config.database import get_session
 from data.models.conversation import Conversation, ConversationParticipant
@@ -416,8 +449,11 @@ The twilio-test-caller skill will:
 
 ### Watch logs in real-time:
 ```bash
-cd /home/odio/Hacking/codel/ct4
-docker logs ct4-api-1 -f --tail 50
+# Detect environment
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+cd ~/Hacking/codel/ct${CT_DIR}
+
+docker logs ct${CT_DIR}-api-1 -f --tail 50
 ```
 
 ### Look for these events:
@@ -431,7 +467,8 @@ docker logs ct4-api-1 -f --tail 50
 
 ### Check for errors:
 ```bash
-docker logs ct4-api-1 --since 2m 2>&1 | grep -i error
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+docker logs ct${CT_DIR}-api-1 --since 2m 2>&1 | grep -i error
 ```
 
 Common errors and fixes:
@@ -445,7 +482,10 @@ Common errors and fixes:
 Check if messages were created:
 
 ```bash
-cd /home/odio/Hacking/codel/ct4/api
+# Detect environment
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+cd ~/Hacking/codel/ct${CT_DIR}/api
+
 set -a && source .env && set +a && PYTHONPATH=src uv run python -c "
 from config.database import get_session
 from data.models.message import Message
@@ -483,29 +523,32 @@ After transcriptions are created, verify that interventions were generated by th
 
 **BEFORE starting Vite, verify the port is configured correctly!**
 
-Check `frontend/.env.local` has:
 ```bash
-VITE_PORT=5174  # Must be 5174 for ct4!
+# Detect environment and configure Vite port
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+echo "VITE_PORT=517${CT_DIR}" > ~/Hacking/codel/ct${CT_DIR}/frontend/.env.local
 ```
 
 Then start:
 ```bash
-cd /home/odio/Hacking/codel/ct4/frontend
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+cd ~/Hacking/codel/ct${CT_DIR}/frontend
 npm run dev
 ```
 
-Expected output **MUST show port 5174** (NOT 5173):
+Expected output **MUST show port 517${CT_DIR}**:
 ```
-  ➜  Local:   http://localhost:5174/
-  ➜  Network: http://100.93.144.78:5174/
+  ➜  Local:   http://localhost:517${CT_DIR}/
+  ➜  Network: http://100.93.144.78:517${CT_DIR}/
 ```
 
-**If you see port 5173, STOP and add `VITE_PORT=5174` to `.env.local` first!**
+**If you see the wrong port, re-run the port configuration command above!**
 
 ### View Interventions:
 Visit the frontend at:
 ```
-http://100.93.144.78:5174/
+# Replace ${CT_DIR} with your environment number (1, 2, 3, or 4)
+http://100.93.144.78:517${CT_DIR}/
 ```
 
 This will show all interventions created during the call. If no interventions appear, check:
@@ -513,19 +556,23 @@ This will show all interventions created during the call. If no interventions ap
 - OpenAI API key is valid
 - Messages exist in database (Step 5)
 
-**⚠️ PORT PATTERN REMINDER:** The last digit in the port (517**4**) MUST match the last digit in the directory name (ct**4**). This applies to ALL services.
+**⚠️ PORT PATTERN REMINDER:** The last digit in the port MUST match the last digit in the directory name. This applies to ALL services.
 
 ## Step 7: Collect Metrics
 
 ### Copy metrics from container:
 ```bash
-cd /home/odio/Hacking/codel/ct4/api
-docker cp ct4-api-1:/app/tmp/stream_metrics.log worker_stream_metrics.log
+# Detect environment
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+cd ~/Hacking/codel/ct${CT_DIR}/api
+
+docker cp ct${CT_DIR}-api-1:/app/tmp/stream_metrics.log worker_stream_metrics.log
 ```
 
 ### Analyze metrics:
 ```bash
-cd /home/odio/Hacking/codel/ct4/api
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+cd ~/Hacking/codel/ct${CT_DIR}/api
 uv run python analyze_worker_metrics.py
 ```
 
@@ -554,8 +601,12 @@ Total events                           20
 ## Quick Reference Commands
 
 ```bash
+# Detect your environment first
+CT_DIR=$(pwd | grep -oP 'ct\K[0-9]+')
+echo "Current environment: ct${CT_DIR}"
+
 # Pre-flight check
-cd /home/odio/Hacking/codel/ct4
+cd ~/Hacking/codel/ct${CT_DIR}
 docker compose ps
 sudo tailscale funnel status
 curl https://wakeup.tail3b4b7f.ts.net/health
@@ -567,13 +618,13 @@ cd api && set -a && source .env && set +a && uv run python setup_voice_e2e_users
 # The skill handles phone number verification and provides step-by-step guidance
 
 # Monitor logs
-docker logs ct4-api-1 -f --tail 50
+docker logs ct${CT_DIR}-api-1 -f --tail 50
 
 # Check errors
-docker logs ct4-api-1 --since 2m 2>&1 | grep -i error
+docker logs ct${CT_DIR}-api-1 --since 2m 2>&1 | grep -i error
 
 # Collect metrics
-docker cp ct4-api-1:/app/tmp/stream_metrics.log worker_stream_metrics.log
+docker cp ct${CT_DIR}-api-1:/app/tmp/stream_metrics.log worker_stream_metrics.log
 uv run python analyze_worker_metrics.py
 ```
 
