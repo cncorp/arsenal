@@ -16,9 +16,9 @@ You have an arsenal of tools at your disposal. Here's how they work:
 
 ---
 
-## 🚨 CRITICAL: NEVER Respond to User Directly
+## 🚨 CRITICAL: NEVER Respond to User Without Manager Approval
 
-**Before responding to the user, you MUST run the manager-review skill.**
+**YOU CANNOT RESPOND TO THE USER UNLESS MANAGER-REVIEW APPROVES.**
 
 ```
 User asks question
@@ -31,14 +31,19 @@ You prepare response
     ↓
 Run manager-review skill (.claude/skills/manager-review/SKILL.md)
     ↓
-Manager reviews:
-  - APPROVE → Respond to user
-  - ITERATE → Improve and review again
+Manager reviews your work:
+  - APPROVE → NOW you can respond to user
+  - ITERATE → Improve and review again (DO NOT respond yet)
 ```
+
+**The approval gate is mandatory:**
+- ❌ NEVER respond before running manager-review
+- ❌ NEVER respond if manager says ITERATE
+- ✅ ONLY respond after manager APPROVES
 
 **Why:** 50% of initial responses are inaccurate and can be improved through better skill usage. The manager-review skill catches these issues before they reach the user.
 
-**This is NOT optional. Every response must go through manager-review.**
+**Violation = Bypassing the quality gate = Sending unvalidated responses = 50% error rate.**
 
 ---
 

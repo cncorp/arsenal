@@ -87,6 +87,71 @@ When reviewing your proposed response, ask yourself:
 
 ---
 
+## 🔍 Assertion Validation Protocol
+
+**🚨 MANDATORY STEP: Before deciding to approve or iterate, validate all assertions.**
+
+**REMEMBER: 50% of your initial analysis is wrong. Every assertion must be validated.**
+
+### Step 1: List All Assertions
+
+**What factual claims are you making?** Write them down explicitly:
+- "X doesn't exist in the codebase"
+- "Tests are failing due to my changes"
+- "Validation would reject Y"
+- "Database has no records of Z"
+- "Feature W is not implemented"
+
+**Every assertion is 50% likely to be wrong until validated.**
+
+### Step 2: Check Chat History for Contradictions
+
+For **each assertion**, scan the conversation:
+- Has the user provided contradicting evidence?
+- Did the user say "X worked in production" while you're claiming "X is impossible"?
+- Have you seen data that suggests otherwise?
+
+**Critical rule:** User's firsthand experience > Your analysis
+
+**If contradiction found → That assertion is probably wrong → ITERATE immediately**
+
+### Step 3: Identify Validation Skills
+
+For each assertion, ask: **"What skill could validate this?"**
+
+| Assertion Type | Contradicting Evidence | Validation Skill | Example |
+|---------------|----------------------|-----------------|---------|
+| "X doesn't exist in codebase" | User says it worked before | `grep -r "X" origin/main` or **git-reader agent** | "infer_local doesn't exist" → grep main branch |
+| "Tests failing due to my changes" | Tests passed before | **test-runner skill** (Stash/Pop Protocol) | "Tests are broken" → stash, test, pop to verify |
+| "Validation would reject Y" | User says Y worked in production | Test it: `python -c "validate(Y)"` | "'infer_local' fails validation" → actually test it |
+| "Code doesn't support Z" | User has evidence Z works | **git-reader agent** + `git log -S "Z"` | "No timezone inference" → search git history |
+| "Database has no records of X" | User saw X happen | **sql-reader skill** with broader query | "No messages sent" → check wider time window |
+
+**Arsenal Skills for Validation:**
+- **test-runner** - Stash/Pop Protocol to verify tests pass on main
+- **git-reader** - Read-only git operations (status, diff, log, search)
+- **sql-reader** - Query production database with read-only credentials
+- **langfuse-prompt-and-trace-debugger** - View prompts and traces from Langfuse
+- **Grep/Bash/Read** - Search codebase, run commands, read files
+
+### Step 4: Run Validation Skills
+
+**Before responding with any assertion:**
+- Use identified skills to validate
+- If validation fails → assertion is wrong → ITERATE
+- If validation succeeds → assertion is likely correct → continue review
+
+**Critical checks:**
+- [ ] Did I grep **main branch** (not just local) for "X doesn't exist" claims?
+- [ ] Did I use **test-runner's Stash/Pop Protocol** for "tests failing" claims?
+- [ ] Did I **actually test** validation logic instead of assuming?
+- [ ] Did I query **production database** for data claims?
+- [ ] Did I check **git history** for "not implemented" claims?
+
+**If you skip validation, you're accepting a 50% error rate.**
+
+---
+
 ## 🔄 Decision: Approve or Iterate
 
 ### APPROVE (Rare - ~20% of cases)
@@ -112,13 +177,16 @@ When reviewing your proposed response, ask yourself:
 - ❌ Missing evidence or verification
 - ❌ Skipped a mandatory workflow step
 - ❌ Could be more accurate with better skill usage
+- ❌ **Made assertions that contradict chat history**
+- ❌ **Made assertions without validation**
 
 **When iterating:**
 1. Identify what's missing or wrong
-2. Identify which skills would improve accuracy
-3. Run those skills
-4. Improve your response
-5. Run manager-review again
+2. **Run Assertion Validation Protocol** (Steps 1-4 above)
+3. Identify which skills would improve accuracy
+4. Run those skills
+5. Improve your response
+6. Run manager-review again (including assertion validation)
 
 ---
 
@@ -451,6 +519,14 @@ ALL YES → APPROVE → Respond to user
 
 ## Remember
 
-**50% of your initial responses are inaccurate.** This isn't a failure—it's expected. The manager-review skill exists to catch those issues and guide you to the 95%+ accuracy tier through proper skill usage and verification.
+**🎯 50% of your initial responses are inaccurate.** This isn't a failure—it's expected. The manager-review skill exists to catch those issues and guide you to the 95%+ accuracy tier through proper skill usage and verification.
 
-**Trust the process. Iterate when in doubt.**
+**The Assertion Validation Protocol is your weapon against the 50% error rate:**
+1. List assertions → Identify what could be wrong
+2. Check chat history → Find contradictions
+3. Identify skills → Know how to validate
+4. Run validations → Actually verify before responding
+
+**Without validation, you're flipping coins. With validation, you're providing reliable answers.**
+
+**Trust the process. Iterate when in doubt. Validate every assertion.**
