@@ -39,6 +39,7 @@ Before placing calls, verify:
 3. ✅ **Tailscale funnel is active** (managed by tailscale-manager skill)
 4. ✅ **Twilio number webhook points to Tailscale URL** (CRITICAL!)
 5. ✅ Environment variables set
+6. ✅ **Phone numbers are verified for your Twilio account** (see Phone Number Verification below)
 
 ## Setup Workflow
 
@@ -76,7 +77,49 @@ https://wakeup.tail<hash>.ts.net (Funnel on)
 
 See `.claude/skills/tailscale-manager/SKILL.md` for full funnel management workflow.
 
-### 4. Verify Twilio Webhook (CRITICAL!)
+### 4. Phone Number Verification (CRITICAL!)
+
+**⚠️ COMMON ERROR:** If you see this error when placing a call:
+```
+⚠  WARNING: +14155697366 is NOT verified for outbound calls
+   This number can only RECEIVE calls, not place them.
+   To verify for outbound calling, visit:
+   https://console.twilio.com/us1/develop/phone-numbers/manage/verified
+```
+
+**This means the `--from` number is not verified for YOUR Twilio account.**
+
+**Understanding Twilio Phone Number Types:**
+- **Owned Numbers**: Numbers you purchased through Twilio (always work for outbound calls)
+- **Verified Numbers**: Numbers you manually verified in Twilio console (can make outbound calls)
+- **Unverified Numbers**: Numbers you don't own and haven't verified (RECEIVE only, cannot send)
+
+**How to find YOUR verified numbers:**
+
+The arsenal install script automatically installed and configured the Twilio CLI. Use it to list your available numbers:
+
+```bash
+# List all phone numbers in your Twilio account
+twilio phone-numbers:list
+
+# Example output:
+# SID                                 Phone Number  Friendly Name
+# PNd611e21fe212b13af84fad19f3dc7a83  +18643997362  (864) 399-7362
+# PNea88101fbb3710daf9b18696439b585f  +16503977712  (650) 397-7712
+```
+
+**These are the numbers you can use with `--from` parameter.**
+
+**If you need to use a number not in your account:**
+1. Visit https://console.twilio.com/us1/develop/phone-numbers/manage/verified
+2. Click "Add a new number"
+3. Verify via SMS or voice call
+4. Wait for verification to complete
+5. Use that number with `--from`
+
+**Default numbers in documentation are examples only - substitute with YOUR verified numbers.**
+
+### 5. Verify Twilio Webhook (CRITICAL!)
 
 Check webhook configuration:
 ```bash
@@ -105,20 +148,25 @@ for number in numbers:
 
 ## Place a Call (It's Simple)
 
+**⚠️ FIRST: Find your verified numbers using `twilio phone-numbers:list` (see Phone Number Verification above)**
+
 **Basic command - just place the call:**
 ```bash
 cd api && set -a && source .env && set +a && \
 PYTHONPATH=src uv run python src/scripts/twilio_place_call.py \
+  --from +18643997362 \
   --to +16503977712 \
   --duration-minutes 1 \
   --audio-url https://github.com/srosro/personal-public/raw/refs/heads/main/lib3_mulaw.wav
 ```
 
+**⚠️ IMPORTANT:** Replace `--from` with YOUR verified number from `twilio phone-numbers:list`
+
 **That's it. If everything is configured correctly, you'll see logs in `docker logs ct4-api-1`.**
 
 **Parameters:**
-- `--to` - Phone number to call (default: +16503977712 - Jake's test number)
-- `--from` - Calling from (default: +18643997362 - Abby's number)
+- `--from` - **YOUR verified Twilio number** (REQUIRED - use `twilio phone-numbers:list` to find yours)
+- `--to` - Phone number to call (example: +16503977712 - replace with your test number)
 - `--duration-minutes` - How long to keep call active (default: 1 minute)
 - `--audio-url` - Test audio to play (MUST be .wav mulaw format for best results)
 
@@ -164,6 +212,20 @@ docker compose logs --since 5m | grep -iE -B 5 -A 5 "call|voice|twilio"
 ```
 
 ## Troubleshooting - Work Backwards
+
+**Error: "WARNING: +XXXXX is NOT verified for outbound calls" → Phone number verification issue:**
+
+1. **Find YOUR verified numbers:**
+   ```bash
+   twilio phone-numbers:list
+   ```
+   Use one of these numbers with `--from` parameter
+
+2. **If you need a different number:**
+   - Visit https://console.twilio.com/us1/develop/phone-numbers/manage/verified
+   - Verify the number through Twilio console
+   - Wait for verification to complete
+   - Then use it with `--from`
 
 **Call placed but NO LOGS in docker → Check in this order:**
 

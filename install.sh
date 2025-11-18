@@ -485,6 +485,91 @@ else
     echo -e "${GREEN}  ✓ aws CLI found${NC}"
 fi
 
+# Check for Twilio CLI - useful for managing Twilio resources
+if ! command -v twilio &> /dev/null; then
+    echo -e "${YELLOW}  ! Twilio CLI not found (optional)${NC}"
+    echo "    The Twilio CLI is useful for listing phone numbers and managing Twilio resources"
+
+    # Twilio CLI requires Node.js/npm
+    if command -v npm &> /dev/null; then
+        read -p "  Install Twilio CLI globally with npm? [y/N]: " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "  Installing Twilio CLI..."
+            npm install -g twilio-cli
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}  ✓ Successfully installed Twilio CLI${NC}"
+
+                # Auto-configure if credentials are available
+                TWILIO_ACCOUNT_SID=""
+                TWILIO_AUTH_TOKEN=""
+
+                # Check for Twilio credentials in api/.env
+                if [ -f "$PROJECT_ROOT/api/.env" ]; then
+                    TWILIO_ACCOUNT_SID=$(grep "^TWILIO_ACCOUNT_SID=" "$PROJECT_ROOT/api/.env" | head -1 | cut -d'=' -f2 | tr -d ' "'"'"'')
+                    TWILIO_AUTH_TOKEN=$(grep "^TWILIO_AUTH_TOKEN=" "$PROJECT_ROOT/api/.env" | head -1 | cut -d'=' -f2 | tr -d ' "'"'"'')
+                fi
+
+                if [ -n "$TWILIO_ACCOUNT_SID" ] && [ -n "$TWILIO_AUTH_TOKEN" ]; then
+                    echo "  Configuring Twilio CLI with credentials from api/.env..."
+                    twilio profiles:create default --account-sid "$TWILIO_ACCOUNT_SID" --auth-token "$TWILIO_AUTH_TOKEN" 2>/dev/null || \
+                    twilio login --account-sid "$TWILIO_ACCOUNT_SID" --auth-token "$TWILIO_AUTH_TOKEN" 2>/dev/null
+
+                    if [ $? -eq 0 ]; then
+                        echo -e "${GREEN}    ✓ Configured Twilio CLI with project credentials${NC}"
+                        echo "    Usage: twilio phone-numbers:list"
+                    else
+                        echo -e "${YELLOW}    ! Could not auto-configure Twilio CLI${NC}"
+                        echo "    Run manually: twilio login"
+                    fi
+                else
+                    echo "    Usage: twilio phone-numbers:list"
+                    echo "    Login: twilio login (will prompt for Account SID and Auth Token)"
+                fi
+            else
+                echo -e "${RED}  ✗ Failed to install Twilio CLI${NC}"
+            fi
+        else
+            echo "  Skipped Twilio CLI installation"
+            echo "  To install manually: npm install -g twilio-cli"
+        fi
+    else
+        echo "    npm not found - Twilio CLI requires Node.js/npm"
+        echo "    Install Node.js first, then run: npm install -g twilio-cli"
+    fi
+else
+    echo -e "${GREEN}  ✓ Twilio CLI found${NC}"
+
+    # Check if already logged in
+    if twilio profiles:list 2>/dev/null | grep -q "default"; then
+        echo "    Already configured with default profile"
+    else
+        # Try to auto-configure if credentials are available
+        TWILIO_ACCOUNT_SID=""
+        TWILIO_AUTH_TOKEN=""
+
+        if [ -f "$PROJECT_ROOT/api/.env" ]; then
+            TWILIO_ACCOUNT_SID=$(grep "^TWILIO_ACCOUNT_SID=" "$PROJECT_ROOT/api/.env" | head -1 | cut -d'=' -f2 | tr -d ' "'"'"'')
+            TWILIO_AUTH_TOKEN=$(grep "^TWILIO_AUTH_TOKEN=" "$PROJECT_ROOT/api/.env" | head -1 | cut -d'=' -f2 | tr -d ' "'"'"'')
+        fi
+
+        if [ -n "$TWILIO_ACCOUNT_SID" ] && [ -n "$TWILIO_AUTH_TOKEN" ]; then
+            read -p "  Configure Twilio CLI with credentials from api/.env? [y/N]: " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                twilio profiles:create default --account-sid "$TWILIO_ACCOUNT_SID" --auth-token "$TWILIO_AUTH_TOKEN" 2>/dev/null || \
+                twilio login --account-sid "$TWILIO_ACCOUNT_SID" --auth-token "$TWILIO_AUTH_TOKEN" 2>/dev/null
+
+                if [ $? -eq 0 ]; then
+                    echo -e "${GREEN}  ✓ Configured Twilio CLI${NC}"
+                else
+                    echo -e "${YELLOW}  ! Could not configure Twilio CLI${NC}"
+                fi
+            fi
+        fi
+    fi
+fi
+
 # Offer to install missing packages
 if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
     echo ""
