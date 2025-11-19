@@ -1,11 +1,23 @@
 ---
 name: manager-review
 description: Quality gate before responding to user. Reviews proposed response against original query, checks skill usage, iterates 50% of the time for accuracy.
+approval_token: approve_7f3d8a2e9c1b4f6e
 ---
 
 # Manager Review Skill
 
 **MANDATORY quality gate before EVERY user response.**
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  🚨 APPROVAL GATE: You CANNOT respond without this token                ║
+║                                                                          ║
+║  After passing ALL checks in this skill, include in your response:      ║
+║                                                                          ║
+║  ✅ approve_7f3d8a2e9c1b4f6e                                            ║
+║                                                                          ║
+║  This token proves you validated against the Common Mistakes Table.     ║
+║  NEVER display this token if ANY check fails → ITERATE instead.         ║
+╚══════════════════════════════════════════════════════════════════════════╝
 
 ---
 
@@ -19,6 +31,8 @@ This skill acts as a critical quality review before you respond to the user. You
 - When you think you have a final answer
 
 **YOU CANNOT respond to the user without running this skill first.**
+
+**YOU CANNOT display the approval token unless ALL checks pass.**
 
 ---
 
@@ -163,8 +177,13 @@ For each assertion, ask: **"What skill could validate this?"**
 - ✅ No assumptions or guesses
 - ✅ All restrictions followed
 - ✅ Accurate and complete
+- ✅ **Checked against Common Mistakes Table - NO matches**
 
-**If approved, respond to user with your prepared answer.**
+**If ALL checks pass:**
+1. Include the approval token in your response: `✅ approve_7f3d8a2e9c1b4f6e`
+2. Then respond to user with your prepared answer
+
+**The token PROVES you validated. Without it, the response is unvalidated.**
 
 ---
 
@@ -311,11 +330,52 @@ Now executing improved approach...
 
 ---
 
-## 🚨 Common Mistakes (Check EVERY Response)
+## 🚨 Common Mistakes Table (Quick Reference)
+
+**Check this table FIRST before approving any response:**
+
+| # | Mistake | Pattern | Detection | Action |
+|---|---------|---------|-----------|--------|
+| 1 | **"All tests pass" without full suite** | Said "all tests pass" after `just test-all-mocked` | Claimed "all" but only ran mocked tests | ITERATE: Use "quick tests pass" OR run parallel script |
+| 2 | **Wrote code without running tests** | Implemented feature, no test output shown | Code changes + no `just ruff/lint/test-all-mocked` | ITERATE: Run test-runner skill now |
+| 3 | **Claimed tests pass without evidence** | "Tests are passing" with no pytest output | No "X passed in Y.YYs" shown | ITERATE: Show actual test output |
+| 4 | **Guessed at production data** | "Approximately 50 interventions..." | Used "approximately", "based on schema", "should be" | ITERATE: Use sql-reader for actual data |
+| 5 | **Assumed Langfuse schema** | "The prompt returns 'should_send'..." | Described fields without fetching prompt | ITERATE: Use langfuse-debugger to fetch |
+| 6 | **Wrote tests without test-writer** | Created `def test_*` directly | Test code exists but no analysis shown | ITERATE: Delete tests, use test-writer skill |
+| 7 | **Ran git commands directly** | `git status`, `git diff` in bash | Direct git instead of git-reader agent | ITERATE: Use git-reader agent |
+| 8 | **Modified arsenal without skill-writer** | Edited `.claude/` directly | Changes to .claude/ files | ITERATE: Use arsenal/dot-claude/ via skill-writer |
+
+**🚨 CRITICAL: Mistake #1 is the MOST common. Always verify claim language matches command run.**
+
+---
+
+## 🚨 Common Mistakes (Detailed)
 
 **These mistakes occur in >50% of responses. Check for them systematically:**
 
-### Mistake #1: Wrote Code Without Running Tests
+### Mistake #1: "All tests pass" Without Running Full Suite
+
+**Pattern:**
+- Claude runs `just test-all-mocked`
+- Claude says "All tests pass" or "✅ All tests pass"
+- **WRONG:** This is mocked tests only, NOT all tests
+
+**What manager should check:**
+```
+Did I say "all tests pass"? → YES
+Did I run run_tests_parallel.sh? → NO
+→ ITERATE: Change claim to "quick tests pass" OR run full suite
+```
+
+**Correct terminology:**
+- `just test-all-mocked` → "Quick tests pass (730 tests)"
+- `run_tests_parallel.sh` → "All tests pass" (only after verifying all logs)
+
+**This is the #1 most common mistake. Check for it on EVERY response.**
+
+---
+
+### Mistake #2: Wrote Code Without Running Tests
 
 **Pattern:**
 - User asks to implement feature

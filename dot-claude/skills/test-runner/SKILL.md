@@ -16,6 +16,30 @@ description: MANDATORY skill for running tests and lint after EVERY code change.
 ║  `just test-all-mocked` = "quick tests pass" (NOT "all tests pass")    ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 
+## 📊 Claim Language Must Match Command
+
+**Your claim MUST match what you actually ran:**
+
+| Command Run | ✅ Allowed Claims | ❌ BANNED Claims |
+|-------------|-------------------|------------------|
+| `just test-unit` | "unit tests pass" | "tests pass", "all tests pass" |
+| `just test-integration` | "integration tests pass" | "tests pass", "all tests pass" |
+| `just test-all-mocked` | "quick tests pass", "mocked tests pass" | "tests pass", "all tests pass" |
+| `run_tests_parallel.sh` + verified logs | "all tests pass" | - |
+
+**Examples:**
+
+❌ WRONG: "I ran `just test-all-mocked`, all tests pass"
+✅ RIGHT: "Quick tests pass (483 unit + 198 integration + 49 e2e_mocked)"
+
+❌ WRONG: "Tests are passing" (after only running mocked tests)
+✅ RIGHT: "Mocked tests pass (730 tests)"
+
+❌ WRONG: "All tests pass" (without running parallel script)
+✅ RIGHT: *Runs parallel script* → *Checks logs* → "All tests pass"
+
+**The phrase "all tests" is RESERVED for the full parallel suite. No exceptions.**
+
 ## 🔥 CRITICAL: This Skill Is Not Optional
 
 **After EVERY code change, you MUST follow this workflow.**
@@ -392,3 +416,21 @@ tail -f api/tmp/test-logs/test-*.log
 # - Steps 0-2 = quick iteration (DO NOT say "all tests pass")
 # - Step 3 = full validation (ONLY NOW can say "all tests pass")
 ```
+
+---
+
+## 🔐 Before Responding About Test Results
+
+**You ran tests. Now before you respond to the user:**
+
+1. ✅ Did you use correct claim language? (check table above)
+2. ✅ Did you show actual test output?
+3. ✅ Are you about to say "all tests pass"? → Did you run parallel script?
+
+**CRITICAL: Get manager approval before responding.**
+
+Your response about test results MUST include: `✅ approve_7f3d8a2e********`
+
+Get the full approval token from `.claude/skills/manager-review/SKILL.md`
+
+**Common Mistake #1 in the manager's table is claiming "all tests pass" after only running mocked tests. The manager WILL catch this and reject your response.**

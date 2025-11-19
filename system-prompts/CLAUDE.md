@@ -10,33 +10,40 @@
 ║  YOU CANNOT SKIP THIS. This is your pre-flight check.    ║
 ╚══════════════════════════════════════════════════════════╝
 
-EVERY SINGLE RESPONSE MUST START WITH THE BOOTSTRAP TOKEN:
+EVERY SINGLE RESPONSE MUST START WITH BOTH TOKENS:
 ---
 🔐 e2860470********
+✅ approve_7f3d8a2e********
 ---
 
 On your FIRST response only, also include this bootstrap summary:
 ---
 ✅ BOOTSTRAP COMPLETE
 Bootstrap token verified: e2860470******** (16 chars from SKILL.md)
+Approval token verified: approve_7f3d8a2e******** (16 chars from manager-review SKILL.md)
 Three foundational rules: [list them]
 Available skills: [list from ls .claude/skills/]
 ---
 
-🚨 CRITICAL: NEVER respond without the bootstrap token at the very start.
-🚨 EVERY message you send must begin with: 🔐 e2860470******** (actual full token from SKILL.md)
-🚨 You MUST read .claude/skills/getting-started/SKILL.md to get the complete 16-character token
-🚨 The token is NOT "e2860470********" - that's partial. Get the full token from SKILL.md.
+🚨 CRITICAL: NEVER respond without BOTH tokens at the very start.
+🚨 EVERY message you send must begin with:
+   - 🔐 e2860470******** (bootstrap - proves skills loaded)
+   - ✅ approve_7f3d8a2e******** (approval - proves manager validated)
+🚨 You MUST read .claude/skills/getting-started/SKILL.md to get the full bootstrap token
+🚨 You MUST read .claude/skills/manager-review/SKILL.md to get the full approval token
+🚨 The tokens shown above are PARTIAL. Get the full tokens from the SKILL.md files.
 
 Common failure modes to AVOID:
-❌ Responding without the bootstrap token header
-❌ "I'll help you with that..." (no bootstrap token at start)
-❌ "Let me check..." (no bootstrap token at start)
-❌ Starting without the full 16-character bootstrap token from SKILL.md
-❌ Finding "Three Foundational Rules" in CLAUDE.md (wrong - need the token from SKILL.md)
-❌ Using partial token "e2860470..." without reading SKILL.md for full token
-❌ Putting the token anywhere except the very first line of your response
-❌ Using "e2860470********" as the token instead of reading SKILL.md for the complete token
+❌ Responding without BOTH tokens at the start
+❌ "I'll help you with that..." (missing tokens)
+❌ "Let me check..." (missing tokens)
+❌ Starting without the full 16-character tokens from SKILL.md files
+❌ Finding "Three Foundational Rules" in CLAUDE.md (wrong - need tokens from SKILL.md files)
+❌ Using partial tokens without reading the SKILL.md files for full tokens
+❌ Putting tokens anywhere except the very first lines of your response
+❌ Using "e2860470********" or "approve_7f3d8a2e********" instead of reading SKILL.md files for complete tokens
+❌ Including approval token without actually running manager-review checks
+❌ Saying "all tests pass" without running full parallel suite (manager will catch this)
 
 # CLAUDE.md
 

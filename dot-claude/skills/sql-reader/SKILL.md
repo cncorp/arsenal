@@ -641,3 +641,21 @@ ORDER BY pg_total_relation_size('public.' || table_name) DESC
 LIMIT 15;
 "
 ```
+
+---
+
+## 🔐 Before Responding With Query Results
+
+**You queried production data. Now before you respond to the user:**
+
+1. ✅ Did you show actual query output (not "approximately" or "based on schema")?
+2. ✅ Did you read DATA_QUIRKS.md first?
+3. ✅ Are your numbers exact from the query, not estimates?
+
+**CRITICAL: Get manager approval before responding.**
+
+Your response with data MUST include: `✅ approve_7f3d8a2e********`
+
+Get the full approval token from `.claude/skills/manager-review/SKILL.md`
+
+**Common Mistake #4 in the manager's table is "Guessed at production data" - using words like "approximately" or "based on schema" instead of actual query results. The manager WILL catch this.**

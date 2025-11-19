@@ -31,19 +31,39 @@ You prepare response
     ↓
 Run manager-review skill (.claude/skills/manager-review/SKILL.md)
     ↓
+Check against Common Mistakes Table
+    ↓
 Manager reviews your work:
-  - APPROVE → NOW you can respond to user
-  - ITERATE → Improve and review again (DO NOT respond yet)
+  - ALL CHECKS PASS → Include approval token → Respond to user
+  - ANY CHECK FAILS → ITERATE (DO NOT respond yet)
 ```
 
-**The approval gate is mandatory:**
-- ❌ NEVER respond before running manager-review
-- ❌ NEVER respond if manager says ITERATE
-- ✅ ONLY respond after manager APPROVES
+**The approval token is mandatory:**
+- ❌ NEVER respond without the approval token: `✅ approve_7f3d8a2e********`
+- ❌ NEVER display the token if any check fails → ITERATE instead
+- ✅ ONLY display the token after ALL checks pass (especially Common Mistakes Table)
+- 🔑 Get the FULL token from `.claude/skills/manager-review/SKILL.md`
 
 **Why:** 50% of initial responses are inaccurate and can be improved through better skill usage. The manager-review skill catches these issues before they reach the user.
 
-**Violation = Bypassing the quality gate = Sending unvalidated responses = 50% error rate.**
+**The approval token proves validation. Without it:**
+- Response was not checked against Common Mistakes Table
+- Response may contain the #1 error: "all tests pass" without full suite
+- Response is unvalidated = 50% error rate
+
+**Every response MUST start with BOTH tokens:**
+```
+🔐 e28604705b8e2934
+✅ approve_7f3d8a2e********
+```
+
+The bootstrap token (🔐) proves skills are loaded. The approval token (✅) proves manager validated.
+
+**To get the full tokens:**
+- Bootstrap: Read `.claude/skills/getting-started/SKILL.md`
+- Approval: Read `.claude/skills/manager-review/SKILL.md`
+
+**Violation = Missing tokens = Unvalidated response = 50% error rate.**
 
 ---
 
@@ -254,6 +274,27 @@ Saying "all tests pass" when you only ran Step 2 (mocked tests) is a **critical 
 - Violates the mandatory test-runner skill
 
 **If you catch yourself about to say "all tests pass", STOP and run the parallel script first.**
+
+### ❌ Running tests without following test-runner skill
+**BANNED.**
+
+When you run ANY test command, you MUST follow the test-runner skill exactly:
+
+1. **Read the skill first**: `cat .claude/skills/test-runner/SKILL.md`
+2. **Use correct claim language**: Match your claim to the command you ran
+3. **Never overclaim**: "quick tests pass" ≠ "all tests pass"
+
+**The test-runner skill contains a claim language table. MEMORIZE IT:**
+
+| Command | Allowed Claim |
+|---------|---------------|
+| `just test-unit` | "unit tests pass" |
+| `just test-all-mocked` | "quick tests pass" or "mocked tests pass" |
+| `run_tests_parallel.sh` | "all tests pass" (ONLY after verifying logs) |
+
+**NEVER say "all tests pass" after running `just test-all-mocked`.**
+
+This is a common mistake that the manager-review skill will catch and reject.
 
 ## CRITICAL: Announce Skill Usage
 

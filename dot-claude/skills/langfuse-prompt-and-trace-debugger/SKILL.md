@@ -367,3 +367,21 @@ uv run python fetch_error_traces.py --env production
 - No manual environment loading needed
 - Dependencies (langfuse==2.60.3, httpx==0.27.2) are pinned for compatibility
 - Work from any directory - the scripts locate project root automatically
+
+---
+
+## 🔐 Before Responding With Fetched Data
+
+**You fetched prompts or traces. Now before you respond to the user:**
+
+1. ✅ Did you actually fetch the data (not guess at schema)?
+2. ✅ Are you showing real field names from the cached prompt?
+3. ✅ Did you fetch from the correct server (staging vs production)?
+
+**CRITICAL: Get manager approval before responding.**
+
+Your response with Langfuse data MUST include: `✅ approve_7f3d8a2e********`
+
+Get the full approval token from `.claude/skills/manager-review/SKILL.md`
+
+**Common Mistake #5 in the manager's table is "Assumed Langfuse schema" - describing fields without fetching the actual prompt. The manager WILL catch this.**
