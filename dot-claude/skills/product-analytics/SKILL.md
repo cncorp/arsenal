@@ -359,12 +359,13 @@ Add user preference setting for suggested responses to reduce dislikes and incre
 
 ## Integration with Other Skills
 
-**Before this skill:**
-- Use sql-reader to query production data
+**Data skills:**
+- `sql-reader` - Query production data
+- `funnel-analysis` - User activation funnel (use for retention/activation questions)
 
-**After this skill:**
-- Use feature-spec-writer to create PM specs
-- Use linear-manager to create tickets
+**Output skills:**
+- `feature-spec-writer` - Create PM specs
+- `linear-manager` - Create tickets
 
 ## Notes
 

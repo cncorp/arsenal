@@ -43,12 +43,15 @@ Use this skill when you need to:
 
 ### Step 1: Analyze (Data → Insights)
 
-**Use skills:** sql-reader + product-analytics OR therapist-data-scientist
+**Use skills:**
+- `funnel-analysis` - For activation/retention questions ("show me the funnel")
+- `sql-reader` + `product-analytics` - For general product questions
+- `therapist-data-scientist` - For therapeutic metrics
 
 **Question format:**
-- "How did users react to our 1:1 messages?"
-- "Which meta-commentary types drive engagement?"
-- "What % of users are power users?"
+- "Show me the funnel" → use funnel-analysis
+- "How did users react to our 1:1 messages?" → use sql-reader
+- "What % of users are power users?" → use funnel-analysis
 
 **Output:** Comprehensive analysis markdown file
 
@@ -422,17 +425,15 @@ Before considering your work done:
 
 ## Integration with Other Skills
 
-**Prerequisite skills:**
+**Analysis skills:**
 - `sql-reader` - Query production data
-- `therapist-data-scientist` - Calculate metrics
-- `product-analytics` - Analysis framework
+- `funnel-analysis` - User activation funnel (use for retention/activation questions)
+- `therapist-data-scientist` - Calculate therapeutic metrics
+- `product-analytics` - General analysis framework
 
-**This skill:**
-- `pm-analyst` - Orchestrate full workflow
-
-**Dependent skills:**
-- `feature-spec-writer` - Structure requirements (used within pm-analyst)
-- `linear-manager` - Create tickets (used within pm-analyst)
+**Output skills:**
+- `feature-spec-writer` - Structure requirements
+- `linear-manager` - Create tickets
 
 ---
 
