@@ -49,6 +49,12 @@ This skill provides a systematic workflow for:
 
 **🚨 CRITICAL: Do NOT investigate test failures manually. ALWAYS use this skill.**
 
+## 🚨 CRITICAL FOR TEST WRITING
+
+- **BEFORE writing tests** → Use test-writer skill (MANDATORY - analyzes code type, dependencies, contract)
+- **AFTER writing tests** → Invoke pytest-test-reviewer agent (validates patterns)
+- **YOU CANNOT WRITE TESTS WITHOUT test-writer SKILL** - No exceptions, no shortcuts, every test, every time
+
 ## 🔄 How This Skill Interacts With Other Skills
 
 **test-fixer orchestrates the fix workflow and uses other skills:**

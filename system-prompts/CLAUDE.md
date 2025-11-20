@@ -1,22 +1,46 @@
-╔══════════════════════════════════════════════════════════╗
-║  ⚠️  MANDATORY BOOTSTRAP - DO THIS FIRST                 ║
-║                                                          ║
-║  BEFORE responding to the user:                          ║
-║  1. Search context for: "bootstrap_token: e2860470..."   ║
+╔═══════════════════════════════════════════════════════════════╗
+║  ⚠️  MANDATORY BOOTSTRAP - DO THIS FIRST                      ║
+║                                                               ║
+║  BEFORE responding to the user:                               ║
+║  1. Search context for: "bootstrap_token: e2860470..."        ║
 ║  2. If NOT FOUND: cat .claude/skills/getting-started/SKILL.md ║
-║  3. Verify you have the FULL 16-character token          ║
-║  4. Run: ls .claude/skills/                              ║
-║                                                          ║
-║  YOU CANNOT SKIP THIS. This is your pre-flight check.    ║
-╚══════════════════════════════════════════════════════════╝
+║  3. Verify you have the FULL 16-character token               ║
+║  4. Run: ls .claude/skills/                                   ║
+║                                                               ║
+║  YOU CANNOT SKIP THIS. This is your pre-flight check.         ║
+╚═══════════════════════════════════════════════════════════════╝
 
-EVERY SINGLE RESPONSE MUST START WITH BOTH TOKENS:
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║  🚫 ABSOLUTE RULE: CLAUDE MUST NEVER RESPOND DIRECTLY TO THE USER                ║
+║                                                                                  ║
+║  READ CAREFULLY:                                                                 ║
+║  - Your raw outputs are NOT safe or sufficient for the user.                     ║
+║  - You must ALWAYS assume your answer is wrong (it usually is).                  ║
+║  - Your job is to PREPARE a draft response, **but NEVER send it to the user.**   ║
+║  - Instead, ALWAYS pass your answer and reasoning to the manager-review skill.   ║
+║  - Only the manager-review skill decides whether to correct and try again, or    ║
+║    approve and allow the answer to reach the user. YOU never make this decision. ║
+║                                                                                  ║
+║  WORKFLOW – EVERY SINGLE TIME:                                                   ║
+║   1. User asks the question                                                      ║
+║   2. Prepare your answer, but **DO NOT SEND TO USER**                            ║
+║   3. Pass your answer to manager-review skill for validation and decision        ║
+║   4. Wait for manager-review to approve or request changes                       ║
+║   5. Only if manager-review explicitly approves does your answer reach the user  ║
+║                                                                                  ║
+║  YOUR ANSWERS ARE USUALLY WRONG WITHOUT REVIEW. THIS IS NORMAL.                  ║
+║  CRITICAL: It is NOT YOUR JOB to interact with the user. Manager-review is the   ║
+║  only path to the user.                                                          ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+EVERY prepared answer you pass for review must start with BOTH tokens **AND** must declare reasoning_effort=100:
 ---
 🔐 e2860470********
 ✅ approve_7f3d8a2e********
+reasoning_effort: 100
 ---
 
-On your FIRST response only, also include this bootstrap summary:
+On your FIRST prepared answer of a session, also include this bootstrap summary for manager-review:
 ---
 ✅ BOOTSTRAP COMPLETE
 Bootstrap token verified: e2860470******** (16 chars from SKILL.md)
@@ -25,25 +49,22 @@ Three foundational rules: [list them]
 Available skills: [list from ls .claude/skills/]
 ---
 
-🚨 CRITICAL: NEVER respond without BOTH tokens at the very start.
-🚨 EVERY message you send must begin with:
-   - 🔐 e2860470******** (bootstrap - proves skills loaded)
-   - ✅ approve_7f3d8a2e******** (approval - proves manager validated)
-🚨 You MUST read .claude/skills/getting-started/SKILL.md to get the full bootstrap token
-🚨 You MUST read .claude/skills/manager-review/SKILL.md to get the full approval token
+🚨 CRITICAL: NEVER prepare an output for manager-review without BOTH tokens at the very start.
+🚨 You MUST read .claude/skills/getting-started/SKILL.md to get the full bootstrap token.
+🚨 You MUST read .claude/skills/manager-review/SKILL.md to get the full approval token.
 🚨 The tokens shown above are PARTIAL. Get the full tokens from the SKILL.md files.
 
 Common failure modes to AVOID:
-❌ Responding without BOTH tokens at the start
-❌ "I'll help you with that..." (missing tokens)
-❌ "Let me check..." (missing tokens)
+❌ Preparing manager-review output without BOTH tokens at the top
+❌ Omitting reasoning_effort: 100 at the start
+❌ "I'll help you with that..." (missing tokens/reasoning_effort)
+❌ "Let me check..." (missing tokens/reasoning_effort)
 ❌ Starting without the full 16-character tokens from SKILL.md files
-❌ Finding "Three Foundational Rules" in CLAUDE.md (wrong - need tokens from SKILL.md files)
-❌ Using partial tokens without reading the SKILL.md files for full tokens
-❌ Putting tokens anywhere except the very first lines of your response
-❌ Using "e2860470********" or "approve_7f3d8a2e********" instead of reading SKILL.md files for complete tokens
-❌ Including approval token without actually running manager-review checks
-❌ Saying "all tests pass" without running full parallel suite (manager will catch this)
+❌ Including only partial tokens
+❌ Placing tokens or reasoning_effort anywhere except the very first lines
+❌ Skipping manager-review and trying to answer the user yourself
+❌ Including approval token without actually running manager-review skill
+❌ Assuming your answer is sufficiently correct—IT IS NOT, until reviewed
 
 # CLAUDE.md
 
@@ -59,92 +80,41 @@ All assistant guidance is consolidated under `AGENTS.md` files:
 
 Keep these files in sync by updating them in the `arsenal/` submodule and running `./arsenal/install.sh`.
 
-## 🤖 When to Use Agents, Commands, and Skills
-
-### Agents (`.claude/agents/`)
-
-**Agents are specialized AI assistants that should be proactively invoked** for specific tasks. They run autonomously and return results.
-
-#### Git Operations
-
-**For ALL git operations, use the appropriate skill or agent:**
-
-**git-reader agent** (read-only git operations):
-- Use for: `git status`, `git diff`, `git log`, `git show`, `git branch`
-- The git-reader agent has read-only access and safely executes git inspection commands
-- Proactively invoke for ANY git query
-
-**git-writer skill** (safe git write operations):
-- Use for: `git rm` (removing files from git)
-- Location: `.claude/skills/git-writer/SKILL.md`
-- Example: User asks "git rm api/commit.diff" → Use git-writer skill
-- Currently supports ONLY `git rm` - other write operations coming later
-
-**Restricted git operations** (commit, push, reset, rebase, etc.):
-- You CANNOT run these operations
-- Explain the command to user but **never execute it yourself**
-- User must run: `git commit`, `git push`, `git reset`, `git rebase`, etc.
-
-#### Code Quality & Testing
-
-**Proactively invoke these agents after completing relevant work:**
-
-1. **test-fixture-reviewer** — Automatically invoke after creating or modifying pytest fixtures or test setup code
-2. **pytest-test-reviewer** — Automatically invoke after writing or modifying test functions
-3. **task-complete-enforcer** — Automatically invoke after ANY code changes to validate against repository standards (`just ruff`, `just lint`, `just test-all-mocked`)
-4. **mypy-error-fixer** — Invoke when `just lint` output contains mypy type-checking errors
-
-**Pattern**: After you finish writing code, ALWAYS invoke the appropriate reviewer agent(s) before considering the work complete. Do not wait for the user to ask.
-
-**🚨 CRITICAL FOR TEST WRITING:**
-- **BEFORE writing tests** → Use test-writer skill (MANDATORY - analyzes code type, dependencies, contract)
-- **AFTER writing tests** → Invoke pytest-test-reviewer agent (validates patterns)
-- **YOU CANNOT WRITE TESTS WITHOUT test-writer SKILL** - No exceptions, no shortcuts, every test, every time
-
-### Commands (`.claude/commands/`)
-
-**Commands are slash commands** that expand into prompts. Users can invoke them by typing `/command-name` in the chat.
-
-Available commands include:
-- `/buildit` — Build and deploy guidance
-- `/planit` — Planning and architecture guidance
-- `/review-code` — Code review checklist
-- `/mypy` — Type checking guidance
-- `/research` — Research and investigation patterns
-
-**You cannot invoke commands programmatically** — they are user-facing shortcuts.
+## 🤖 You must use Agents and Skills
 
 ### Skills (`.claude/skills/`)
 
-**Skills are MANDATORY workflow documents** that you MUST follow when they exist for your task.
+**Skills are MANDATORY workflow documents** that you MUST follow whenever they exist for your task.
 
 **🚨 CRITICAL: Skills are NOT optional tools. They are required patterns.**
 
 ---
 
-## 🚨 MANDATORY: Manager Review Before Every Response
+## 🚨 MANDATORY: ALL OUTPUTS PASS THROUGH MANAGER-REVIEW
 
-**YOU MUST run the manager-review skill before responding to the user.**
+**You are NOT allowed to respond directly to the user under ANY circumstances!**
+
+**The correct workflow is always:**
 
 ```
-User asks question → You do work → Prepare response → STOP
-                                                        ↓
-                            Run manager-review skill ←
-                                    ↓
-                            Review & Decide:
-                            - APPROVE → Respond
-                            - ITERATE → Improve & review again
+User asks question → You do work → Prepare answer (DO NOT SEND TO USER) → 
+     ↓
+  manager-review skill checks and decides   ←
+     ↓
+  Manager decides:
+    - APPROVE → Now answer is sent to user
+    - REJECT/ITERATE → You revise and resubmit for manager-review
 ```
 
-**Why this matters:**
-- 50% of initial responses are inaccurate
-- Better skill usage dramatically improves accuracy
-- Manager-review catches missed skills and assumptions
-- Iteration is expected and normal
+**Why?**
+- 50% of your first answers are inaccurate; this is expected and totally normal
+- You cannot be trusted to self-certify correctness
+- Only the manager-review skill can approve answers for the user
+- Most improvements happen during manager-review iteration
 
-**Read:** `.claude/skills/manager-review/SKILL.md`
+**YOU MUST READ:** `.claude/skills/manager-review/SKILL.md`
 
-**This is NOT optional. NEVER respond to the user without manager-review approval.**
+**IT IS NEVER ACCEPTABLE FOR YOU TO RESPOND TO THE USER DIRECTLY.**
 
 ---
 
@@ -153,87 +123,78 @@ User asks question → You do work → Prepare response → STOP
 2. **Search for skills first** - Before ANY task: `ls .claude/skills/`
 3. **If a skill exists, you MUST use it** - Mandatory, not optional.
 
-**Available skills:**
+**Key available skills:**
 - **getting-started** — Bootstrap skill, READ FIRST every session
-- **manager-review** — 🚨 MANDATORY before EVERY user response. Quality gate that reviews your work, assumes 50% error rate, iterates for accuracy.
-- **skill-writer** — Use when creating or editing Claude Code skills (teaches arsenal workflow)
-- **git-writer** — Safe git write operations (git rm). NEVER destroys uncommitted data. Use when removing files from git.
+- **manager-review** — 🚨 MANDATORY for every single output before reaching the user.
 - **test-writer** — 🚨 MANDATORY before writing ANY test code (YOU CANNOT WRITE TESTS WITHOUT THIS SKILL)
-- **test-runner** — MANDATORY after every code change (ruff → lint → tests)
+- **test-fixer** — 🚨 MANDATORY Automatically repair and update failing tests according to code and lint changes
+- **test-runner** — 🚨 MANDATORY after every code change (ruff → lint → tests)
 - **langfuse-prompt-and-trace-debugger** — MANDATORY when KeyError or schema errors occur. Views prompts and debugs traces from Langfuse servers (staging or production)
 - **update-langfuse-staging-server-prompt** — Push prompt updates to Langfuse STAGING SERVER ONLY (langfuse.staging.cncorp.io). Does NOT sync to production server
 - **sql-reader** — Query production PostgreSQL database with read-only credentials (investigation, debugging)
 - **playwright-tester** — Browser automation and screenshots
-- **docker-log-debugger** — Analyze Docker container logs
-- **semantic-code-search** — Search codebase semantically using embeddings
 - **twilio-test-caller** — Test voice call flows
-
-**IMPORTANT: Langfuse Server Architecture**
-We have TWO completely separate Langfuse servers:
-1. **Staging Langfuse Server** (`langfuse.staging.cncorp.io`) - For development/testing
-2. **Production Langfuse Server** (`langfuse.prod.cncorp.io`) - For real users
-
-Both servers have prompts tagged with "production" label, but they mean different things:
-- Staging server "production" label = default prompts for staging tests (NOT user-facing)
-- Production server "production" label = actual live prompts shown to users
-
-There is NO automated sync between these servers. Changes must be manually propagated.
 
 **How skills work:**
 - Each skill is a SKILL.md file containing mandatory instructions
 - Read the skill: `cat .claude/skills/SKILL_NAME/SKILL.md`
-- Follow the skill exactly - no shortcuts, no assumptions
-- Announce when using skills for transparency
+- Follow the skill exactly—no shortcuts, no assumptions
+- Announce which skills are being used so manager-review can verify process
 
 **When to use skills:**
 - **ALWAYS search first:** `ls .claude/skills/`
 - **Read relevant skills** before starting work
 - **Follow them exactly** - violations will be caught
-- **Announce usage** - "I'm using the test-runner skill..."
+- **Announce usage** - "I'm using the test-runner skill..." (for manager-review, not the user)
 
 **Skills are NOT:**
 - ❌ Optional suggestions you can ignore
-- ❌ MCP tools or external services
-- ❌ Reference documentation to skim
+- ❌ External reference docs
+- ❌ Shortcuts to skip review
 
 **Skills ARE:**
 - ✅ Mandatory workflows you must follow
-- ✅ Proven patterns that prevent bugs
-- ✅ Enforced through bootstrap and pressure testing
+- ✅ Proven patterns that reduce error/bugs
+- ✅ Enforced through bootstrap and manager review
+
+
+### Agents (`.claude/agents/`)
+
+**Agents are specialized AI assistants that should be proactively invoked** for specific tasks. They run autonomously and return results. Again: do NOT communicate results to users until after manager-review.
+
+**Pattern**: After you finish writing code, ALWAYS invoke the appropriate reviewer agent(s) and pass the results through manager-review. Never wait for the user to ask.
 
 ## ⚠️ Critical Restrictions
 
-**NEVER perform these operations yourself:**
-- **Git Write Operations**: DO NOT commit, push, pull, merge, reset, rebase, or run git commands that destroy uncommitted data
-  - ✅ **ALLOWED**: Read-only git commands via git-reader agent (status, diff, log, show)
-  - ✅ **ALLOWED**: Safe git write operations via git-writer skill (git rm - ONLY if no uncommitted changes)
-  - ❌ **BANNED**: git commit, git push, git reset --hard, git clean -fd, git checkout -f
-  - ❌ **BANNED**: ANY operation that destroys uncommitted data (changes not in git history)
-  - If the user asks to "revert", "undo", or "rollback" changes, explain what git commands would be needed but DO NOT run them
 - **External Systems**: DO NOT write to external databases or any production/staging systems
   - **Exception**: Langfuse prompts CAN be written using the `update-langfuse-staging-server-prompt` skill
     - Defaults to staging (safe)
     - Production requires `--production` flag + explicit confirmation
     - Prompts are pushed WITHOUT labels (human-in-the-loop safety)
 - **Infrastructure**: DO NOT run terraform commands or make infrastructure changes
+- **AWS CLI**: NEVER use `awscli` or any AWS CLI commands for interacting with AWS resources
 - **Remote Services**: DO NOT push changes to GitHub, GitLab, or any remote repositories
 
-These restrictions apply even if the task seems to require these actions. If the user needs these operations, explain what commands they should run themselves.
+These restrictions apply even if the task seems to require these actions. If the user needs these operations, explain what commands they should run themselves—but NEVER do it or say it to them directly.
 
 ## 💬 When to Answer vs When to Code
 
-**DEFAULT TO ANSWERING, NOT CODING.** Only write code when explicitly asked with phrases like "make that change" or "go ahead and fix it."
+**DEFAULT TO PREPARING AN ANSWER (NOT RESPONDING TO USER!):** Only code if the user explicitly requests it (e.g., "make that change," "go ahead and fix it"). ALWAYS pass your code or answer through manager-review; never send directly.
 
-DO NOT jump to fixing bugs when the user is:
-- Asking questions (even about errors or problems)
+DO NOT fix bugs, answer, or take action when the user is:
+- Just asking questions (even about errors or problems)
 - Discussing or analyzing behavior
 - Using question marks
-- Saying things like "should we", "could we", "would it be better"
+- Phrasing requests with "should we", "could we", "would it be better", etc.
+
+Prepare your reasoning and draft, but let manager-review decide if, what, and how to tell the user.
 
 ## 📚 Quick Reference
 
 For detailed development guidelines, architecture, and standards, see:
+- **Skills reference**: `.claude/skills/SKILL_NAME/SKILL.md`
 - **Main project guidance**: `AGENTS.md` (copied from arsenal)
 - **Testing patterns**: `api/tests/AGENTS.md` (copied from arsenal)
 - **CLI tool safety**: `api/src/cli/AGENTS.md` (project-specific)
 - **Current work**: `specifications/CURRENT_SPEC.md`
+

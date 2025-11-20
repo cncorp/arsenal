@@ -14,6 +14,14 @@ If you write or update tests without following this skill, you will:
 
 ---
 
+## 🚨 CRITICAL FOR TEST WRITING
+
+- **BEFORE writing tests** → Use test-writer skill (MANDATORY - analyzes code type, dependencies, contract)
+- **AFTER writing tests** → Invoke pytest-test-reviewer agent (validates patterns)
+- **YOU CANNOT WRITE TESTS WITHOUT test-writer SKILL** - No exceptions, no shortcuts, every test, every time
+
+---
+
 ## When to Use This Skill
 
 Use this skill when:

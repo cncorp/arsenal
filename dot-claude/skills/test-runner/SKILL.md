@@ -40,6 +40,12 @@ description: MANDATORY skill for running tests and lint after EVERY code change.
 
 **The phrase "all tests" is RESERVED for the full parallel suite. No exceptions.**
 
+## 🚨 CRITICAL FOR TEST WRITING
+
+- **BEFORE writing tests** → Use test-writer skill (MANDATORY - analyzes code type, dependencies, contract)
+- **AFTER writing tests** → Invoke pytest-test-reviewer agent (validates patterns)
+- **YOU CANNOT WRITE TESTS WITHOUT test-writer SKILL** - No exceptions, no shortcuts, every test, every time
+
 ## 🔥 CRITICAL: This Skill Is Not Optional
 
 **After EVERY code change, you MUST follow this workflow.**
