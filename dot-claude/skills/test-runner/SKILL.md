@@ -107,27 +107,19 @@ Pass pytest args in quotes: `just test-unit "path/to/test.py::test_name -vv"`
 
 **After making ANY code change:**
 
-### Step 0: ALWAYS Run Ruff First (Code Formatting)
-```bash
-cd api && just ruff
-```
-
-**YOU MUST:**
-- ✅ Run this command and see the output
-- ✅ Verify it passes or auto-fixes issues
-- ✅ If failures occur: Fix them IMMEDIATELY before continuing
-- ✅ This checks code style and formatting
-
-**NEVER skip ruff** - it catches formatting issues before they become lint failures.
-
-### Step 1: ALWAYS Run Lint (Type Checking)
+### Step 0: ALWAYS Run Lint (Auto-fix + Type Checking)
 ```bash
 cd api && just lint
 ```
 
+**This command now:**
+1. Auto-fixes formatting/lint issues (runs `just ruff` internally)
+2. Verifies all issues are resolved
+3. Runs mypy type checking
+
 **YOU MUST:**
 - ✅ Run this command and see the output
-- ✅ Verify output shows "All checks passed!" or similar success message
+- ✅ Verify output shows "✅ All linting checks passed!"
 - ✅ If failures occur: Fix them IMMEDIATELY before continuing
 - ✅ NEVER skip this step, even for "tiny" changes
 
@@ -136,7 +128,7 @@ cd api && just lint
 - Saw the actual output
 - Confirmed it shows success
 
-### Step 2: ALWAYS Run Quick Tests (Development Cycle)
+### Step 1: ALWAYS Run Quick Tests (Development Cycle)
 ```bash
 cd api && just test-all-mocked
 ```
@@ -160,7 +152,7 @@ cd api && just test-all-mocked
 
 **Takes ~20 seconds. Use for rapid iteration.**
 
-### Step 3: ALWAYS Run ALL Tests Before Saying "All Tests Pass"
+### Step 2: ALWAYS Run ALL Tests Before Saying "All Tests Pass"
 ```bash
 .claude/skills/test-runner/scripts/run_tests_parallel.sh
 ```
@@ -246,13 +238,14 @@ done
 - `just test-all-mocked` = "quick tests pass" or "mocked tests pass"
 - Parallel script = "all tests pass"
 
-❌ **Skipping ruff formatting**
-- WRONG: "Lint passed, so formatting is fine"
-- RIGHT: *Runs `just ruff` FIRST, before lint*
-
-❌ **Saying "tests passed" without running them**
+❌ **Claiming tests pass without showing output (LYING)**
+- WRONG: "all 464 tests passed" (WHERE is the pytest output?)
+- WRONG: "just ran them and tests pass" (WHERE is the output?)
 - WRONG: "I fixed the bug, tests should pass"
-- RIGHT: *Runs `just test-all-mocked` and shows output*
+- WRONG: "Yes - want me to run them again?" (DEFLECTION)
+- RIGHT: *Runs `just test-all-mocked` and shows "===== X passed in Y.YYs ====="*
+
+**🚨 THE RULE: If you can't see "X passed in Y.YYs" in your context, you're lying about tests passing.**
 
 ❌ **Skipping linting "because it's a small change"**
 - WRONG: "It's just 3 lines, lint isn't needed"
@@ -286,10 +279,9 @@ done
 
 ### Simple Changes (Quick Iteration)
 1. Make change
-2. Run `just ruff` (formatting)
-3. Run `just lint` (type checking)
-4. Run `just test-all-mocked` (quick tests)
-5. **DONE for iteration** (but cannot say "all tests pass" yet)
+2. Run `just lint` (auto-fix + type checking)
+3. Run `just test-all-mocked` (quick tests)
+4. **DONE for iteration** (but cannot say "all tests pass" yet)
 
 ### Before Marking Task Complete
 1. Run `.claude/skills/test-runner/scripts/run_tests_parallel.sh`
@@ -299,20 +291,19 @@ done
 ### Complex Changes (Multiple Files/Features)
 1. Make a logical change
 2. **Stage it:** `git add <files>`
-3. Run `just ruff`
-4. Run `just lint`
-5. Run `just test-all-mocked`
-6. Repeat steps 1-5 for each logical chunk
-7. **At the end, MANDATORY:** Run `.claude/skills/test-runner/scripts/run_tests_parallel.sh`
-8. Check all logs
-9. **ONLY NOW** can you say "all tests pass"
+3. Run `just lint`
+4. Run `just test-all-mocked`
+5. Repeat steps 1-4 for each logical chunk
+6. **At the end, MANDATORY:** Run `.claude/skills/test-runner/scripts/run_tests_parallel.sh`
+7. Check all logs
+8. **ONLY NOW** can you say "all tests pass"
 
 This workflow ensures you catch issues early and don't accumulate breaking changes.
 
 **Remember:**
-- **Quick iteration:** ruff → lint → test-all-mocked (Steps 0-2)
-- **Task complete:** Run parallel script, check logs (Step 3)
-- **Never say "all tests pass" without Step 3**
+- **Quick iteration:** lint → test-all-mocked (Steps 0-1)
+- **Task complete:** Run parallel script, check logs (Step 2)
+- **Never say "all tests pass" without Step 2**
 
 ## Individual Test Suites
 
@@ -343,18 +334,17 @@ cd api && just test-smoke
 
 ## When to Use
 
-- **ALWAYS:** Run `just ruff` → `just lint` → `just test-all-mocked` after every code change
+- **ALWAYS:** Run `just lint` → `just test-all-mocked` after every code change
 - User asks to run tests
 - Validating code changes
 - After modifying code
 - Debugging test failures
 
-**Every change (Steps 0-2):**
-- Run `just ruff` (formatting)
-- Run `just lint` (type checking)
+**Every change (Steps 0-1):**
+- Run `just lint` (auto-fix + type checking)
 - Run `just test-all-mocked` (quick tests)
 
-**Before saying "all tests pass" (Step 3):**
+**Before saying "all tests pass" (Step 2):**
 - Run `.claude/skills/test-runner/scripts/run_tests_parallel.sh`
 - Check all logs for failures
 - Verify ALL suites passed
@@ -385,17 +375,14 @@ docker compose up -d
 ## Quick Reference
 
 ```bash
-# 🔥 Step 0: ALWAYS run ruff first (formatting)
-cd api && just ruff
-
-# 🔥 Step 1: ALWAYS run lint (type checking)
+# 🔥 Step 0: ALWAYS run lint (auto-fix + type checking)
 cd api && just lint
 
-# 🔥 Step 2: ALWAYS run quick tests (development)
+# 🔥 Step 1: ALWAYS run quick tests (development)
 cd api && just test-all-mocked
 # ^ This is NOT "all tests" - only say "quick tests pass" or "mocked tests pass"
 
-# 🔥 Step 3: Run ALL tests before saying "all tests pass" (MANDATORY before task complete)
+# 🔥 Step 2: Run ALL tests before saying "all tests pass" (MANDATORY before task complete)
 .claude/skills/test-runner/scripts/run_tests_parallel.sh
 
 # Check results (MUST do this before saying "all tests pass")
@@ -413,8 +400,8 @@ done
 tail -f api/tmp/test-logs/test-*.log
 
 # 🚨 REMEMBER:
-# - Steps 0-2 = quick iteration (DO NOT say "all tests pass")
-# - Step 3 = full validation (ONLY NOW can say "all tests pass")
+# - Steps 0-1 = quick iteration (DO NOT say "all tests pass")
+# - Step 2 = full validation (ONLY NOW can say "all tests pass")
 ```
 
 ---

@@ -485,29 +485,27 @@ Where: `.claude/skills/test-runner/SKILL.md`
 
 **Example queries where you MUST run test-runner:** "I modified the auth logic, verify it works" • "Run tests to make sure nothing broke" • "Check if my changes pass linting"
 
-**YOU MUST (Steps 0-2 for quick iteration):**
-- Step 0: Run `cd api && just ruff` (formatting)
-- Step 1: Run `cd api && just lint` (type checking)
-- Step 2: Run `cd api && just test-all-mocked` (quick tests)
+**YOU MUST (Steps 0-1 for quick iteration):**
+- Step 0: Run `cd api && just lint` (auto-fix + type checking)
+- Step 1: Run `cd api && just test-all-mocked` (quick tests)
 - VERIFY the output shows success for each step
 - NEVER say "tests passed" without seeing actual output
 
-**YOU MUST (Step 3 before saying "all tests pass"):**
+**YOU MUST (Step 2 before saying "all tests pass"):**
 - Run `.claude/skills/test-runner/scripts/run_tests_parallel.sh`
 - Check ALL logs for failures
 - ONLY SAY "all tests pass" after this completes successfully
 
 **Critical terminology:**
-- "quick tests pass" = Step 2 passed
-- "mocked tests pass" = Step 2 passed
-- **"all tests pass"** = Step 3 passed (NEVER say this without Step 3)
+- "quick tests pass" = Step 1 passed
+- "mocked tests pass" = Step 1 passed
+- **"all tests pass"** = Step 2 passed (NEVER say this without Step 2)
 
 **Violations:**
 - ❌ **CRITICAL:** Claiming test failures are "unrelated" without using test-fixer skill
 - ❌ **CRITICAL:** ANY test failures without invoking test-fixer skill (no exceptions!)
-- ❌ Saying "all tests pass" without running parallel script (Step 3)
-- ❌ Saying "tests are passing" after only running Step 2
-- ❌ Skipping ruff "because lint will catch it"
+- ❌ Saying "all tests pass" without running parallel script (Step 2)
+- ❌ Saying "tests are passing" after only running Step 1
 - ❌ Skipping linting "because it's a small change"
 - ❌ Assuming tests pass without verification
 - ❌ Not reading the actual test output

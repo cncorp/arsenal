@@ -337,15 +337,21 @@ Now executing improved approach...
 | # | Mistake | Pattern | Detection | Action |
 |---|---------|---------|-----------|--------|
 | 1 | **"All tests pass" without full suite** | Said "all tests pass" after `just test-all-mocked` | Claimed "all" but only ran mocked tests | ITERATE: Use "quick tests pass" OR run parallel script |
-| 2 | **Wrote code without running tests** | Implemented feature, no test output shown | Code changes + no `just ruff/lint/test-all-mocked` | ITERATE: Run test-runner skill now |
-| 3 | **Claimed tests pass without evidence** | "Tests are passing" with no pytest output | No "X passed in Y.YYs" shown | ITERATE: Show actual test output |
-| 4 | **Guessed at production data** | "Approximately 50 interventions..." | Used "approximately", "based on schema", "should be" | ITERATE: Use sql-reader for actual data |
-| 5 | **Assumed Langfuse schema** | "The prompt returns 'should_send'..." | Described fields without fetching prompt | ITERATE: Use langfuse-debugger to fetch |
-| 6 | **Wrote tests without test-writer** | Created `def test_*` directly | Test code exists but no analysis shown | ITERATE: Delete tests, use test-writer skill |
-| 7 | **Ran git commands directly** | `git status`, `git diff` in bash | Direct git instead of git-reader agent | ITERATE: Use git-reader agent |
-| 8 | **Modified arsenal without skill-writer** | Edited `.claude/` directly | Changes to .claude/ files | ITERATE: Use arsenal/dot-claude/ via skill-writer |
+| 2 | **Wrote code without running lint+tests** | Implemented feature, missing lint or test output | Code changes + no `just lint` output OR no test output | ITERATE: Run `just lint` then `just test-all-mocked` |
+| 3 | **Skipped linting (50% of failures!)** | Ran tests but no lint output shown | Has test output but missing "✅ All linting checks passed!" | ITERATE: Run `just lint` first - it auto-fixes AND runs mypy |
+| 4 | **Claimed tests pass without evidence** | "all 464 tests passed" or "just ran them" with no pytest output | Claimed specific numbers but no actual "===== X passed in Y.YYs =====" line shown | ITERATE: Run tests NOW and show the actual pytest summary line |
+| 5 | **Guessed at production data** | "Approximately 50 interventions..." | Used "approximately", "based on schema", "should be" | ITERATE: Use sql-reader for actual data |
+| 6 | **Assumed Langfuse schema** | "The prompt returns 'should_send'..." | Described fields without fetching prompt | ITERATE: Use langfuse-debugger to fetch |
+| 7 | **Wrote tests without test-writer** | Created `def test_*` directly | Test code exists but no analysis shown | ITERATE: Delete tests, use test-writer skill |
+| 8 | **Ran git commands directly** | `git status`, `git diff` in bash | Direct git instead of git-reader agent | ITERATE: Use git-reader agent |
+| 9 | **Modified arsenal without skill-writer** | Edited `.claude/` directly | Changes to .claude/ files | ITERATE: Use arsenal/dot-claude/ via skill-writer |
 
-**🚨 CRITICAL: Mistake #1 is the MOST common. Always verify claim language matches command run.**
+**🚨 CRITICAL: Mistakes #1, #3, and #4 are the MOST common.**
+- **#1:** Claiming "all tests" after only running mocked tests
+- **#3:** Showing test output but missing lint output
+- **#4:** Claiming "X tests passed" without showing the actual pytest output line
+
+**If you don't have "===== X passed in Y.YYs =====" in your context, you didn't run the tests!**
 
 ---
 
@@ -402,33 +408,40 @@ cd api && just test-all-mocked  # Quick tests
 
 ---
 
-### Mistake #2: Claimed Tests Pass Without Verification
+### Mistake #4: Claimed Tests Pass Without Evidence
 
 **Pattern:**
-- Claude says "tests are passing" or "all tests pass"
-- **MISSING:** No actual test output shown
-- **OR:** Only ran one test suite, not all
+- Claude says "all 464 tests passed" or "just ran them and tests pass"
+- Claims specific numbers that sound authoritative
+- **MISSING:** No actual pytest output line shown in context
+
+**🚨 THE CRITICAL TEST:**
+```
+Can I see "===== X passed in Y.YYs =====" in my context?
+  NO → I did NOT run the tests. I am lying.
+  YES → I can make the claim.
+```
 
 **What manager should check:**
 ```
 Did I claim tests pass? → YES
-Did I show actual test output? → NO
-→ ITERATE: Actually run tests and show output
+Did I show actual pytest output with "X passed in Y.YYs"? → NO
+→ ITERATE: Run tests NOW and show the actual output
 
-Did I say "all tests pass"? → YES
-Did I run parallel test suite? → NO
-→ ITERATE: Use correct terminology ("quick tests pass") or run full suite
+Did I claim a specific number like "464 tests"? → YES
+Can I point to where that number came from? → NO
+→ ITERATE: I made up that number. Run tests and show real output.
 ```
 
-**Verification required:**
-- Must show actual pytest output
-- Must show line like: "===== X passed in Y.YYs ====="
-- If said "all tests", must run `.claude/skills/test-runner/scripts/run_tests_parallel.sh`
-
-**Common false claims:**
+**Common lies (even specific-sounding ones are lies without evidence):**
+- ❌ "all 464 tests passed" (WHERE is the pytest output?)
+- ❌ "just ran them and all X tests passed" (WHERE is the output?)
 - ❌ "Tests should pass" (didn't run them)
 - ❌ "Tests are passing" (no evidence)
-- ❌ "All tests pass" (only ran mocked tests)
+- ❌ "Yes - want me to run them again?" (DEFLECTION - you didn't run them the first time!)
+
+**The ONLY valid claim:**
+- ✅ Shows actual Bash output with "===== 464 passed in 12.34s ====="
 
 ---
 
