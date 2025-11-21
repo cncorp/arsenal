@@ -419,30 +419,70 @@ Each reaction creates a new message with:
 - `content` starting with the reaction type: "Liked", "Loved", "Disliked", "Laughed at", "Emphasized", "Questioned"
 
 ```sql
--- Find all reactions in 1:1 conversations
+-- Find reactions with message type (intervention, cron, direct response)
+-- This query identifies what type of coach message was reacted to
+WITH reaction_messages AS (
+  SELECT
+    m.id as reaction_id,
+    m.conversation_id,
+    CASE
+      WHEN m.content LIKE 'Liked %' THEN 'Liked'
+      WHEN m.content LIKE 'Loved %' THEN 'Loved'
+      WHEN m.content LIKE 'Disliked %' THEN 'Disliked'
+      WHEN m.content LIKE 'Laughed at %' THEN 'Laughed at'
+      WHEN m.content LIKE 'Emphasized %' THEN 'Emphasized'
+      WHEN m.content LIKE 'Questioned %' THEN 'Questioned'
+    END as reaction_type,
+    TRIM(BOTH '"' FROM SUBSTRING(m.content FROM POSITION('"' IN m.content))) as quoted_content,
+    p.name as sender_name,
+    m.created_at
+  FROM message m
+  JOIN conversation c ON m.conversation_id = c.id
+  JOIN person_contacts pc ON m.sender_person_contact_id = pc.id
+  JOIN persons p ON pc.person_id = p.id
+  WHERE m.provider_data->>'reaction_id' IS NOT NULL
+    AND c.type = 'ONE_ON_ONE'
+    AND m.created_at >= NOW() - INTERVAL '96 hours'  -- Adjust timeframe as needed
+),
+original_messages AS (
+  SELECT DISTINCT ON (rm.reaction_id)
+    rm.reaction_id,
+    orig.id as orig_message_id,
+    orig.content as orig_content
+  FROM reaction_messages rm
+  JOIN message orig ON orig.conversation_id = rm.conversation_id
+    AND rm.quoted_content LIKE '%' || LEFT(orig.content, 50) || '%'
+    AND orig.id <> rm.reaction_id
+  ORDER BY rm.reaction_id, orig.created_at DESC
+)
 SELECT
+  rm.reaction_id,
+  rm.reaction_type,
+  rm.sender_name,
   CASE
-    WHEN m.content LIKE 'Liked %' THEN 'Liked'
-    WHEN m.content LIKE 'Loved %' THEN 'Loved'
-    WHEN m.content LIKE 'Disliked %' THEN 'Disliked'
-    WHEN m.content LIKE 'Laughed at %' THEN 'Laughed at'
-    WHEN m.content LIKE 'Emphasized %' THEN 'Emphasized'
-    WHEN m.content LIKE 'Questioned %' THEN 'Questioned'
-  END as reaction_type,
-  m.provider_data->>'reaction_id' as reaction_id,
-  m.content,
-  c.type as conversation_type,
-  m.created_at
-FROM message m
-JOIN conversation c ON m.conversation_id = c.id
-WHERE m.provider_data->>'reaction_id' IS NOT NULL
-  AND c.type = 'ONE_ON_ONE'  -- or 'GROUP'
-ORDER BY m.created_at DESC
-LIMIT 20;
+    WHEN im.prompt_key IS NOT NULL THEN im.prompt_key
+    WHEN om.orig_content LIKE 'Here''s a thought%' THEN 'scheduled_cron'
+    WHEN om.orig_content LIKE 'Here''s a curious%' THEN 'scheduled_cron'
+    WHEN om.orig_content LIKE 'Hey %' AND om.orig_content LIKE '%react%' THEN 'feedback_request'
+    ELSE 'direct_response'
+  END as message_type,
+  LEFT(om.orig_content, 60) as content_preview,
+  rm.created_at
+FROM reaction_messages rm
+LEFT JOIN original_messages om ON om.reaction_id = rm.reaction_id
+LEFT JOIN intervention_message im ON im.message_id = om.orig_message_id
+ORDER BY rm.created_at DESC;
 ```
 
+**Message type values:**
+- `group_msg_*` - Intervention triggered by partner's message (e.g., `group_msg_needs_affirmation`, `group_msg_intervention_needed_recipient`)
+- `scheduled_cron` - Daily scheduled check-in ("Here's a thought/curious question...")
+- `feedback_request` - Message asking user to react for feedback
+- `direct_response` - Direct coach response to user's message
+- `oh-by-the-way` - Scheduled reminder about upcoming events
+
 ```sql
--- Count reactions by type
+-- Simple reaction count by type
 SELECT
   CASE
     WHEN m.content LIKE 'Liked %' THEN '👍 Liked'
