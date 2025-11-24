@@ -1,6 +1,6 @@
 ---
 name: task-complete-enforcer
-description: Use this agent when a coding task has been completed and needs validation against repository quality standards. This agent should run automatically after any code changes are made, before considering the task truly complete. Examples:\n\n<example>\nContext: User has just finished implementing a new feature.\nuser: "I've added the new user authentication endpoint"\nassistant: "Great! Let me validate this implementation against our repository standards."\n<uses Task tool to launch task-complete-enforcer agent>\nassistant (as task-complete-enforcer): "Running quality checks: `just ruff`, `just lint`, and `just test-all-mocked`..."\n</example>\n\n<example>\nContext: User has refactored a module.\nuser: "The refactoring is done"\nassistant: "Before we close this out, I'll run our standard validation checks."\n<uses Task tool to launch task-complete-enforcer agent>\nassistant (as task-complete-enforcer): "Executing repository pattern enforcement..."\n</example>\n\n<example>\nContext: User has fixed a bug.\nuser: "Bug fix is complete"\nassistant: "Let me verify this meets our quality standards."\n<uses Task tool to launch task-complete-enforcer agent>\nassistant (as task-complete-enforcer): "Running compliance checks on the bug fix..."\n</example>
+description: Use this agent when a coding task has been completed and needs validation against repository quality standards. This agent should run automatically after any code changes are made, before considering the task truly complete. Examples:\n\n<example>\nContext: User has just finished implementing a new feature.\nuser: "I've added the new user authentication endpoint"\nassistant: "Great! Let me validate this implementation against our repository standards."\n<uses Task tool to launch task-complete-enforcer agent>\nassistant (as task-complete-enforcer): "Running quality checks: `just ruff`, `just lint-and-fix`, and `just test-all-mocked`..."\n</example>\n\n<example>\nContext: User has refactored a module.\nuser: "The refactoring is done"\nassistant: "Before we close this out, I'll run our standard validation checks."\n<uses Task tool to launch task-complete-enforcer agent>\nassistant (as task-complete-enforcer): "Executing repository pattern enforcement..."\n</example>\n\n<example>\nContext: User has fixed a bug.\nuser: "Bug fix is complete"\nassistant: "Let me verify this meets our quality standards."\n<uses Task tool to launch task-complete-enforcer agent>\nassistant (as task-complete-enforcer): "Running compliance checks on the bug fix..."\n</example>
 model: sonnet
 color: yellow
 ---
@@ -20,14 +20,14 @@ You MUST execute the following validation pipeline in this exact order:
 - Do NOT proceed to the next step until all Ruff issues are resolved
 
 ### 2. Type Checking with MyPy
-- Run `just lint` to execute MyPy type checking
+- Run `just lint-and-fix` to execute MyPy type checking
 - If MyPy errors are detected, you MUST invoke the mypy-error-fixer agent to resolve them
 - Wait for the mypy-error-fixer to complete its work
-- Re-run `just lint` to verify all type errors are resolved
+- Re-run `just lint-and-fix` to verify all type errors are resolved
 - Do NOT proceed until MyPy passes cleanly
 
 ### 3. Test Suite Validation
-- **Use test-runner skill** to run tests (`just ruff` → `just lint` → `just test-all-mocked`)
+- **Use test-runner skill** to run tests (`just lint-and-fix` → `just test-all-mocked`)
 - If ANY tests fail, you MUST invoke the **test-fixer skill** immediately
 - The test-fixer skill will:
   - Systematically investigate failures

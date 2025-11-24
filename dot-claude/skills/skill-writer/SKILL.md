@@ -577,10 +577,9 @@ If users run the same commands repeatedly, create a script:
 
 **WRONG:**
 ```markdown
-1. Run `cd api && just ruff`
-2. Run `cd api && just lint`
-3. Run `cd api && just test-all-mocked`
-4. Check all outputs for failures
+1. Run `cd api && just lint-and-fix`
+2. Run `cd api && just test-all-mocked`
+3. Check all outputs for failures
 ```
 
 **RIGHT:**

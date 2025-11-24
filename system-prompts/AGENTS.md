@@ -322,8 +322,7 @@ Your implementation is complete when ALL of the following are true:
 - ✅ **Tests Are Maintainable**: Not brittle, focus on behavior not implementation
 
 **4. Code Hygiene**
-- ✅ **Linting**: Run `cd api && just ruff` after code changes (wraps `ruff format` and `ruff check`)
-- ✅ **Type Checking**: `cd api && just lint` passes (runs strict mypy on changed files)
+- ✅ **Linting & Type Checking**: Run `cd api && just lint-and-fix` after code changes (auto-fixes + runs mypy)
 - ✅ **Pre-commit**: `pre-commit run --hook-stage manual --all-files` passes
 - ✅ **No Debug Code**: Remove all print statements, commented code, TODOs
 - ✅ **Test Failure Hygiene**: Only commit code that passes tests
@@ -622,14 +621,8 @@ cd api && ENVIRONMENT=development watchmedo auto-restart --directory=./src --pat
 
 **⚠️ CRITICAL: Type checking is strict-only.**
 ```bash
-# Strict mypy (same config used by CI)
-cd api && uv run mypy --config-file mypy-strict.ini src
-
-# Run linting and formatting (use these for CI/lint checks)
-cd api && just ruff
-
-# Strict mypy + lint (THIS IS WHAT MATTERS!) - includes LLM nits/secret detection
-cd api && just lint
+# Auto-fix + mypy (use this after code changes)
+cd api && just lint-and-fix
 
 # Run comprehensive pre-commit checks (includes E2E and smoke tests)
 pre-commit run --hook-stage manual --all-files
@@ -830,8 +823,7 @@ When tests fail after making changes:
    just test-unit               # Unit tests pass
    just test-integration        # Integration tests pass
    just test-e2e-live          # E2E live tests pass (if touching prompts)
-   just lint                    # All linting passes (includes LLM nits)
-   just lint-extras            # No broad exceptions or late imports
+   just lint-and-fix           # All linting passes (includes LLM nits)
    ```
 
 ## VERIFYING TEST SUCCESS
@@ -867,7 +859,7 @@ Running linting and static checks........................................Failed 
 **❌ Common MISLEADING output (baseline-only run):**
 ```bash
 $ cd api && uv run mypy --config-file mypy.ini src
-Success: no issues found in 118 source files  # Baseline passes, but strict checks still run via `just lint`.
+Success: no issues found in 118 source files  # Baseline passes, but strict checks still run via `just lint-and-fix`.
 ```
 
 **IMPORTANT RULES:**
@@ -876,7 +868,7 @@ Success: no issues found in 118 source files  # Baseline passes, but strict chec
 3. **NO ASSUMPTIONS** - Never say "tests pass" without seeing all "Passed" indicators.
 4. **FIX IMMEDIATELY** - If linting fails, fix it before claiming completion.
 5. **VERIFY AGAIN** - After any fixes, run the full test suite again.
-6. **STRICT MYPY ON `src/`** - `just lint` runs strict mypy across the application code; baseline still runs too. Don't skip it or fall back to baseline-only checks!
+6. **STRICT MYPY ON `src/`** - `just lint-and-fix` runs strict mypy across the application code; baseline still runs too. Don't skip it or fall back to baseline-only checks!
 
 **Common mistakes to avoid:**
 - ❌ Using short timeouts like `timeout 60` (must be 900+ seconds)

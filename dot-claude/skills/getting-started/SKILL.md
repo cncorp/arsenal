@@ -486,7 +486,7 @@ Where: `.claude/skills/test-runner/SKILL.md`
 **Example queries where you MUST run test-runner:** "I modified the auth logic, verify it works" • "Run tests to make sure nothing broke" • "Check if my changes pass linting"
 
 **YOU MUST (Steps 0-1 for quick iteration):**
-- Step 0: Run `cd api && just lint` (auto-fix + type checking)
+- Step 0: Run `cd api && just lint-and-fix` (auto-fix + type checking)
 - Step 1: Run `cd api && just test-all-mocked` (quick tests)
 - VERIFY the output shows success for each step
 - NEVER say "tests passed" without seeing actual output

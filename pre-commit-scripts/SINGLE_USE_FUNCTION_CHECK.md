@@ -71,7 +71,7 @@ From `CLAUDE.md`:
 ## Integration
 
 The check runs automatically as part of:
-- `just lint` (via `lint-extras` target)
+- `just lint-and-fix` (via `lint-extras` target)
 - Pre-commit hooks (manual stage)
 - CI/CD pipelines
 

@@ -14,7 +14,7 @@ Conduct a comprehensive code review of implemented features before handoff. This
 ### Prerequisites
 - Implementation should be complete (via `/implement-tdd` or manual)
 - All automated tests should be passing
-- Basic quality checks (`just ruff`, `just lint`) should pass
+- Basic quality checks (`just lint-and-fix`) should pass
 - Research and implementation documents should exist
 
 ### Review Scope
@@ -119,8 +119,7 @@ Execute systematic review of all changes:
 
 ## Automated Checks ✓
 - [ ] All tests passing
-- [ ] Type checking passing (`just lint`)
-- [ ] Code formatting correct (`just ruff`)
+- [ ] Type checking and formatting passing (`just lint-and-fix`)
 - [ ] No security vulnerabilities detected
 - [ ] Coverage threshold met (if applicable)
 - [ ] Codex CLI review complete

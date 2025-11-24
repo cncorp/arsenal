@@ -69,10 +69,9 @@ When Claude uses a skill, it will:
 - ✅ Never skip steps or make assumptions
 
 **Example:** After every code change, Claude MUST:
-- Step 0: Run `just ruff` (formatting)
-- Step 1: Run `just lint` (type checking)
-- Step 2: Run `just test-all-mocked` (quick tests)
-- Step 3: Run full test suite before saying "all tests pass"
+- Step 0: Run `just lint-and-fix` (auto-fix + type checking)
+- Step 1: Run `just test-all-mocked` (quick tests)
+- Step 2: Run full test suite before saying "all tests pass"
 
 **CRITICAL:** If tests fail after your changes, they are NEVER "unrelated" or "pre-existing." Tests always pass on main. Verify with: `git stash` → run tests → `git stash pop`.
 

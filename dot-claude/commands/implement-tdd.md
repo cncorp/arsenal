@@ -51,7 +51,7 @@ For each iteration defined in the plan:
 
 #### Phase 4: Quality Enforcement
 - **SUBAGENT**: Invoke `task-complete-enforcer` for repository compliance
-  - Runs: `just ruff`, `just lint`, `just test-all-mocked`
+  - Runs: `just lint-and-fix`, `just test-all-mocked`
 - Fix any quality issues identified
 - **GATE**: Must pass all quality checks before completion
 - **AUTO-PROCEED**: If all quality checks pass, continue to Phase 5
@@ -66,8 +66,7 @@ For each iteration defined in the plan:
 
 ### Automated Checks (via task-complete-enforcer)
 ```bash
-just ruff           # Code formatting
-just lint           # Type checking and linting
+just lint-and-fix    # Auto-fix + type checking
 just test-all-mocked # Full test suite
 ```
 

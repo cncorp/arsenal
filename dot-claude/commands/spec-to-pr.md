@@ -213,13 +213,10 @@ Estimated time: {effort from spec}
 Before creating PR, verify code quality:
 
 ```bash
-# Step 0: Format code
-cd api && just ruff
+# Step 0: Auto-fix + type check
+cd api && just lint-and-fix
 
-# Step 1: Type check
-cd api && just lint
-
-# Step 2: Run tests
+# Step 1: Run tests
 cd api && just test-all-mocked
 ```
 
@@ -295,8 +292,7 @@ This ensures the spec is version-controlled with the implementation.
 
    ## Testing
    - [x] Tests pass locally (`just test-all-mocked`)
-   - [x] Linting passes (`just lint`)
-   - [x] Formatted (`just ruff`)
+   - [x] Linting and formatting pass (`just lint-and-fix`)
 
    ## Acceptance Criteria
    {Copy from spec}

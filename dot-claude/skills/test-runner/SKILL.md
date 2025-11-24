@@ -113,12 +113,12 @@ Pass pytest args in quotes: `just test-unit "path/to/test.py::test_name -vv"`
 
 **After making ANY code change:**
 
-### Step 0: ALWAYS Run Lint (Auto-fix + Type Checking)
+### Step 0: ALWAYS Run Lint-and-Fix (Auto-fix + Type Checking)
 ```bash
-cd api && just lint
+cd api && just lint-and-fix
 ```
 
-**This command now:**
+**This command:**
 1. Auto-fixes formatting/lint issues (runs `just ruff` internally)
 2. Verifies all issues are resolved
 3. Runs mypy type checking
@@ -255,7 +255,7 @@ done
 
 ❌ **Skipping linting "because it's a small change"**
 - WRONG: "It's just 3 lines, lint isn't needed"
-- RIGHT: *Runs `just lint` ALWAYS, regardless of change size*
+- RIGHT: *Runs `just lint-and-fix` ALWAYS, regardless of change size*
 
 ❌ **Assuming tests pass without verification**
 - WRONG: "The change is simple, tests will pass"
@@ -285,7 +285,7 @@ done
 
 ### Simple Changes (Quick Iteration)
 1. Make change
-2. Run `just lint` (auto-fix + type checking)
+2. Run `just lint-and-fix` (auto-fix + type checking)
 3. Run `just test-all-mocked` (quick tests)
 4. **DONE for iteration** (but cannot say "all tests pass" yet)
 
@@ -297,7 +297,7 @@ done
 ### Complex Changes (Multiple Files/Features)
 1. Make a logical change
 2. **Stage it:** `git add <files>`
-3. Run `just lint`
+3. Run `just lint-and-fix`
 4. Run `just test-all-mocked`
 5. Repeat steps 1-4 for each logical chunk
 6. **At the end, MANDATORY:** Run `.claude/skills/test-runner/scripts/run_tests_parallel.sh`
@@ -340,14 +340,14 @@ cd api && just test-smoke
 
 ## When to Use
 
-- **ALWAYS:** Run `just lint` → `just test-all-mocked` after every code change
+- **ALWAYS:** Run `just lint-and-fix` → `just test-all-mocked` after every code change
 - User asks to run tests
 - Validating code changes
 - After modifying code
 - Debugging test failures
 
 **Every change (Steps 0-1):**
-- Run `just lint` (auto-fix + type checking)
+- Run `just lint-and-fix` (auto-fix + type checking)
 - Run `just test-all-mocked` (quick tests)
 
 **Before saying "all tests pass" (Step 2):**
@@ -381,8 +381,8 @@ docker compose up -d
 ## Quick Reference
 
 ```bash
-# 🔥 Step 0: ALWAYS run lint (auto-fix + type checking)
-cd api && just lint
+# 🔥 Step 0: ALWAYS run lint-and-fix (auto-fix + type checking)
+cd api && just lint-and-fix
 
 # 🔥 Step 1: ALWAYS run quick tests (development)
 cd api && just test-all-mocked

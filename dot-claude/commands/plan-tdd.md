@@ -202,9 +202,8 @@ IMPORTANT: Execute every step in order, top to bottom.
 
 ## Validation Commands
 <list specific commands to validate the implementation:>
+- `just lint-and-fix` - Auto-fix + type checking
 - `just test-all-mocked` - Run full test suite
-- `just ruff` - Validate code formatting
-- `just lint` - Validate type checking
 - <any task-specific validation commands>
 
 ## Success Criteria

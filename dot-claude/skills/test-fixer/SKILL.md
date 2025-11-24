@@ -60,7 +60,7 @@ This skill provides a systematic workflow for:
 **test-fixer orchestrates the fix workflow and uses other skills:**
 
 1. **test-runner skill** - To verify fixes work
-   - After each fix attempt, use test-runner to run: `just ruff && just lint && just test-all-mocked`
+   - After each fix attempt, use test-runner to run: `just lint-and-fix && just test-all-mocked`
    - Final verification uses test-runner's full parallel test suite
 
 2. **test-writer skill** - When modifying test files
@@ -279,8 +279,7 @@ just test-all-mocked  # Get fresh failure output
 # - 💡 OPTIONAL: Use sql-reader skill to understand production data model if debugging integration/e2e tests
 
 # 3. Verify fix
-just ruff         # Ensure formatting correct
-just lint         # Ensure types correct
+just lint-and-fix     # Auto-fix + type checking
 just test-all-mocked  # Run tests
 
 # 4. Evaluate result
@@ -337,8 +336,7 @@ Once quick tests pass, verify ALL tests:
 
 ```bash
 # 1. Quick verification first
-just ruff
-just lint
+just lint-and-fix     # Auto-fix + type checking
 just test-all-mocked  # Quick tests must pass
 
 # 2. Clean up any debugging artifacts
@@ -394,8 +392,7 @@ Iteration 2:
 
 Phase 3: Final Verification
 ----------------------------
-✅ just ruff - passed
-✅ just lint - passed
+✅ just lint-and-fix - passed
 ✅ just test-all-mocked - all 464 tests passed
 
 Cleanup:
@@ -506,7 +503,7 @@ git stash pop  # If you see your stash
 **Your work is complete when:**
 
 1. ✅ **All tests pass** (`just test-all-mocked` shows 0 failures)
-2. ✅ **Linting passes** (`just ruff` and `just lint` clean)
+2. ✅ **Linting passes** (`just lint-and-fix` clean)
 3. ✅ **Code is clean** (no debug artifacts, commented code, or prints)
 4. ✅ **Minimal changes** (git diff shows only necessary fixes)
 5. ✅ **User's code preserved** (original intent and functionality intact)
@@ -621,7 +618,7 @@ while tests_failing:
     # Edit specific files
 
     # 3. Verify
-    just ruff && just lint && just test-all-mocked
+    just lint-and-fix && just test-all-mocked
 
     # 4. Evaluate
     if all_tests_pass:
@@ -632,8 +629,7 @@ while tests_failing:
         revert_this_attempt()
 
 # Final Verification
-just ruff
-just lint
+just lint-and-fix
 just test-all-mocked
 # Report success
 ```

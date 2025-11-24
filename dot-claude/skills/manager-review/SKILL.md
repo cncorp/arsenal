@@ -337,8 +337,8 @@ Now executing improved approach...
 | # | Mistake | Pattern | Detection | Action |
 |---|---------|---------|-----------|--------|
 | 1 | **"All tests pass" without full suite** | Said "all tests pass" after `just test-all-mocked` | Claimed "all" but only ran mocked tests | ITERATE: Use "quick tests pass" OR run parallel script |
-| 2 | **Wrote code without running lint+tests** | Implemented feature, missing lint or test output | Code changes + no `just lint` output OR no test output | ITERATE: Run `just lint` then `just test-all-mocked` |
-| 3 | **Skipped linting (50% of failures!)** | Ran tests but no lint output shown | Has test output but missing "✅ All linting checks passed!" | ITERATE: Run `just lint` first - it auto-fixes AND runs mypy |
+| 2 | **Wrote code without running lint+tests** | Implemented feature, missing lint or test output | Code changes + no `just lint-and-fix` output OR no test output | ITERATE: Run `just lint-and-fix` then `just test-all-mocked` |
+| 3 | **Skipped linting (50% of failures!)** | Ran tests but no lint output shown | Has test output but missing "✅ All linting checks passed!" | ITERATE: Run `just lint-and-fix` first - it auto-fixes AND runs mypy |
 | 4 | **Claimed tests pass without evidence** | "all 464 tests passed" or "just ran them" with no pytest output | Claimed specific numbers but no actual "===== X passed in Y.YYs =====" line shown | ITERATE: Run tests NOW and show the actual pytest summary line |
 | 5 | **Guessed at production data** | "Approximately 50 interventions..." | Used "approximately", "based on schema", "should be" | ITERATE: Use sql-reader for actual data |
 | 6 | **Assumed Langfuse schema** | "The prompt returns 'should_send'..." | Described fields without fetching prompt | ITERATE: Use langfuse-debugger to fetch |
@@ -399,8 +399,7 @@ Did I run test-runner skill after? → NO
 **Correct action:**
 ```bash
 # Must run after EVERY code change
-cd api && just ruff     # Formatting
-cd api && just lint     # Type checking
+cd api && just lint-and-fix     # Auto-fix + type checking
 cd api && just test-all-mocked  # Quick tests
 ```
 
