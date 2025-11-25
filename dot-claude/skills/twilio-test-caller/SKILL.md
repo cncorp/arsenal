@@ -11,14 +11,21 @@ Place test voice calls to validate voice conversation features end-to-end.
 
 ## How It Works (Simple Version)
 
-1. **Script calls Twilio API** → Twilio places call FROM +18643997362 TO +16503977712
-2. **Twilio hits webhook** → +16503977712 is configured with webhook URL in Twilio console
-3. **Tailscale forwards** → Public HTTPS request → localhost:8084
-4. **Docker API receives** → FastAPI processes webhook, returns TwiML with WebSocket URL
-5. **Audio streams** → VAD + OpenAI Realtime process speech
-6. **You see logs** → `docker logs ct4-api-1` shows "Received Twilio voice webhook call_sid=CA..."
+**Key concept: The script simulates a USER calling INTO our system.**
 
-**If you DON'T see logs in step 6 → something in the pipeline is broken.**
+1. **Script calls Twilio API** → Twilio places call FROM +18643997362 (TestCaller) TO +19144449736 (webhook number)
+2. **Twilio receives call on webhook number** → +19144449736 is configured with webhook URL in Twilio console
+3. **Twilio hits our webhook** → Our API receives the call, looks up the CALLER (+18643997362)
+4. **Caller must have GROUP conversation** → TestCaller (person 175) has GROUP conversation 251
+5. **Tailscale forwards** → Public HTTPS request → localhost:8082
+6. **Audio streams** → VAD + Whisper transcription + GPT enrichment run
+7. **You see logs** → `docker logs ct1-api-1` shows "Received Twilio voice webhook call_sid=CA..."
+
+**Important distinctions:**
+- `--from` = WHO is calling (must be a Twilio-owned number with a person who has a GROUP conversation)
+- `--to` = The Twilio number with webhooks configured (our "phone line")
+
+**If you DON'T see logs in step 7 → something in the pipeline is broken.**
 
 **For detailed pipeline flow with all 12 steps, see the `run-voice-e2e` skill which includes a complete diagnostic table.**
 
@@ -148,32 +155,38 @@ for number in numbers:
 
 ## Place a Call (It's Simple)
 
-**⚠️ FIRST: Find your verified numbers using `twilio phone-numbers:list` (see Phone Number Verification above)**
-
-**Basic command - just place the call:**
+**First, ensure your .env has these variables set:**
 ```bash
-cd api && set -a && source .env && set +a && \
-PYTHONPATH=src uv run python src/scripts/twilio_place_call.py \
-  --from +18643997362 \
-  --to +16503977712 \
-  --duration-minutes 1 \
-  --audio-url https://github.com/srosro/personal-public/raw/refs/heads/main/lib3_mulaw.wav
+# In api/.env
+TWILIO_VOICE_PHONE_NUMBER=+19144449736  # Your webhook number (the number to call INTO)
+TWILIO_TEST_CALLER_NUMBER=+18643997362  # Test caller with GROUP conversation
 ```
 
-**⚠️ IMPORTANT:** Replace `--from` with YOUR verified number from `twilio phone-numbers:list`
+**Then just run:**
+```bash
+cd api && set -a && source .env && set +a && \
+PYTHONPATH=src uv run python src/scripts/twilio_place_call.py --duration-minutes 1
+```
 
-**That's it. If everything is configured correctly, you'll see logs in `docker logs ct4-api-1`.**
+**That's it. If everything is configured correctly, you'll see logs in `docker logs ct1-api-1`.**
 
-**Parameters:**
-- `--from` - **YOUR verified Twilio number** (REQUIRED - use `twilio phone-numbers:list` to find yours)
-- `--to` - Phone number to call (example: +16503977712 - replace with your test number)
-- `--duration-minutes` - How long to keep call active (default: 1 minute)
-- `--audio-url` - Test audio to play (MUST be .wav mulaw format for best results)
+**Parameters (all have env var defaults):**
+- `--from` - WHO is calling (env: `TWILIO_TEST_CALLER_NUMBER`). Must have GROUP conversation.
+- `--to` - Webhook number to call INTO (env: `TWILIO_VOICE_PHONE_NUMBER`)
+- `--duration-minutes` - How long to keep call active (default: 6 minutes, use 1 for quick tests)
+- `--audio` - Test audio to play (see below)
 
-**Audio URL Requirements:**
-- ✅ Use mulaw format: `lib3_mulaw.wav`
-- ❌ NOT static format: `lib3_converted.wav` (will sound like static)
-- 🔗 Recommended URL: `https://github.com/srosro/personal-public/raw/refs/heads/main/lib3_mulaw.wav`
+**Test Audio Options (use ONLY these for consistency):**
+- `--audio fight` (default) - Couple conflict audio, triggers interventions
+- `--audio neutral` - Silero VAD test audio, no conflict, tests basic pipeline
+
+```bash
+# Test with conflict audio (triggers interventions)
+PYTHONPATH=src uv run python src/scripts/twilio_place_call.py --audio fight --duration-minutes 1
+
+# Test basic pipeline without conflict
+PYTHONPATH=src uv run python src/scripts/twilio_place_call.py --audio neutral --duration-minutes 1
+```
 
 **Verify Interventions After Call:**
 After placing a call, verify that interventions were created by visiting the frontend:
@@ -268,11 +281,12 @@ find . -maxdepth 4 -name "twilio_place_call.py" -type f 2>/dev/null
 docker compose ps
 sudo tailscale funnel status  # Use tailscale-manager skill commands
 
-# Verify webhook
-docker compose exec api bash -lc 'set -a && source /app/.env && set +a && python -c "from twilio.rest import Client; import os; client = Client(os.environ[\"TWILIO_ACCOUNT_SID\"], os.environ[\"TWILIO_AUTH_TOKEN\"]); [print(f\"Voice URL: {n.voice_url}\") for n in client.incoming_phone_numbers.list(phone_number=\"+16503977712\")]"'
+# Verify webhook on your TWILIO_VOICE_PHONE_NUMBER
+docker compose exec api bash -lc 'set -a && source /app/.env && set +a && python -c "from twilio.rest import Client; import os; client = Client(os.environ[\"TWILIO_ACCOUNT_SID\"], os.environ[\"TWILIO_AUTH_TOKEN\"]); [print(f\"Voice URL: {n.voice_url}\") for n in client.incoming_phone_numbers.list(phone_number=os.environ.get(\"TWILIO_VOICE_PHONE_NUMBER\"))]"'
 
-# Place 1-minute call
-docker compose exec api bash -lc 'cd /app/src/scripts && set -a && source /app/.env && set +a && uv run python twilio_place_call.py --from +18643997362 --to +16503977712 --duration-minutes 1 --audio-url https://github.com/srosro/sample-audio/raw/refs/heads/main/lib3_mulaw.wav'
+# Place 1-minute call (uses env vars: TWILIO_TEST_CALLER_NUMBER -> TWILIO_VOICE_PHONE_NUMBER)
+cd api && set -a && source .env && set +a && \
+PYTHONPATH=src uv run python src/scripts/twilio_place_call.py --duration-minutes 1
 
 # Monitor
 docker compose logs -f api worker
@@ -285,6 +299,8 @@ In `api/.env`:
 ```bash
 TWILIO_ACCOUNT_SID=ACxxxxx
 TWILIO_AUTH_TOKEN=xxxxx
+TWILIO_VOICE_PHONE_NUMBER=+19144449736  # Webhook number to call INTO (each dev may have different)
+TWILIO_TEST_CALLER_NUMBER=+18643997362  # Test caller phone (must have GROUP conversation)
 OPENAI_API_KEY=sk-xxxxx
 LANGFUSE_PUBLIC_KEY=pk-xxxxx
 LANGFUSE_SECRET_KEY=sk-xxxxx
