@@ -713,32 +713,31 @@ else
     # Create settings.json with hook configuration and permissions
     cat > "$SETTINGS_JSON" << 'SETTINGS_EOF'
 {
-  "comment": "Modern Claude Code permissions format using permissions.deny with Bash(command:*) syntax per official docs. Blocks dangerous bash commands, git modification, and sudo access.",
   "permissions": {
     "deny": [
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(git pull:*)",
-      "Bash(git merge:*)",
-      "Bash(git reset:*)",
-      "Bash(git rebase:*)",
-      "Bash(git stash pop:*)",
-      "Bash(git cherry-pick:*)",
-      "Bash(git apply:*)",
-      "Bash(rm:*)",
-      "Bash(rm -rf:*)",
-      "Bash(sudo:*)"
-    ],
-    "allowGitWrite": false
-  },
-  "bashCommandApprovals": {
-    "requireApprovalPatterns": []
+      "Bash(git commit :*)",
+      "Bash(git push :*)",
+      "Bash(git pull :*)",
+      "Bash(git merge :*)",
+      "Bash(git reset :*)",
+      "Bash(git rebase :*)",
+      "Bash(git stash pop :*)",
+      "Bash(git cherry-pick :*)",
+      "Bash(git apply :*)",
+      "Bash(rm :*)",
+      "Bash(rm -rf :*)",
+      "Bash(sudo :*)"
+    ]
   },
   "hooks": {
     "SessionStart": [
       {
-        "type": "command",
-        "command": "python3 .claude/hooks/session_start.py"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session_start.py"
+          }
+        ]
       }
     ]
   }
