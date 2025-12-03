@@ -577,7 +577,7 @@ Is it production health? → Smoke Test (HTTP-only)
 - Use Alembic for schema migrations
 - All database access should handle async sessions properly
 - Worker processes manage database session lifecycle automatically
-- **Mutable JSON columns**: SQLAlchemy doesn't detect nested dict modifications. Either replace the entire dict (`obj.field = {...}`) or use `flag_modified(obj, "field")` after modifying nested values. See `api/src/data/custom_types.py` for examples.
+- **Mutable JSON columns**: Use `MutableJSONB` from `data.custom_types` for JSON columns. It automatically tracks nested dict/list modifications without requiring `flag_modified()`. See `api/src/data/README.md` for details.
 
 #### Migration Guidelines
 **NEVER generate or write migration files manually. Always provide the command for the user to run:**
