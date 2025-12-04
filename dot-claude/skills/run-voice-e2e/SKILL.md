@@ -444,6 +444,7 @@ Total events                           20
 | WebSocket crashes | Infrastructure issue | Check Tailscale funnel, Docker logs |
 | No transcriptions | OpenAI API issue | Check OPENAI_API_KEY, worker logs |
 | No metrics logged | Instrumentation off | Verify `instrument_operation` in code |
+| Frontend "Failed to fetch" / CORS error | API missing frontend origin in CORS | `echo 'CORS_EXTRA_ORIGINS=http://100.93.144.78:5171,http://100.93.144.78:5172' >> api/.env && docker compose restart api` |
 
 ## Quick Reference Commands
 
