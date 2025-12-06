@@ -373,6 +373,99 @@ Langfuse automatically handles versioning:
 - `staging` - Explicitly marks as staging version
 - `latest` - Automatically applied by Langfuse
 
+## 🚨 CRITICAL: Prompt Nesting / Composition
+
+**Langfuse prompts can include OTHER prompts using special syntax:**
+
+```
+@@@langfusePrompt:name=PROMPT_NAME|label=LABEL@@@
+```
+
+**Example from production `1on1` prompt (RAW version from UI):**
+```
+...your response here.
+
+------------------------
+
+# About you
+@@@langfusePrompt:name=about_codel|label=production@@@
+```
+
+This syntax is **resolved at runtime by Langfuse** - the `about_codel` prompt content gets injected into the parent prompt when it's fetched via API.
+
+### ⚠️ CRITICAL: Fetched Prompts Are COMPILED (Nesting Expanded)
+
+**🚨 THE API RETURNS COMPILED PROMPTS - NESTING IS INVISIBLE 🚨**
+
+When you fetch a prompt using `refresh_prompt_cache.py` or the Langfuse API:
+- ❌ You get the **COMPILED** version with nested prompts **expanded inline**
+- ❌ The `@@@langfusePrompt:...@@@` syntax is **NOT visible** in fetched content
+- ❌ You **CANNOT tell** which parts came from nested prompts vs the parent
+
+**Example - same prompt, two views:**
+
+| Source | What You See |
+|--------|--------------|
+| **Langfuse UI (raw)** | `# About you`<br>`@@@langfusePrompt:name=about_codel\|label=production@@@` |
+| **Fetched via API** | `# About you`<br>`Wren is a text-based AI coach that helps romantic partners...` (full expanded content) |
+
+**The fetched version looks like one big prompt, but part of it is actually a nested prompt!**
+
+### 🔐 MANDATORY: Get Raw Text from User Before Editing
+
+**Before editing ANY prompt, you MUST:**
+
+1. **ASK THE USER** to copy/paste the raw prompt text from the Langfuse UI
+2. **COMPARE** the raw text to the fetched/cached version
+3. **IDENTIFY** which sections are nested (present in raw as `@@@langfusePrompt:...@@@` but expanded in cached)
+4. **ONLY EDIT** the non-nested portions - preserve `@@@langfusePrompt:...@@@` syntax exactly
+
+**Why you CANNOT skip this:**
+- The cached/fetched file shows COMPILED content
+- You have NO WAY to know what's nested vs inline from the cached file alone
+- If you push the cached file back, you'll **replace nested references with hardcoded text**
+- This breaks the shared prompt system and creates maintenance nightmares
+
+### ⚠️ DANGER: Editing Prompts with Nesting
+
+**If you edit a prompt that contains `@@@langfusePrompt:...@@@` references:**
+- ❌ **DO NOT** replace the nesting syntax with expanded text
+- ❌ **DO NOT** assume you know where nesting boundaries are from the cached file
+- ❌ **DO NOT** edit without the user providing raw text from Langfuse UI
+- ✅ **ALWAYS** get raw text from user first
+- ✅ **ALWAYS** preserve the `@@@langfusePrompt:...@@@` syntax exactly
+- ✅ **ALWAYS** compare raw vs cached to identify nested sections
+
+### Workflow for Editing Prompts with Potential Nesting
+
+```
+1. User asks to edit a prompt (e.g., "1on1")
+   ↓
+2. STOP - Ask user: "Please copy/paste the raw prompt text from Langfuse UI
+   so I can see if it has nested prompts (the cached version expands them)"
+   ↓
+3. User pastes raw text
+   ↓
+4. Search for @@@langfusePrompt: in the raw text
+   ↓
+5a. NO MATCHES → Safe to edit entire prompt from cached file
+5b. MATCHES FOUND → Only edit sections BEFORE the @@@langfusePrompt: lines
+   ↓
+6. Create updated prompt preserving @@@langfusePrompt: syntax exactly
+   ↓
+7. Push to staging
+```
+
+### Common Nested Prompts
+
+Many prompts include these shared components via nesting:
+- `about_codel` - Information about Wren/Codel
+- `mindset_short` - Therapist mindset guidance
+- `language` - Language and tone guidance
+- `therapist_type` - Role definition
+
+**If you need to edit a nested prompt's content, edit THAT prompt separately.**
+
 ## Safety Checks
 
 The script includes multiple safety validations:
