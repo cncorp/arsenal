@@ -11,15 +11,18 @@ SAFETY FEATURES:
 - Provides URL to view result in Langfuse UI
 
 Usage:
-    python push_to_staging.py PROMPT_NAME [PROMPT_NAME2 ...] [--production]
+    python push_to_staging.py PROMPT_NAME [PROMPT_NAME2 ...] [--production] [-m "message"]
 
 Examples:
     # Push to STAGING (default - safe):
-    python push_to_staging.py message_enricher
-    python push_to_staging.py prompt1 prompt2 prompt3
+    python push_to_staging.py message_enricher -m "Reorder conditions: timeout first, bot response second"
+    python push_to_staging.py prompt1 prompt2 prompt3 -m "Add new detection rules"
+
+    # Push with a commit message:
+    python push_to_staging.py message_enricher -m "Reorder conditions: timeout first, bot response second"
 
     # Push to PRODUCTION (requires --production flag + confirmation):
-    python push_to_staging.py message_enricher --production
+    python push_to_staging.py message_enricher --production -m "Fix: prioritize timeout over bot response"
 
 Environment:
     Staging: LANGFUSE_PUBLIC_KEY_STAGING, LANGFUSE_SECRET_KEY_STAGING, LANGFUSE_HOST_STAGING
@@ -147,7 +150,7 @@ def read_prompt_from_cache(prompt_name: str, cache_dir: Path) -> dict | None:
 
 
 def push_prompt(
-    prompt_name: str, prompt_data: dict, public_key: str, secret_key: str, host: str, environment: str = "staging"
+    prompt_name: str, prompt_data: dict, public_key: str, secret_key: str, host: str, environment: str = "staging", commit_message: str | None = None
 ) -> dict | None:
     """
     Push prompt to Langfuse via API.
@@ -179,7 +182,7 @@ def push_prompt(
         "prompt": prompt_content,
         # "labels": [],  # NEVER set labels - human must assign in Langfuse UI
         "tags": ["pushed-from-cli"],
-        "commitMessage": f"Updated from CLI at {datetime.now().isoformat()}",
+        "commitMessage": commit_message if commit_message else f"Updated from CLI at {datetime.now().isoformat()}",
     }
 
     # Add config if present
@@ -244,8 +247,26 @@ def main() -> None:
     # Check for production flag
     use_production = "--production" in sys.argv
 
-    # Remove flags from arguments to get prompt names
-    prompt_names = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
+    # Parse -m/--message flag
+    commit_message = None
+    args = sys.argv[1:]
+    for i, arg in enumerate(args):
+        if arg in ("-m", "--message") and i + 1 < len(args):
+            commit_message = args[i + 1]
+            break
+
+    # Remove flags and their values from arguments to get prompt names
+    prompt_names = []
+    skip_next = False
+    for arg in args:
+        if skip_next:
+            skip_next = False
+            continue
+        if arg in ("-m", "--message"):
+            skip_next = True
+            continue
+        if not arg.startswith("--"):
+            prompt_names.append(arg)
 
     if not prompt_names:
         print("❌ ERROR: No prompt names provided")
@@ -325,7 +346,7 @@ def main() -> None:
             continue
 
         # Push to environment (staging or production)
-        result = push_prompt(prompt_name, prompt_data, public_key, secret_key, host, environment)
+        result = push_prompt(prompt_name, prompt_data, public_key, secret_key, host, environment, commit_message)
         if result:
             success_count += 1
 

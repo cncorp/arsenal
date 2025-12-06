@@ -80,6 +80,15 @@ description: Push prompt updates to Langfuse (staging or production). Defaults t
 
 **This is NOT optional - it's a critical safety feature to prevent untested prompts from being used.**
 
+## 📝 MANDATORY: Commit Messages Required
+
+**Every push MUST include `-m "message"` (under 8 words).**
+
+```bash
+# Good: -m "Reorder: timeout first, bot response second"
+# Bad:  -m "Updated prompt"  # too vague
+```
+
 ## When to Use This Skill
 
 **Use for STAGING when:**
@@ -197,14 +206,14 @@ Pushes prompts from local cached files to Langfuse (staging or production).
 # Navigate to skill directory
 cd .claude/skills/update-langfuse-staging-server-prompt
 
-# Push to STAGING (default - no flag needed)
-uv run python push_to_staging.py PROMPT_NAME
+# Push to STAGING (always include -m with <8 word summary)
+uv run python push_to_staging.py PROMPT_NAME -m "Brief description of change"
 
 # Push multiple prompts to staging
-uv run python push_to_staging.py prompt1 prompt2 prompt3
+uv run python push_to_staging.py prompt1 prompt2 -m "Add new detection rules"
 
 # Push to PRODUCTION (requires --production flag + confirmation)
-uv run python push_to_staging.py PROMPT_NAME --production
+uv run python push_to_staging.py PROMPT_NAME --production -m "Fix bot response priority"
 
 # View help
 uv run python push_to_staging.py --help
@@ -407,13 +416,13 @@ The script includes multiple safety validations:
 # Add LANGFUSE_PUBLIC_KEY_STAGING, LANGFUSE_SECRET_KEY_STAGING, LANGFUSE_HOST_STAGING to arsenal/.env
 
 # Navigate to skill directory
-cd .claude/skills/update-staging-prompt
+cd .claude/skills/update-langfuse-staging-server-prompt
 
-# Push single prompt
-uv run python push_to_staging.py PROMPT_NAME
+# Push single prompt (ALWAYS include -m with <8 word summary!)
+uv run python push_to_staging.py PROMPT_NAME -m "Short description of change"
 
-# Push multiple prompts
-uv run python push_to_staging.py prompt1 prompt2 prompt3
+# Push to production
+uv run python push_to_staging.py PROMPT_NAME --production -m "Fix condition priority order"
 
 # View result
 # Script provides Langfuse UI URL to verify the update
