@@ -134,8 +134,20 @@ def read_prompt_from_cache(prompt_name: str, cache_dir: Path) -> dict | None:
     with open(prompt_file) as f:
         lines = f.readlines()
 
-    # Skip header lines that start with #
-    prompt_lines = [line for line in lines if not line.strip().startswith("#")]
+    # Skip ONLY the file header comments at the top (e.g., "# prompt_name (production)", "# Version: X")
+    # But PRESERVE markdown headers like "### RULES" or "#### 1. **fact**"
+    prompt_lines = []
+    in_header = True
+    for line in lines:
+        stripped = line.strip()
+        # File header comments start with "# " (single #) and are at the top
+        # Markdown headers start with "##" or more
+        if in_header and stripped.startswith("#") and not stripped.startswith("##"):
+            # Skip file header comments (single # at start of file)
+            continue
+        else:
+            in_header = False
+            prompt_lines.append(line)
     prompt_text = "".join(prompt_lines).strip()
 
     result = {"prompt": prompt_text}
