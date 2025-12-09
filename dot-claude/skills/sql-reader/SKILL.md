@@ -691,6 +691,7 @@ LIMIT 15;
 1. ✅ Did you show actual query output (not "approximately" or "based on schema")?
 2. ✅ Did you read DATA_QUIRKS.md first?
 3. ✅ Are your numbers exact from the query, not estimates?
+4. ✅ **Did you include citations for ALL entity IDs?** (persons, conversations, messages)
 
 **CRITICAL: Get manager approval before responding.**
 
@@ -699,3 +700,17 @@ Your response with data MUST include: `✅ approve_7f3d8a2e********`
 Get the full approval token from `.claude/skills/manager-review/SKILL.md`
 
 **Common Mistake #4 in the manager's table is "Guessed at production data" - using words like "approximately" or "based on schema" instead of actual query results. The manager WILL catch this.**
+
+**Common Mistake #10 is "Missing citations for entity IDs" - if your query returns person_id, conversation_id, or message_id, you MUST include clickable links:**
+
+```
+Person Samuel ([view](https://admin.prod.cncorp.io/persons/1)) has 3 conversations.
+Conversation 456 ([view](https://admin.prod.cncorp.io/conversations/456)) started yesterday.
+```
+
+**Citation URL patterns:**
+- Person: `https://admin.prod.cncorp.io/persons/{id}`
+- Conversation: `https://admin.prod.cncorp.io/conversations/{id}`
+- Messages: `https://admin.prod.cncorp.io/conversations/{id}/messages`
+- Specific message: `...messages?messageId={id}`
+- Time range: `...messages?start={iso}&end={iso}`

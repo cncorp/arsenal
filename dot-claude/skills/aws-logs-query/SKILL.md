@@ -1,6 +1,6 @@
 ---
 name: aws-logs-query
-description: Query AWS CloudWatch logs for staging and production environments. Use for debugging errors, investigating incidents, or monitoring application behavior. PRIMARY - aws logs tail "/ecs/codel-staging" --follow --profile codel --format short | grep -iE "error|exception"
+description: Query AWS CloudWatch logs for staging and production environments. Use for debugging errors, investigating incidents, or monitoring application behavior. PRIMARY - aws logs tail "/ecs/codel-staging" --follow --format short | grep -iE "error|exception"
 ---
 
 # AWS Logs Query Skill
@@ -20,19 +20,36 @@ Use this skill when you need to:
 ## Prerequisites
 
 - AWS CLI installed (`brew install awscli` or `pip install awscli`)
-- AWS profile configured with credentials (default: `codel`)
+- AWS credentials available (via profile, environment, or ECS task role)
 - Access to `/ecs/codel-staging` and `/ecs/codel-prod` log groups
 
 ## Configuration
 
-The skill automatically loads AWS profile settings from `arsenal/.env`:
-
+**Local development:** Set `AWS_PROFILE` environment variable to your profile name:
 ```bash
-# In arsenal/.env
-AWS_PROFILE=codel  # Change this to use a different AWS profile
+export AWS_PROFILE=codel
 ```
 
-If `arsenal/.env` doesn't exist or `AWS_PROFILE` is not set, it defaults to `codel`.
+**ECS containers:** No configuration needed — uses the task role automatically.
+
+## Profile Handling
+
+**IMPORTANT:** When running AWS CLI commands:
+- If `AWS_PROFILE` env var is set → add `--profile $AWS_PROFILE` to commands
+- If `AWS_PROFILE` is not set → omit `--profile` flag (uses default credential chain)
+
+```bash
+# Check if profile is set and build the profile flag
+PROFILE_FLAG=""
+if [ -n "$AWS_PROFILE" ]; then
+  PROFILE_FLAG="--profile $AWS_PROFILE"
+fi
+
+# Then use in commands:
+aws logs tail "/ecs/codel-staging" --follow $PROFILE_FLAG --format short
+```
+
+For simplicity, all examples below omit `--profile`. Add `--profile $AWS_PROFILE` if running locally with a named profile.
 
 ## ⚡ Choosing Your Tool
 
@@ -69,7 +86,7 @@ START_TIME=$((END_TIME - 604800))  # 7 days in seconds
 # Start query
 QUERY_ID=$(aws logs start-query \
   --log-group-name "/ecs/codel-prod" \
-  --profile codel \
+   \
   --start-time "$START_TIME" \
   --end-time "$END_TIME" \
   --query-string 'fields @timestamp, @message | filter @message like /your_pattern_here/ | sort @timestamp desc | limit 100' \
@@ -79,7 +96,7 @@ QUERY_ID=$(aws logs start-query \
 sleep 5
 
 # Get results
-aws logs get-query-results --query-id "$QUERY_ID" --profile codel --output json
+aws logs get-query-results --query-id "$QUERY_ID" --output json
 ```
 
 ### Real-World Example: Search Past Week for Specific Error
@@ -96,14 +113,14 @@ QUERY='fields @timestamp, @message
 
 QUERY_ID=$(aws logs start-query \
   --log-group-name "/ecs/codel-prod" \
-  --profile codel \
+   \
   --start-time "$START_TIME" \
   --end-time "$END_TIME" \
   --query-string "$QUERY" \
   --output text --query 'queryId')
 
 sleep 5
-aws logs get-query-results --query-id "$QUERY_ID" --profile codel --output json
+aws logs get-query-results --query-id "$QUERY_ID" --output json
 ```
 
 ### Common CloudWatch Insights Queries
@@ -158,23 +175,23 @@ Use `tail` for real-time monitoring and quick checks of recent logs.
 
 ```bash
 # Watch staging logs as they happen
-aws logs tail "/ecs/codel-staging" --follow --profile codel --format short
+aws logs tail "/ecs/codel-staging" --follow --format short
 
 # Watch production logs
-aws logs tail "/ecs/codel-prod" --follow --profile codel --format short
+aws logs tail "/ecs/codel-prod" --follow --format short
 ```
 
 ### Quick Recent Searches
 
 ```bash
 # Last 15 minutes only
-aws logs tail "/ecs/codel-staging" --since 15m --profile codel --format short
+aws logs tail "/ecs/codel-staging" --since 15m --format short
 
 # Find errors in last 30 min
-aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | grep -iE "error|exception|failed"
+aws logs tail "/ecs/codel-staging" --since 30m --format short | grep -iE "error|exception|failed"
 
 # Get full error context (10 lines before/after)
-aws logs tail "/ecs/codel-staging" --since 15m --profile codel --format short | grep -iE -B 10 -A 10 "ValidationError"
+aws logs tail "/ecs/codel-staging" --since 15m --format short | grep -iE -B 10 -A 10 "ValidationError"
 ```
 
 ## Available Log Groups
@@ -234,55 +251,55 @@ PROD_METABASE="/ecs/codel-prod-metabase"
 **Main app logs** (where Evolution webhooks are processed):
 ```bash
 # Find recent Evolution validation errors in main app
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -i "evolution" | grep -i "error"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -i "evolution" | grep -i "error"
 
 # Get full traceback for Evolution issues
-aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | grep -B 20 -A 5 "EvolutionInstance"
+aws logs tail "/ecs/codel-staging" --since 30m --format short | grep -B 20 -A 5 "EvolutionInstance"
 
 # Watch Evolution webhooks being processed
-aws logs tail "/ecs/codel-staging" --follow --profile codel --format short | grep -i "evolution.*webhook"
+aws logs tail "/ecs/codel-staging" --follow --format short | grep -i "evolution.*webhook"
 ```
 
 **Evolution API logs** (Evolution service itself):
 ```bash
 # Watch Evolution API directly
-aws logs tail "/ecs/codel-staging-evolution" --follow --profile codel --format short
+aws logs tail "/ecs/codel-staging-evolution" --follow --format short
 
 # Find Evolution API errors
-aws logs tail "/ecs/codel-prod-evolution" --since 1h --profile codel --format short | grep -iE "error|exception|fail"
+aws logs tail "/ecs/codel-prod-evolution" --since 1h --format short | grep -iE "error|exception|fail"
 
 # Check Evolution instance disconnections
-aws logs tail "/ecs/codel-prod-evolution" --since 30m --profile codel --format short | grep -i "disconnect"
+aws logs tail "/ecs/codel-prod-evolution" --since 30m --format short | grep -i "disconnect"
 
 # Monitor Evolution health checks
-aws logs tail "/ecs/codel-staging-evolution" --since 15m --profile codel --format short | grep -i "health"
+aws logs tail "/ecs/codel-staging-evolution" --since 15m --format short | grep -i "health"
 ```
 
 ### Find Specific Error Types
 ```bash
 # Pydantic validation errors
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -i "ValidationError"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -i "ValidationError"
 
 # Database errors
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -iE "sqlalchemy|database|postgres"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -iE "sqlalchemy|database|postgres"
 
 # OpenAI/LLM errors
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -iE "openai|anthropic|llm"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -iE "openai|anthropic|llm"
 
 # Worker job failures
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -iE "job.*failed|exception raised while executing"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -iE "job.*failed|exception raised while executing"
 ```
 
 ### Monitor Specific Services
 ```bash
 # API logs only (look for api/ prefix in log stream)
-aws logs tail "/ecs/codel-staging" --follow --profile codel --format short | grep "api/api/"
+aws logs tail "/ecs/codel-staging" --follow --format short | grep "api/api/"
 
 # Worker logs only
-aws logs tail "/ecs/codel-staging" --follow --profile codel --format short | grep "worker/worker/"
+aws logs tail "/ecs/codel-staging" --follow --format short | grep "worker/worker/"
 
 # Voice service logs
-aws logs tail "/ecs/codel-staging" --follow --profile codel --format short | grep "voice/voice/"
+aws logs tail "/ecs/codel-staging" --follow --format short | grep "voice/voice/"
 ```
 
 
@@ -314,7 +331,7 @@ admin-api/admin-api/348f846767d34f90913d145b9533eda8
 # See which tasks are currently logging
 aws logs describe-log-streams \
   --log-group-name "/ecs/codel-staging" \
-  --profile codel \
+   \
   --order-by LastEventTime \
   --descending \
   --max-items 10
@@ -325,37 +342,37 @@ aws logs describe-log-streams \
 ### When Tests Fail
 ```bash
 # 1. Check recent errors
-aws logs tail "/ecs/codel-staging" --since 15m --profile codel --format short | grep -iE "error|exception|failed"
+aws logs tail "/ecs/codel-staging" --since 15m --format short | grep -iE "error|exception|failed"
 
 # 2. Look for specific test failures
-aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | grep -i "test"
+aws logs tail "/ecs/codel-staging" --since 30m --format short | grep -i "test"
 
 # 3. Check worker job processing
-aws logs tail "/ecs/codel-staging" --since 15m --profile codel --format short | grep -i "worker"
+aws logs tail "/ecs/codel-staging" --since 15m --format short | grep -i "worker"
 ```
 
 ### When Evolution Errors Occur
 ```bash
 # 1. Find the error message
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -i "evolution.*error"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -i "evolution.*error"
 
 # 2. Get full context (20 lines before/after)
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -iE -B 20 -A 10 "EvolutionInstance|evolution.*validation"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -iE -B 20 -A 10 "EvolutionInstance|evolution.*validation"
 
 # 3. Check webhook processing
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -i "evolution.*webhook"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -i "evolution.*webhook"
 ```
 
 ### When Messages Aren't Sending
 ```bash
 # 1. Check message sending errors
-aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | grep -iE "send.*message|messaging"
+aws logs tail "/ecs/codel-staging" --since 30m --format short | grep -iE "send.*message|messaging"
 
 # 2. Look for provider errors
-aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | grep -iE "evolution|linq|sendblue"
+aws logs tail "/ecs/codel-staging" --since 30m --format short | grep -iE "evolution|linq|sendblue"
 
 # 3. Check for API errors
-aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | grep -E "(400|401|403|404|500|502|503)"
+aws logs tail "/ecs/codel-staging" --since 30m --format short | grep -E "(400|401|403|404|500|502|503)"
 ```
 
 ## Common Error Patterns
@@ -389,28 +406,28 @@ aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | 
 ### Save Logs for Analysis
 ```bash
 # Save last hour of logs to file
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short > staging-logs.txt
+aws logs tail "/ecs/codel-staging" --since 1h --format short > staging-logs.txt
 
 # Save only errors
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -iE "error|exception" > staging-errors.txt
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -iE "error|exception" > staging-errors.txt
 ```
 
 ### Count Error Occurrences
 ```bash
 # Count how many validation errors
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -c "ValidationError"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -c "ValidationError"
 
 # Count errors by type
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -iE "error|exception" | sort | uniq -c | sort -rn
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -iE "error|exception" | sort | uniq -c | sort -rn
 ```
 
 ### Follow Specific Flow
 ```bash
 # Track a specific webhook through the system
-aws logs tail "/ecs/codel-staging" --follow --profile codel --format short | grep "webhook_id_here"
+aws logs tail "/ecs/codel-staging" --follow --format short | grep "webhook_id_here"
 
 # Follow a user's messages
-aws logs tail "/ecs/codel-staging" --follow --profile codel --format short | grep "person_id.*123"
+aws logs tail "/ecs/codel-staging" --follow --format short | grep "person_id.*123"
 ```
 
 ## Integration with Claude Code
@@ -431,13 +448,13 @@ START_TIME=$((END_TIME - 604800))  # 7 days
 
 # 2. Build and run query
 QUERY='fields @timestamp, @message | filter @message like /ValidationError/ | sort @timestamp desc | limit 100'
-QUERY_ID=$(aws logs start-query --log-group-name "/ecs/codel-prod" --profile codel \
+QUERY_ID=$(aws logs start-query --log-group-name "/ecs/codel-prod"  \
   --start-time "$START_TIME" --end-time "$END_TIME" --query-string "$QUERY" \
   --output text --query 'queryId')
 
 # 3. Wait and get results
 sleep 5
-aws logs get-query-results --query-id "$QUERY_ID" --profile codel --output json
+aws logs get-query-results --query-id "$QUERY_ID" --output json
 
 # 4. Report: "Found 47 validation errors in the past 7 days, first occurred on Nov 7..."
 ```
@@ -451,10 +468,10 @@ aws logs get-query-results --query-id "$QUERY_ID" --profile codel --output json
 **Example workflow for recent errors:**
 ```bash
 # 1. Check last 15 minutes
-aws logs tail "/ecs/codel-staging" --since 15m --profile codel --format short | grep -i "error"
+aws logs tail "/ecs/codel-staging" --since 15m --format short | grep -i "error"
 
 # 2. Get full context
-aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | grep -B 20 -A 5 "EvolutionInstance"
+aws logs tail "/ecs/codel-staging" --since 30m --format short | grep -B 20 -A 5 "EvolutionInstance"
 
 # 3. Report: "Found 2 Evolution errors in the last 15 minutes..."
 ```
@@ -463,7 +480,7 @@ aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | 
 
 ### "The specified log group does not exist"
 - Verify log group name (should be `/ecs/codel-staging` or `/ecs/codel-prod`)
-- Check you're using `--profile codel`
+- Check you're using ``
 - Confirm AWS credentials are configured
 
 ### "Invalid --since value"
@@ -472,7 +489,7 @@ aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | 
 
 ### No output when tailing
 - Try expanding time window: `--since 1h` or `--since 6h`
-- Check log streams exist: `aws logs describe-log-streams --log-group-name "/ecs/codel-staging" --profile codel --max-items 5`
+- Check log streams exist: `aws logs describe-log-streams --log-group-name "/ecs/codel-staging" --max-items 5`
 - Verify services are running and generating logs
 
 ### Query times out
@@ -484,22 +501,22 @@ aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | 
 
 ```bash
 # Watch logs live
-aws logs tail "/ecs/codel-staging" --follow --profile codel --format short
+aws logs tail "/ecs/codel-staging" --follow --format short
 
 # Last 15 minutes
-aws logs tail "/ecs/codel-staging" --since 15m --profile codel --format short
+aws logs tail "/ecs/codel-staging" --since 15m --format short
 
 # Find errors
-aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | grep -iE "error|exception"
+aws logs tail "/ecs/codel-staging" --since 30m --format short | grep -iE "error|exception"
 
 # Evolution issues
-aws logs tail "/ecs/codel-staging" --since 1h --profile codel --format short | grep -i "evolution" | grep -i "error"
+aws logs tail "/ecs/codel-staging" --since 1h --format short | grep -i "evolution" | grep -i "error"
 
 # Get context around errors
-aws logs tail "/ecs/codel-staging" --since 30m --profile codel --format short | grep -B 20 -A 10 "ValidationError"
+aws logs tail "/ecs/codel-staging" --since 30m --format short | grep -B 20 -A 10 "ValidationError"
 
 # Production (same commands, different log group)
-aws logs tail "/ecs/codel-prod" --since 15m --profile codel --format short
+aws logs tail "/ecs/codel-prod" --since 15m --format short
 ```
 
 ## Best Practices
@@ -514,5 +531,5 @@ aws logs tail "/ecs/codel-prod" --since 15m --profile codel --format short
 ❌ **Don't:**
 - Query production unless investigating live issues
 - Use very large time windows (> 6h) without filters
-- Run queries without `--profile codel`
+- Run queries without ``
 - Forget to use `--format short` for readable output

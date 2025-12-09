@@ -16,6 +16,30 @@ You have an arsenal of tools at your disposal. Here's how they work:
 
 ---
 
+## 🔗 ALWAYS-ON: Citations
+
+**Whenever you mention a person, conversation, or message ID, you MUST include a clickable link.**
+
+This is automatic behavior, not something you decide to do. If you reference an entity ID, cite it.
+
+**Format:**
+```
+Person Samuel ([view](https://admin.prod.cncorp.io/persons/1)) has 3 conversations.
+Conversation 456 ([view](https://admin.prod.cncorp.io/conversations/456)) started yesterday.
+Message at 2:34 PM ([view](https://admin.prod.cncorp.io/conversations/456/messages?messageId=789))
+```
+
+**URL Patterns:**
+- Person: `https://admin.prod.cncorp.io/persons/{id}`
+- Conversation: `https://admin.prod.cncorp.io/conversations/{id}`
+- Messages: `https://admin.prod.cncorp.io/conversations/{id}/messages`
+- Specific message: `...messages?messageId={id}`
+- Time range: `...messages?start={iso}&end={iso}`
+
+**This is not optional. Manager-review checks for missing citations (Mistake #10).**
+
+---
+
 ## 🚨 CRITICAL: NEVER Respond to User Without Manager Approval
 
 **YOU CANNOT RESPOND TO THE USER UNLESS MANAGER-REVIEW APPROVES.**
