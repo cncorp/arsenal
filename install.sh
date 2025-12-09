@@ -7,6 +7,22 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Non-interactive mode (for Docker builds, CI, etc.)
+# Usage: ./install.sh --non-interactive or ./install.sh -y
+NONINTERACTIVE=false
+for arg in "$@"; do
+    case $arg in
+        -y|--yes|--non-interactive)
+            NONINTERACTIVE=true
+            shift
+            ;;
+    esac
+done
+
+if [[ "$NONINTERACTIVE" == "true" ]]; then
+    echo -e "${YELLOW}Running in non-interactive mode (skipping all prompts)${NC}"
+fi
+
 # Cross-platform sed in-place function (macOS requires -i '', Linux requires -i)
 sed_inplace() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -185,8 +201,12 @@ if [ -f "$SUPERPOWERS_ENV" ]; then
     else
         if [ -n "$PARENT_API_KEY" ]; then
             echo -e "${YELLOW}  ! OPENAI_API_KEY not configured${NC}"
-            read -p "  Copy OPENAI_API_KEY from parent project? [y/N]: " -n 1 -r
-            echo
+            if [[ "$NONINTERACTIVE" == "true" ]]; then
+                REPLY="n"
+            else
+                read -p "  Copy OPENAI_API_KEY from parent project? [y/N]: " -n 1 -r
+                echo
+            fi
             if [[ $REPLY =~ ^[Yy]$ ]]; then
                 sed_inplace "s|OPENAI_API_KEY=.*|OPENAI_API_KEY=$PARENT_API_KEY|" "$SUPERPOWERS_ENV"
                 echo -e "${GREEN}    ✓ Copied OPENAI_API_KEY${NC}"
@@ -221,8 +241,12 @@ if [ -f "$SUPERPOWERS_ENV" ]; then
             echo "    Public Key: ${PARENT_LANGFUSE_PUBLIC_KEY:0:15}..."
             echo "    Secret Key: ${PARENT_LANGFUSE_SECRET_KEY:0:15}..."
             echo ""
-            read -p "  Are these STAGING or PRODUCTION credentials? [s/p/skip]: " -n 1 -r
-            echo
+            if [[ "$NONINTERACTIVE" == "true" ]]; then
+                REPLY="x"  # skip
+            else
+                read -p "  Are these STAGING or PRODUCTION credentials? [s/p/skip]: " -n 1 -r
+                echo
+            fi
 
             if [[ $REPLY =~ ^[Ss]$ ]]; then
                 # Save as staging credentials
@@ -296,8 +320,12 @@ else
         sed_inplace "s|OPENAI_API_KEY=.*|OPENAI_API_KEY=$OPENAI_API_KEY|" "$SUPERPOWERS_ENV"
         echo -e "${GREEN}  ✓ Set OPENAI_API_KEY${NC}"
     elif [ -n "$PARENT_API_KEY" ]; then
-        read -p "  Copy OPENAI_API_KEY from parent project? [y/N]: " -n 1 -r
-        echo
+        if [[ "$NONINTERACTIVE" == "true" ]]; then
+            REPLY="n"
+        else
+            read -p "  Copy OPENAI_API_KEY from parent project? [y/N]: " -n 1 -r
+            echo
+        fi
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             sed_inplace "s|OPENAI_API_KEY=.*|OPENAI_API_KEY=$PARENT_API_KEY|" "$SUPERPOWERS_ENV"
             echo -e "${GREEN}  ✓ Copied OPENAI_API_KEY${NC}"
@@ -316,8 +344,12 @@ else
         echo "    Public Key: ${PARENT_LANGFUSE_PUBLIC_KEY:0:15}..."
         echo "    Secret Key: ${PARENT_LANGFUSE_SECRET_KEY:0:15}..."
         echo ""
-        read -p "  Are these STAGING or PRODUCTION credentials? [s/p/skip]: " -n 1 -r
-        echo
+        if [[ "$NONINTERACTIVE" == "true" ]]; then
+            REPLY="x"  # skip
+        else
+            read -p "  Are these STAGING or PRODUCTION credentials? [s/p/skip]: " -n 1 -r
+            echo
+        fi
 
         if [[ $REPLY =~ ^[Ss]$ ]]; then
             # Save as staging credentials
@@ -380,8 +412,12 @@ if [ -d "$CODE_SEARCH_DIR" ]; then
                 echo "    Edit arsenal/.env to add your key, then run:"
                 echo "    cd arsenal && docker-compose up -d"
             else
-                read -p "  Start semantic search containers? [y/N]: " -n 1 -r
-                echo
+                if [[ "$NONINTERACTIVE" == "true" ]]; then
+                    REPLY="n"
+                else
+                    read -p "  Start semantic search containers? [y/N]: " -n 1 -r
+                    echo
+                fi
                 if [[ $REPLY =~ ^[Yy]$ ]]; then
                     echo "  Starting semantic search containers..."
                     cd "$SUPERPOWERS_DIR"
@@ -492,8 +528,12 @@ if ! command -v twilio &> /dev/null; then
 
     # Twilio CLI requires Node.js/npm
     if command -v npm &> /dev/null; then
-        read -p "  Install Twilio CLI globally with npm? [y/N]: " -n 1 -r
-        echo
+        if [[ "$NONINTERACTIVE" == "true" ]]; then
+            REPLY="n"
+        else
+            read -p "  Install Twilio CLI globally with npm? [y/N]: " -n 1 -r
+            echo
+        fi
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             echo "  Installing Twilio CLI..."
             npm install -g twilio-cli
@@ -554,8 +594,12 @@ else
         fi
 
         if [ -n "$TWILIO_ACCOUNT_SID" ] && [ -n "$TWILIO_AUTH_TOKEN" ]; then
-            read -p "  Configure Twilio CLI with credentials from api/.env? [y/N]: " -n 1 -r
-            echo
+            if [[ "$NONINTERACTIVE" == "true" ]]; then
+                REPLY="n"
+            else
+                read -p "  Configure Twilio CLI with credentials from api/.env? [y/N]: " -n 1 -r
+                echo
+            fi
             if [[ $REPLY =~ ^[Yy]$ ]]; then
                 twilio profiles:create default --account-sid "$TWILIO_ACCOUNT_SID" --auth-token "$TWILIO_AUTH_TOKEN" 2>/dev/null || \
                 twilio login --account-sid "$TWILIO_ACCOUNT_SID" --auth-token "$TWILIO_AUTH_TOKEN" 2>/dev/null
@@ -576,8 +620,12 @@ if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
     echo -e "${YELLOW}Missing packages: ${MISSING_PACKAGES[*]}${NC}"
 
     if [[ "$PKG_MANAGER" == "apt-get" ]]; then
-        read -p "  Install missing packages with apt-get? (requires sudo) [y/N]: " -n 1 -r
-        echo
+        if [[ "$NONINTERACTIVE" == "true" ]]; then
+            REPLY="n"
+        else
+            read -p "  Install missing packages with apt-get? (requires sudo) [y/N]: " -n 1 -r
+            echo
+        fi
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             echo "  Installing packages..."
             sudo apt-get update -qq
@@ -592,8 +640,12 @@ if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
             echo "  To install manually: sudo apt-get install ${MISSING_PACKAGES[*]}"
         fi
     elif [[ "$PKG_MANAGER" == "brew" ]]; then
-        read -p "  Install missing packages with Homebrew? [y/N]: " -n 1 -r
-        echo
+        if [[ "$NONINTERACTIVE" == "true" ]]; then
+            REPLY="n"
+        else
+            read -p "  Install missing packages with Homebrew? [y/N]: " -n 1 -r
+            echo
+        fi
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             echo "  Installing packages..."
             brew install "${MISSING_PACKAGES[@]}"

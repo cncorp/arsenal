@@ -132,6 +132,7 @@ User asks question → You do work → Prepare answer (DO NOT SEND TO USER) →
 - **langfuse-prompt-and-trace-debugger** — MANDATORY when KeyError or schema errors occur. Views prompts and debugs traces from Langfuse servers (staging or production)
 - **update-langfuse-staging-server-prompt** — Push prompt updates to Langfuse STAGING SERVER ONLY (langfuse.staging.cncorp.io). Does NOT sync to production server
 - **sql-reader** — Query production PostgreSQL database with read-only credentials (investigation, debugging)
+- **citations** — 🔗 ALWAYS include clickable links when referencing persons, conversations, or messages
 - **playwright-tester** — Browser automation and screenshots
 - **twilio-test-caller** — Test voice call flows
 
