@@ -263,6 +263,44 @@ uv run python fetch_error_traces.py --help
 - Find traces related to specific failure modes
 - Debug issues reported by users
 
+### 5. extract_compiled_prompt.py - Quick Trace Inspection
+
+Extract compiled prompt from a Langfuse trace. **⚠️ May be truncated for large prompts (~10KB limit).**
+
+```bash
+cd .claude/skills/langfuse-prompt-and-trace-debugger
+
+# Basic usage
+uv run python extract_compiled_prompt.py --trace-id TRACE_ID --production
+
+# Save to file
+uv run python extract_compiled_prompt.py --trace-id TRACE_ID --production --output docs/debug/prompt.md
+```
+
+### 6. reconstruct_compiled_prompt.py - Full Prompt (No Truncation)
+
+Reconstructs **full** prompts from database + Langfuse template. Bypasses API truncation limits.
+
+**⚠️ Lives in CODEBASE at `api/src/cli/` (not arsenal) - uses production formatters.**
+
+```bash
+# Basic usage (from project root)
+docker compose exec api python src/cli/reconstruct_compiled_prompt.py --message-id 90404
+
+# A/B test with specific version
+docker compose exec api python src/cli/reconstruct_compiled_prompt.py --message-id 90404 --version 99
+
+# Save to file
+docker compose exec api python src/cli/reconstruct_compiled_prompt.py --message-id 90404 --output docs/debug/full_prompt.md
+```
+
+**When to use which:**
+| Use Case | Script |
+|----------|--------|
+| Quick trace inspection | `extract_compiled_prompt.py` (arsenal) |
+| Full prompt with history | `reconstruct_compiled_prompt.py` (codebase) |
+| A/B testing versions | `reconstruct_compiled_prompt.py --version N` |
+
 ## Understanding Prompt Configs
 
 ### Prompt Text File
@@ -351,6 +389,12 @@ uv run python fetch_error_traces.py --days 7
 
 # Find error traces in production
 uv run python fetch_error_traces.py --env production
+
+# Extract compiled prompt from trace (may truncate large prompts)
+uv run python extract_compiled_prompt.py --trace-id TRACE_ID --production
+
+# Full prompt reconstruction (from codebase, not arsenal)
+docker compose exec api python src/cli/reconstruct_compiled_prompt.py --message-id MESSAGE_ID
 ```
 
 ## Important Notes
