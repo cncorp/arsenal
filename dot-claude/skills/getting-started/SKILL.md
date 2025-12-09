@@ -735,13 +735,13 @@ Where: `.claude/skills/aws-logs-query/SKILL.md`
 - ❌ Using Docker logs for production debugging (use AWS logs instead)
 - ❌ Not checking both main app AND Evolution API logs for Evolution issues
 
-### semantic-code-search
+### semantic-search
 **Use for finding code by meaning**
 
 When to use: Need to find code semantically, not by text matching
-Where: `.claude/skills/semantic-code-search/SKILL.md`
+Where: `.claude/skills/semantic-search/SKILL.md`
 
-**Example queries where you MUST run semantic-code-search:** "Where do we handle user authentication?" • "Find code that processes webhook messages" • "Show me functions that query the database"
+**Example queries where you MUST run semantic-search:** "Where do we handle user authentication?" • "Find code that processes webhook messages" • "Show me functions that query the database"
 
 ### tailscale-manager
 **Use for managing Tailscale funnels**

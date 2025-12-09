@@ -764,6 +764,81 @@ When using this skill:
 ### "Division by zero error"
 - Should be handled by CASE statements, but if it occurs, check for negative_count = 0
 
+## Example SQL: A/B Test - Intervention Impact on Affect Ratio
+
+Compare Gottman affect ratios (positive/negative) on days with interventions vs withheld days.
+
+**Method:** Per-user ratios → calculate delta → average across users
+
+```sql
+-- A/B Test: Affect ratio delta (SENT days vs WITHHELD days)
+WITH withholding_users AS (
+    SELECT p.id as person_id, p.name FROM persons p
+    JOIN messages_preferences mp ON mp.person_id = p.id
+    WHERE mp.withhold_interventions_enabled = true
+),
+user_conversations AS (
+    SELECT DISTINCT wu.person_id, wu.name, cp.conversation_id
+    FROM withholding_users wu
+    JOIN conversation_participant cp ON cp.person_id = wu.person_id
+    JOIN conversation c ON cp.conversation_id = c.id
+    WHERE c.type = 'GROUP' AND cp.role = 'MEMBER'
+),
+day_classification AS (
+    SELECT DATE(i.created_at AT TIME ZONE 'America/Los_Angeles') as the_date, m.conversation_id,
+        CASE WHEN COUNT(*) FILTER (WHERE i.status = 'WITHHELD') > 0 AND COUNT(*) FILTER (WHERE i.status = 'SENT') = 0 THEN 'WITHHELD'
+             WHEN COUNT(*) FILTER (WHERE i.status = 'SENT') > 0 AND COUNT(*) FILTER (WHERE i.status = 'WITHHELD') = 0 THEN 'SENT'
+             ELSE 'MIXED' END as day_type
+    FROM intervention i JOIN message m ON i.source_message_id = m.id
+    WHERE i.created_at >= NOW() - INTERVAL '112 days'
+    GROUP BY 1, 2
+),
+user_daily_affects AS (
+    SELECT uc.name, DATE(m.provider_timestamp AT TIME ZONE 'America/Los_Angeles') as msg_date, uc.conversation_id,
+        SUM(CASE WHEN me.affect IN ('Partner-Affection','Partner-Validation','Partner-Enthusiasm','Partner-Interest','Humor') THEN 1 ELSE 0 END) as pos,
+        SUM(CASE WHEN me.affect IN ('Partner-Contempt','Partner-Criticism','Partner-Defensiveness','Stonewalling','Partner-Belligerence') THEN 1 ELSE 0 END) as neg
+    FROM message m
+    JOIN person_contacts pc ON m.sender_person_contact_id = pc.id
+    JOIN user_conversations uc ON pc.person_id = uc.person_id AND m.conversation_id = uc.conversation_id
+    LEFT JOIN message_enrichment me ON me.message_id = m.id
+    WHERE m.provider_timestamp >= NOW() - INTERVAL '112 days'
+    GROUP BY 1, 2, 3
+),
+user_totals AS (
+    SELECT uda.name, dc.day_type, SUM(uda.pos) as pos, SUM(uda.neg) as neg
+    FROM user_daily_affects uda
+    JOIN day_classification dc ON uda.msg_date = dc.the_date AND uda.conversation_id = dc.conversation_id
+    WHERE dc.day_type IN ('SENT', 'WITHHELD')
+    GROUP BY 1, 2
+),
+user_ratios AS (
+    SELECT name,
+        MAX(CASE WHEN day_type = 'SENT' THEN pos END) as sent_pos,
+        MAX(CASE WHEN day_type = 'SENT' THEN neg END) as sent_neg,
+        MAX(CASE WHEN day_type = 'WITHHELD' THEN pos END) as wh_pos,
+        MAX(CASE WHEN day_type = 'WITHHELD' THEN neg END) as wh_neg
+    FROM user_totals GROUP BY name
+)
+SELECT name,
+    sent_pos || '/' || sent_neg as "sent +/-",
+    wh_pos || '/' || wh_neg as "withheld +/-",
+    CASE WHEN sent_neg > 0 THEN ROUND(sent_pos::numeric / sent_neg, 2) END as sent_ratio,
+    CASE WHEN wh_neg > 0 THEN ROUND(wh_pos::numeric / wh_neg, 2) END as wh_ratio,
+    CASE WHEN sent_neg > 0 AND wh_neg > 0 THEN ROUND((sent_pos::numeric/sent_neg) - (wh_pos::numeric/wh_neg), 2) END as delta
+FROM user_ratios ORDER BY name;
+```
+
+**For average delta** (add to end of query above):
+```sql
+-- Replace final SELECT with:
+SELECT COUNT(*) as n_users, ROUND(AVG(sent_pos::numeric/sent_neg), 2) as avg_sent_ratio,
+    ROUND(AVG(wh_pos::numeric/wh_neg), 2) as avg_wh_ratio,
+    ROUND(AVG((sent_pos::numeric/sent_neg) - (wh_pos::numeric/wh_neg)), 2) as avg_delta
+FROM user_ratios WHERE sent_neg > 0 AND wh_neg > 0;
+```
+
+**Interpretation:** `delta > 0` means better affect ratio on intervention days. Users with 0 negatives in either condition are excluded. MIXED days (pre-Dec 2025) excluded for clean comparison.
+
 ## Further Reading
 
 - **Gottman Institute**: https://www.gottman.com/

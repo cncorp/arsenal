@@ -75,7 +75,7 @@ When reviewing your proposed response, ask yourself:
 
 **Common missed opportunities:**
 - Used direct bash instead of sql-reader skill
-- Searched manually instead of using semantic-code-search
+- Searched manually instead of using semantic-search
 - Wrote tests without test-writer skill
 - Modified arsenal without skill-writer skill
 - Queried production data without product-data-analyst skill

@@ -389,22 +389,22 @@ else
     fi
 fi
 
-# 6. Setup semantic code search skill
-echo -e "\n${YELLOW}Step 6: Setting up semantic code search skill...${NC}"
+# 6. Setup semantic search skill
+echo -e "\n${YELLOW}Step 6: Setting up semantic search skill...${NC}"
 
-CODE_SEARCH_DIR="$SUPERPOWERS_DIR/dot-claude/skills/semantic-code-search"
+CODE_SEARCH_DIR="$SUPERPOWERS_DIR/dot-claude/skills/semantic-search"
 if [ -d "$CODE_SEARCH_DIR" ]; then
-    echo "  Found semantic-code-search skill"
+    echo "  Found semantic-search skill"
 
     # Check if Docker is available
     if ! command -v docker &> /dev/null; then
-        echo -e "${YELLOW}  ! Docker not found - skipping semantic code search setup${NC}"
-        echo "    To use semantic code search later, install Docker and run:"
+        echo -e "${YELLOW}  ! Docker not found - skipping semantic search setup${NC}"
+        echo "    To use semantic search later, install Docker and run:"
         echo "    cd arsenal && docker-compose up -d"
     else
         # Check if containers are already running
         if docker ps | grep -q arsenal-semantic-search-cli; then
-            echo -e "${GREEN}  ✓ Semantic code search containers already running${NC}"
+            echo -e "${GREEN}  ✓ Semantic search containers already running${NC}"
         else
             # Check if OpenAI API key is configured
             if [ ! -f "$SUPERPOWERS_ENV" ] || ! grep -q "^OPENAI_API_KEY=sk-" "$SUPERPOWERS_ENV"; then
@@ -415,18 +415,18 @@ if [ -d "$CODE_SEARCH_DIR" ]; then
                 if [[ "$NONINTERACTIVE" == "true" ]]; then
                     REPLY="n"
                 else
-                    read -p "  Start semantic code search containers? [y/N]: " -n 1 -r
+                    read -p "  Start semantic search containers? [y/N]: " -n 1 -r
                     echo
                 fi
                 if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    echo "  Starting semantic code search containers..."
+                    echo "  Starting semantic search containers..."
                     cd "$SUPERPOWERS_DIR"
 
                     # Start containers
                     docker-compose up -d --build 2>&1 | grep -v "Pulling" | grep -v "Waiting"
 
                     if [ $? -eq 0 ]; then
-                        echo -e "${GREEN}    ✓ Started semantic code search containers${NC}"
+                        echo -e "${GREEN}    ✓ Started semantic search containers${NC}"
 
                         # Wait for postgres to be healthy
                         echo "    Waiting for database to be ready..."
@@ -452,19 +452,19 @@ if [ -d "$CODE_SEARCH_DIR" ]; then
                             echo "    Try manually: docker exec arsenal-semantic-search-cli code-search index /project --clear"
                         fi
                     else
-                        echo -e "${RED}    ✗ Failed to start semantic code search containers${NC}"
+                        echo -e "${RED}    ✗ Failed to start semantic search containers${NC}"
                     fi
 
                     cd "$PROJECT_ROOT"
                 else
-                    echo "  Skipped semantic code search startup"
+                    echo "  Skipped semantic search startup"
                     echo "  To start later: cd arsenal && docker-compose up -d"
                 fi
             fi
         fi
     fi
 else
-    echo -e "${YELLOW}  ! Semantic code search skill not found - skipping${NC}"
+    echo -e "${YELLOW}  ! Semantic search skill not found - skipping${NC}"
 fi
 
 # 7. Check for optional tool dependencies
@@ -817,9 +817,9 @@ if [ -f "$SUPERPOWERS_ENV" ]; then
     echo ""
 fi
 
-# Check if semantic code search was set up
+# Check if semantic search was set up
 if docker ps | grep -q arsenal-semantic-search-cli; then
-    echo -e "${GREEN}Semantic code search is ready!${NC}"
+    echo -e "${GREEN}Semantic search is ready!${NC}"
     echo "  Usage: docker exec arsenal-semantic-search-cli code-search find \"your search query\""
     echo "  Stats: docker exec arsenal-semantic-search-cli code-search stats"
     echo "  Reindex: docker exec arsenal-semantic-search-cli code-search index /project --clear"
