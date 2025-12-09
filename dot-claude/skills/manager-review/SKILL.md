@@ -345,6 +345,7 @@ Now executing improved approach...
 | 7 | **Wrote tests without test-writer** | Created `def test_*` directly | Test code exists but no analysis shown | ITERATE: Delete tests, use test-writer skill |
 | 8 | **Ran git commands directly** | `git status`, `git diff` in bash | Direct git instead of git-reader agent | ITERATE: Use git-reader agent |
 | 9 | **Modified arsenal without skill-writer** | Edited `.claude/` directly | Changes to .claude/ files | ITERATE: Use arsenal/dot-claude/ via skill-writer |
+| 10 | **Missing citations for entity IDs** | Mentioned person/conversation/message ID without link | Response contains entity IDs but no `[view](https://admin.prod.cncorp.io/...)` links | ITERATE: Add citations per citations skill |
 
 **🚨 CRITICAL: Mistakes #1, #3, and #4 are the MOST common.**
 - **#1:** Claiming "all tests" after only running mocked tests
