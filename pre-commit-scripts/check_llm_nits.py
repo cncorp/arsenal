@@ -38,6 +38,45 @@ NOQA_SINGLE_USE_PATTERN = re.compile(NOQA_PATTERN.pattern + r"SINGLE001")
 # Pattern to match function definitions in diff output
 DIFF_FUNCTION_PATTERN = re.compile(r"^\+\s*def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(")
 
+# Threshold for imports after docstring ends (in lines)
+# This allows ~50 lines of imports after the docstring ends before flagging
+IMPORT_THRESHOLD_AFTER_DOCSTRING = 50
+
+
+def _find_docstring_end_line(lines: List[str]) -> int:
+    """
+    Find the line where the module docstring ends.
+
+    Returns the line number (1-indexed) where the docstring ends,
+    or 0 if no docstring is found.
+    """
+    if not lines:
+        return 0
+
+    in_docstring = False
+    docstring_quote = None
+
+    for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+
+        if not in_docstring:
+            # Look for docstring start (must be at beginning of file, allowing shebang and encoding)
+            if stripped.startswith('"""') or stripped.startswith("'''"):
+                docstring_quote = stripped[:3]
+                # Check if docstring ends on same line (e.g., """Short docstring.""")
+                if stripped.count(docstring_quote) >= 2 and len(stripped) > 3:
+                    return line_num
+                in_docstring = True
+            elif stripped and not stripped.startswith("#") and not stripped.startswith("#!/"):
+                # Non-empty, non-comment line before docstring means no docstring
+                return 0
+        else:
+            # Look for docstring end
+            if docstring_quote in stripped:
+                return line_num
+
+    return 0
+
 
 def check_file(filepath: Path) -> List[Tuple[str, int, str]]:
     """
@@ -54,6 +93,12 @@ def check_file(filepath: Path) -> List[Tuple[str, int, str]]:
         return issues
 
     is_test_file = "/tests/" in str(filepath) or str(filepath).startswith("tests/")
+
+    # Find where the module docstring ends (for late import check)
+    docstring_end_line = _find_docstring_end_line(lines)
+    # Imports are considered "late" if they're more than IMPORT_THRESHOLD_AFTER_DOCSTRING lines
+    # after the docstring ends (or from line 0 if no docstring).
+    import_threshold_line = docstring_end_line + IMPORT_THRESHOLD_AFTER_DOCSTRING
 
     for line_num, line in enumerate(lines, 1):
         # Check 1: Broad exception catching (unless noqa comment present)
@@ -82,11 +127,11 @@ def check_file(filepath: Path) -> List[Tuple[str, int, str]]:
                 )
             )
 
-        # Check 3: Late imports (after line 50, not in tests)
+        # Check 3: Late imports (after import_threshold_line, not in tests)
         # Skip if has noqa: E402 comment (legitimate deferred import)
         if (
             not is_test_file
-            and line_num > 50
+            and line_num > import_threshold_line
             and IMPORT_PATTERN.match(line)
             and not NOQA_E402_PATTERN.search(line)
         ):
