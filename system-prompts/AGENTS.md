@@ -53,7 +53,7 @@ git submodule update --init --recursive
 # 2. Run install script (handles .env setup automatically)
 ./arsenal/install.sh
 
-# 3. Start Docker services (optional - for semantic-code-search skill)
+# 3. Start Docker services (optional - for semantic-search skill)
 cd arsenal && docker-compose up -d
 ```
 

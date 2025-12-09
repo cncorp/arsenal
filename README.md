@@ -11,7 +11,7 @@ git submodule update --init --recursive
 # 2. Run install script (handles .env setup automatically)
 ./arsenal/install.sh
 
-# 3. Start Docker services (optional - for semantic-code-search)
+# 3. Start Docker services (optional - for semantic-search)
 cd arsenal && docker-compose up -d
 ```
 
@@ -127,7 +127,7 @@ Invoke with `/command-name` in Claude Code:
 **Additional skills:**
 - **`playwright-tester`** - Browser automation and screenshots
 - **`docker-log-debugger`** - Analyze container logs
-- **`semantic-code-search`** - Find code by meaning using vector embeddings
+- **`semantic-search`** - Find code by meaning using vector embeddings
 - **`twilio-test-caller`** - Test voice call flows
 
 ---

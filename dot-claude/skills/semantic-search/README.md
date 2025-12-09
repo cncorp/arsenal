@@ -14,7 +14,7 @@ This skill uses:
 
 ### Automatic (via superpowers install.sh)
 
-When you run `./superpowers/install.sh` in your project, you'll be prompted to set up semantic-code-search:
+When you run `./superpowers/install.sh` in your project, you'll be prompted to set up semantic-search:
 
 ```bash
 ./superpowers/install.sh
@@ -81,7 +81,7 @@ Example interaction:
 ```
 You: "Where do we handle Twilio webhooks?"
 
-Claude: *Uses semantic-code-search skill*
+Claude: *Uses semantic-search skill*
         docker exec code-search-cli code-search find "Twilio webhook incoming calls"
 
         Found in api/routes/webhooks.py:45 - handle_incoming_call function
@@ -93,7 +93,7 @@ Claude: *Uses semantic-code-search skill*
 superpowers/
 └── dot-claude/
     └── skills/
-        └── semantic-code-search/
+        └── semantic-search/
             ├── SKILL.md              # Instructions for Claude Code
             ├── README.md             # This file (for humans)
             ├── docker-compose.yml    # Container orchestration
