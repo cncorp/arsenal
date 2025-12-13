@@ -201,6 +201,39 @@ except NotFoundError:  # Specific, expected business case
 
 **For detailed external API error handling patterns, see `docs/EXTERNAL_API_PATTERNS.md`**
 
+#### 1b. Logging Levels (logger.error vs logger.warning)
+
+**CRITICAL:** `logger.error()` automatically sends alerts to Slack. Use it sparingly!
+
+❌ **DON'T use logger.error() for:**
+```python
+# BAD: Expected failures - will spam Slack
+logger.error("User not found", user_id=user_id)
+logger.error("Validation failed", errors=errors)
+logger.error("Config missing in CLI tool", var_name=var_name)
+```
+
+✅ **DO use logger.warning() for expected/handled failures:**
+```python
+# GOOD: Expected edge cases - no Slack alert
+logger.warning("User not found", user_id=user_id)
+logger.warning("Validation failed", errors=errors)
+logger.warning("Config missing", var_name=var_name)
+```
+
+✅ **DO use logger.error() only for unexpected production errors:**
+```python
+# GOOD: True errors that need immediate attention
+logger.error("Database connection failed", exc_info=True, slack_channel="downtime")
+logger.error("Unhandled API exception", url=url, slack_channel="general")
+```
+
+**Channel routing:** Use `slack_channel=` to route to specific channels:
+- `"general"` - API/application errors
+- `"worker"` - Background job errors (DEFAULT)
+- `"prompt"` - LLM/prompt issues
+- `"downtime"` - Infrastructure alerts
+
 #### 2. Imports
 ❌ **DON'T use late imports (after line 50):**
 ```python
