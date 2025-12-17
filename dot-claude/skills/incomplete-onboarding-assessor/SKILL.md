@@ -89,7 +89,7 @@ SELECT
   p.type as person_type,  -- Fixed: column is 'type' not 'person_type'
   MAX(m.provider_timestamp) as last_user_message,
   EXTRACT(DAY FROM NOW() - MAX(m.provider_timestamp))::int as days_since_last_msg,
-  COUNT(DISTINCT m.id) as message_count
+  COUNT(DISTINCT m.id) as user_message_count  -- Messages sent BY the user (not Wren's messages)
 FROM incomplete_onboardings io
 LEFT JOIN persons p ON LOWER(p.name) = LOWER(io.initiator_name)
   AND p.type IN ('USER', 'USER_RESEARCH')  -- Fixed: moved filter to JOIN, use uppercase enum values
@@ -231,6 +231,7 @@ Create a markdown report with this structure:
 | Days silent | [X] |
 | Partner | [Partner name] |
 | Goals | [relationship_dynamic] |
+| User messages sent | [X] |
 
 **Chat history summary:**
 - [Key engagement points]
