@@ -13,6 +13,30 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
+## Commands Used by This Skill
+
+**TDD runs ONLY the specific test being written:**
+```bash
+# Unit tests
+cd api && just test-unit "tests/unit/test_file.py::test_name -v"
+
+# Integration tests
+cd api && just test-integration "tests/integration/test_file.py::test_name -v"
+
+# E2E mocked tests
+cd api && just test-e2e "tests/e2e_mocked/test_file.py::test_name -v"
+
+# Lint + type checking (after GREEN)
+cd api && just lint-and-fix
+```
+
+**TDD does NOT run:**
+- ❌ `just test-all-mocked` (full test suite)
+- ❌ `.claude/skills/test-runner/scripts/run_tests_parallel.sh` (all suites)
+- ❌ Any comprehensive test commands
+
+**Why?** TDD focuses on the specific test being written. The **test-runner skill** handles comprehensive testing after TDD is complete.
+
 ## When to Use
 
 **Always:**
@@ -116,7 +140,10 @@ Vague name, tests mock not code
 **MANDATORY. Never skip.**
 
 ```bash
-uv run pytest test/test_retry.py::test_retries_failed_operations_3_times -v
+# Run ONLY the test you just wrote (use appropriate command for test type)
+cd api && just test-unit "tests/unit/test_retry.py::test_retries_failed_operations_3_times -v"
+# Or: just test-integration "tests/integration/..."
+# Or: just test-e2e "tests/e2e_mocked/..."
 ```
 
 Confirm:
@@ -168,17 +195,25 @@ Don't add features, refactor other code, or "improve" beyond the test.
 **MANDATORY.**
 
 ```bash
-uv run pytest test/test_retry.py::test_retries_failed_operations_3_times -v
+# 1. Run the specific test you wrote (use appropriate command for test type)
+cd api && just test-unit "tests/unit/test_retry.py::test_retries_failed_operations_3_times -v"
+# Or: just test-integration "tests/integration/..."
+# Or: just test-e2e "tests/e2e_mocked/..."
+
+# 2. Run lint + type checking (catches syntax/type issues immediately)
+cd api && just lint-and-fix
 ```
 
 Confirm:
 - Test passes
-- Other tests still pass
+- Lint and mypy pass
 - Output pristine (no errors, warnings)
 
 **Test fails?** Fix code, not test.
 
-**Other tests fail?** Fix now.
+**Lint/mypy fails?** Fix immediately before continuing.
+
+**NOTE:** Do NOT run the full test suite here. The **test-runner skill** handles comprehensive testing after TDD is complete.
 
 ### REFACTOR - Clean Up
 
@@ -300,7 +335,7 @@ def test_rejects_empty_email():
 
 **Verify RED**
 ```bash
-$ uv run pytest test/test_form.py::test_rejects_empty_email -v
+$ cd api && just test-unit "tests/unit/test_form.py::test_rejects_empty_email -v"
 FAILED: AssertionError: assert None == 'Email required'
 ```
 
@@ -316,8 +351,11 @@ def submit_form(data: dict) -> dict:
 
 **Verify GREEN**
 ```bash
-$ uv run pytest test/test_form.py::test_rejects_empty_email -v
+$ cd api && just test-unit "tests/unit/test_form.py::test_rejects_empty_email -v"
 PASSED
+
+$ cd api && just lint-and-fix
+✅ All linting checks passed!
 ```
 
 **REFACTOR**
@@ -325,18 +363,20 @@ Extract validation for multiple fields if needed.
 
 ## Verification Checklist
 
-Before marking work complete:
+Before marking TDD work complete:
 
 - [ ] Every new function/method has a test
 - [ ] Watched each test fail before implementing
 - [ ] Each test failed for expected reason (feature missing, not typo)
 - [ ] Wrote minimal code to pass each test
-- [ ] All tests pass
-- [ ] Output pristine (no errors, warnings)
+- [ ] Specific tests pass (`just test-unit/integration/e2e "path/to/test.py::test_name"`)
+- [ ] Lint and mypy pass (`just lint-and-fix`)
 - [ ] Tests use real code (mocks only if unavoidable)
 - [ ] Edge cases and errors covered
 
 Can't check all boxes? You skipped TDD. Start over.
+
+**NOTE:** This checklist is for the TDD cycle only. Use **test-runner skill** for comprehensive testing (full test suite, all mocked tests, etc.) before committing.
 
 ## When Stuck
 
@@ -452,9 +492,11 @@ When implementing a full feature:
 3. **Drop to unit tests** - Write pytest tests for backend logic
 4. **Implement backend** - Until pytest passes
 5. **Implement frontend** - Until E2E test passes
-6. **Verify all pass** - `just test && just lint && just e2e-smoke`
+6. **Run lint** - `cd api && just lint-and-fix`
 
 This ensures both backend logic AND user experience are tested.
+
+**NOTE:** Use **test-runner skill** for comprehensive testing after TDD is complete.
 
 ---
 
