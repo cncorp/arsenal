@@ -64,6 +64,9 @@ else
     echo -e "${GREEN}  ✓ Created .claude directory${NC}"
 fi
 
+# Make hook scripts executable
+chmod +x "$CLAUDE_DIR/hooks/"*.py 2>/dev/null || true
+
 # 2. Copy AGENTS.md files
 # Note: We copy instead of symlink because Claude Code doesn't reliably respect symlinks
 echo -e "\n${YELLOW}Step 2: Copying AGENTS.md files...${NC}"
@@ -690,120 +693,10 @@ else
     echo -e "${GREEN}  ✓ Created CLAUDE.md${NC}"
 fi
 
-# 9. Setup SessionStart hook for getting-started skill
-echo -e "\n${YELLOW}Step 9: Setting up SessionStart hook...${NC}"
-HOOKS_DIR="$CLAUDE_DIR/hooks"
-SOURCE_HOOK="$SUPERPOWERS_DIR/hooks/session_start.py"
-SETTINGS_JSON="$CLAUDE_DIR/settings.json"
-
-# Create hooks directory if it doesn't exist
-if [ ! -d "$HOOKS_DIR" ]; then
-    mkdir -p "$HOOKS_DIR"
-    echo -e "${GREEN}  ✓ Created hooks directory${NC}"
-fi
-
-# Copy session_start.py hook
-if [ -f "$SOURCE_HOOK" ]; then
-    cp "$SOURCE_HOOK" "$HOOKS_DIR/session_start.py"
-    chmod +x "$HOOKS_DIR/session_start.py"
-    echo -e "${GREEN}  ✓ Installed session_start.py hook${NC}"
-else
-    echo -e "${YELLOW}  ! Source hook not found at $SOURCE_HOOK${NC}"
-    echo "    Creating default hook inline..."
-    cat > "$HOOKS_DIR/session_start.py" << 'HOOK_EOF'
-#!/usr/bin/env python3
-"""
-SessionStart hook that injects the getting-started skill into every session.
-
-This ensures agents have the skill content in their context from the start,
-making compliance mechanical rather than relying on LLM choice.
-"""
-import os
-import sys
-
-def main():
-    skill_path = "./.claude/skills/getting-started/SKILL.md"
-
-    if os.path.exists(skill_path):
-        with open(skill_path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-            line_count = len(lines)
-            content = "".join(lines)
-
-            print("╔══════════════════════════════════════════════════════════╗")
-            print("║   📋 SESSION BOOTSTRAP: getting-started skill loaded     ║")
-            print(f"║   File size: {line_count} lines                                   ║")
-            print("╚══════════════════════════════════════════════════════════╝")
-            print()
-            print(content)
-            print()
-            print(f"--- End of getting-started skill ({line_count} lines) ---")
-            print()
-    else:
-        print("⚠️  WARNING: getting-started skill not found at:", skill_path)
-        print("Expected location: ./.claude/skills/getting-started/SKILL.md")
-        print("The agent will not have skill context loaded.")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
-HOOK_EOF
-    chmod +x "$HOOKS_DIR/session_start.py"
-    echo -e "${GREEN}  ✓ Created default session_start.py hook${NC}"
-fi
-
-# Setup settings.json with hook configuration and permissions
-if [ -f "$SETTINGS_JSON" ]; then
-    # Check if SessionStart hook is already configured
-    if grep -q '"SessionStart"' "$SETTINGS_JSON"; then
-        echo "  ✓ settings.json already has SessionStart hook configured"
-    else
-        echo -e "${YELLOW}  ! settings.json exists but missing SessionStart hook${NC}"
-        echo "    You may need to manually add the hook configuration"
-    fi
-else
-    # Create settings.json with hook configuration and permissions
-    cat > "$SETTINGS_JSON" << 'SETTINGS_EOF'
-{
-  "permissions": {
-    "deny": [
-      "Bash(git commit :*)",
-      "Bash(git push :*)",
-      "Bash(git pull :*)",
-      "Bash(git merge :*)",
-      "Bash(git reset :*)",
-      "Bash(git rebase :*)",
-      "Bash(git stash pop :*)",
-      "Bash(git cherry-pick :*)",
-      "Bash(git apply :*)",
-      "Bash(rm :*)",
-      "Bash(rm -rf :*)",
-      "Bash(sudo :*)"
-    ]
-  },
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session_start.py"
-          }
-        ]
-      }
-    ]
-  }
-}
-SETTINGS_EOF
-    echo -e "${GREEN}  ✓ Created settings.json with SessionStart hook and permissions${NC}"
-fi
-
 echo -e "\n${GREEN}✓ Installation complete!${NC}"
 echo ""
 echo "Arsenal setup:"
-echo "  - $PROJECT_ROOT/.claude (copied from arsenal/dot-claude)"
-echo "  - $PROJECT_ROOT/.claude/hooks/session_start.py (SessionStart hook)"
-echo "  - $PROJECT_ROOT/.claude/settings.json (hook configuration)"
+echo "  - $PROJECT_ROOT/.claude (agents, commands, skills, hooks, settings)"
 echo "  - $PROJECT_ROOT/.pre-commit-scripts -> $SUPERPOWERS_DIR/pre-commit-scripts (symlink)"
 echo "  - $PROJECT_ROOT/CLAUDE.md (copied from arsenal/system-prompts/CLAUDE.md)"
 echo "  - $PROJECT_ROOT/AGENTS.md (copied from arsenal/system-prompts/AGENTS.md)"
