@@ -1,3 +1,8 @@
+---
+name: brainstorming
+description: "INVOKE when user says: 'brainstorm', 'design this', 'help me think through', 'what should we build'. Collaborative idea-to-spec workflow."
+---
+
 # Brainstorming Ideas Into Designs
 
 ## Overview
@@ -10,6 +15,9 @@ Start by understanding the current project context, then ask questions one at a 
 
 **Understanding the idea:**
 - Check out the current project state first (files, docs, recent commits)
+- **Run semantic-search to find existing similar implementations** before designing new ones:
+  - `docker exec arsenal-semantic-search-cli code-search find "<feature concept>"`
+  - Check if something similar already exists (DRY principle)
 - Ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
@@ -54,3 +62,23 @@ Start by understanding the current project context, then ask questions one at a 
 - **Explore alternatives** - Always propose 2-3 approaches before settling
 - **Incremental validation** - Present design in sections, validate each
 - **Be flexible** - Go back and clarify when something doesn't make sense
+- **Specs are negotiable** - Always propose modifications that reduce complexity
+
+## 🚨 CRITICAL: Prefer Spec Adjustments Over New Infrastructure
+
+**Specs are starting points, not immutable requirements.**
+
+Before designing new systems, ask:
+1. Can we **adjust the spec slightly** to reuse existing patterns?
+2. Would a different approach achieve 90% of the value with 50% of the complexity?
+3. Is this creating parallel infrastructure when we could extend existing?
+
+**Always present a "simplification option":**
+```
+Option A: Implement spec as-is (creates new X, Y, Z)
+Option B (recommended): Adjust spec to reuse existing [pattern]
+  - Tradeoff: [minor limitation]
+  - Benefit: Reuses proven infrastructure, less code to maintain
+```
+
+**Example:** If designing "scheduled message conditions", check if `group_message_intervention_conditions_yaml` logic could be extended rather than creating a new DSL.

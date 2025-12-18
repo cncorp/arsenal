@@ -346,11 +346,13 @@ Now executing improved approach...
 | 8 | **Ran git commands directly** | `git status`, `git diff` in bash | Direct git instead of git-reader agent | ITERATE: Use git-reader agent |
 | 9 | **Modified arsenal without skill-writer** | Edited `.claude/` directly | Changes to .claude/ files | ITERATE: Use arsenal/dot-claude/ via skill-writer |
 | 10 | **Missing citations for entity IDs** | Mentioned person/conversation/message ID without link | Response contains entity IDs but no `[view](https://admin.prod.cncorp.io/...)` links | ITERATE: Add citations per citations skill |
+| 11 | **Implemented spec literally instead of simplest solution** | Added complexity when simpler approach achieves the spirit of the ask | New infrastructure when extending existing works, or complex solution when 90% value achievable simply | ITERATE: Run semantic-search, propose spec modifications that simplify |
 
-**🚨 CRITICAL: Mistakes #1, #3, and #4 are the MOST common.**
+**🚨 CRITICAL: Mistakes #1, #3, #4, and #11 are the MOST common.**
 - **#1:** Claiming "all tests" after only running mocked tests
 - **#3:** Showing test output but missing lint output
 - **#4:** Claiming "X tests passed" without showing the actual pytest output line
+- **#11:** Implementing specs literally instead of finding the simplest path to the spirit of the ask
 
 **If you don't have "===== X passed in Y.YYs =====" in your context, you didn't run the tests!**
 

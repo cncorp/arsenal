@@ -1,3 +1,8 @@
+---
+name: test-writer
+description: "MANDATORY - INVOKE BEFORE writing ANY test code (def test_*, class Test*). Prevents brittle tests. Read this skill first, then write tests."
+---
+
 # test-writer Skill
 
 ## 🚨 CRITICAL: MANDATORY FOR ALL TEST WRITING AND UPDATING
@@ -41,7 +46,10 @@ Use this skill when:
 
 1. **Called by test-fixer** when modifying test files - determines if code or contract is wrong
 2. **Can call sql-reader** to query production data model and design realistic fixtures
-3. **Works autonomously** but flags UX contract changes: "⚠️ UX contract change: [explain]"
+3. **MUST call semantic-search** before writing tests to find existing test patterns and fixtures:
+   - `docker exec arsenal-semantic-search-cli code-search find "test <feature>"`
+   - Check for existing fixtures, test utilities, and similar test patterns
+4. **Works autonomously** but flags UX contract changes: "⚠️ UX contract change: [explain]"
 
 ## 🚨 CRITICAL: Don't Encode Broken Behavior
 

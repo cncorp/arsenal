@@ -1,6 +1,6 @@
 ---
 name: semantic-search
-description: Semantic search using vector embeddings. Find code, messages, and facts by meaning, not exact text. Use for codebase exploration, user feedback analysis, and pattern discovery.
+description: "INVOKE BEFORE writing new code to find existing implementations (DRY). Also for codebase exploration and production data search. Run: docker exec arsenal-semantic-search-cli code-search find 'query'"
 ---
 
 # Semantic Search

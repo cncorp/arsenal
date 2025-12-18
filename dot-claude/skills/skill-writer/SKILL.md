@@ -1,3 +1,8 @@
+---
+name: skill-writer
+description: "INVOKE when: creating new skills, editing SKILL.md files, modifying .claude/ content. NEVER edit .claude/ directly - this skill shows the arsenal-first workflow."
+---
+
 # skill-writer Skill
 
 ## 🎯 Purpose

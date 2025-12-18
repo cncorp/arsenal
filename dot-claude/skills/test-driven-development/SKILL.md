@@ -58,6 +58,21 @@ Thinking "skip TDD just this once"? Stop. That's rationalization.
 NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
 ```
 
+## Step 0: DRY Check Before Writing Anything
+
+**BEFORE writing tests or code, run semantic search:**
+
+```bash
+docker exec arsenal-semantic-search-cli code-search find "<what you're implementing>"
+```
+
+**If similar patterns exist, ask:**
+- Can we extend existing code instead of writing new?
+- Would a small spec adjustment allow reuse?
+- Is this duplicating infrastructure that already exists?
+
+**If reuse is possible, propose spec modifications to the user BEFORE writing tests.**
+
 Write code before the test? Delete it. Start over.
 
 **No exceptions:**

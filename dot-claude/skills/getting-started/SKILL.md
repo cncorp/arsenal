@@ -6,13 +6,14 @@ bootstrap_token: e28604705b8e2934
 
 # Getting Started with Arsenal
 
-## 🔥 Three Foundational Rules
+## 🔥 Four Foundational Rules
 
 You have an arsenal of tools at your disposal. Here's how they work:
 
 1. **Skills give you capabilities** - You have skills. Arsenal gives you powers you previously didn't have.
 2. **Search for skills first** - Before ANY task, search for skills by running: `ls .claude/skills/`
 3. **If a skill exists, you MUST use it** - Skills are mandatory, not optional.
+4. **Specs are negotiable, simplicity is not** - Your job is to accomplish the *spirit* of the ask with minimal complexity, not to implement specs literally. Before implementing, search for existing patterns (`docker exec arsenal-semantic-search-cli code-search find "..."`). Propose spec modifications that reuse existing code or simplify the approach. Creating new infrastructure when you could extend existing, or adding complexity when a simpler solution achieves 90% of the value, is a **critical violation**.
 
 ---
 

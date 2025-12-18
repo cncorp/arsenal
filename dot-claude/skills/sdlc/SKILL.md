@@ -39,6 +39,39 @@ This skill automates the software development lifecycle workflow for implementin
 
 ## Workflow
 
+### Step 0: DRY Check - Can We Reuse Existing Patterns?
+
+**BEFORE implementing, run semantic search to find similar implementations:**
+
+```bash
+docker exec arsenal-semantic-search-cli code-search find "<what the spec does>"
+```
+
+**Ask yourself:**
+1. Does similar functionality already exist?
+2. Could we **modify the spec slightly** to reuse existing infrastructure?
+3. Would extending existing code be simpler than building new?
+
+**If reuse is possible, STOP and propose spec modifications to the user:**
+```
+⚠️ SPEC SIMPLIFICATION OPPORTUNITY
+
+I found existing infrastructure that does something similar:
+- [existing pattern/file]
+
+Instead of implementing the spec as-is, we could:
+- Option A: Extend [existing thing] with minor changes
+- Option B: Adjust the spec to use [existing pattern]
+
+This would reduce complexity by [benefit].
+
+Should I adjust the approach?
+```
+
+**Example:** If spec says "create new YAML DSL for cron conditions" but you find `group_message_intervention_conditions_yaml` already handles similar logic, propose reusing/extending that instead.
+
+**Only proceed to Step 1 after confirming no reuse opportunity exists.**
+
 ### Step 1: Invoke TDD Skill
 
 Invoke the **test-driven-development skill** with the spec/plan:
