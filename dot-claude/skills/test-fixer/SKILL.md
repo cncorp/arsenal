@@ -64,6 +64,20 @@ git diff main...HEAD
 
 **🚨 CRITICAL: Do NOT investigate test failures manually. ALWAYS use this skill.**
 
+## 🛠️ Test Infrastructure Quick Reference
+
+| Command/File | Purpose |
+|--------------|---------|
+| `just lint-and-fix` | Auto-fix formatting + run linting + mypy type checks |
+| `just test-all-mocked` | Fast tests with mocked external services (used in CI) |
+| `just test-all` | All tests including live/e2e with real services |
+| `just test-smoke` | Smoke tests requiring Docker (production-like) |
+| `.pre-commit-config.yaml` | Git hooks: lint on pre-commit, full tests on pre-push |
+| `.github/workflows/ci.yml` | GitHub Actions: runs `just lint` + `just test-all-mocked` on every push |
+| `.github/workflows/deploy.yml` | Deployment workflow (staging/production) |
+
+**CI/CD flow**: Push → ci.yml runs lint+mocked tests → deploy.yml deploys if tests pass
+
 ## 🚨 CRITICAL FOR TEST WRITING
 
 - **BEFORE writing tests** → Use test-writer skill (MANDATORY - analyzes code type, dependencies, contract)
