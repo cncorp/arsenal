@@ -1,6 +1,6 @@
 ---
 name: test-fixer
-description: MANDATORY when tests fail. Systematically investigates test failures, identifies root cause, writes fixes, and iterates until all tests pass.
+description: "MANDATORY when: tests fail, CI fails, CI/CD fails, ci.yml fails, user provides CI log URL. Investigates failures, fixes iteratively until passing."
 allowed-tools:
   - Bash
   - Read
@@ -41,6 +41,21 @@ This skill provides a systematic workflow for:
 5. **User says:** "tests are broken" OR "tests failing" OR "fix the tests"
 6. **Pre-commit hook fails** due to test failures
 7. **You see test error output** from any source
+8. **User provides CI log URL** (Azure Blob, GitHub Actions, etc.)
+
+### ⚡ CI Log URLs: Download IMMEDIATELY
+
+CI log URLs have **short-lived tokens (~10 min)**. When user provides one:
+
+```bash
+# 1. IMMEDIATELY WebFetch the URL (before it expires)
+# 2. Grep for failures: grep -iE "failed|error|FAILED"
+# 3. Get diff vs main to develop thesis
+git diff main...HEAD
+# 4. Apply test-fixer workflow below
+```
+
+**URL pattern:** `productionresultssa16.blob.core.windows.net/actions-results/*`
 
 **Integration with other skills:**
 - **test-runner** detects failures → immediately invoke test-fixer

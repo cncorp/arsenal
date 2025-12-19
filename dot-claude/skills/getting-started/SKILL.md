@@ -566,10 +566,10 @@ git stash pop                # Restore your changes
 ### 🔥 test-fixer (CRITICAL)
 **MANDATORY when tests fail**
 
-When to use: When tests fail after code changes, merges, or CI reports failures
+When to use: When tests fail after code changes, merges, CI reports failures, **or user provides CI log URL**
 Where: `.claude/skills/test-fixer/SKILL.md`
 
-**Example queries where you MUST use test-fixer:** "Tests are failing" • "CI reports test failures" • "Fix the broken tests" • "3 tests failing after my changes"
+**Example queries where you MUST use test-fixer:** "Tests are failing" • "CI failed" • "CI/CD failed" • "ci.yml failed" • "Fix the broken tests" • "why did CI fail?" • **"Here's the CI log: https://..."** (download immediately - URLs expire in ~10 min!)
 
 **YOU MUST:**
 - Systematically investigate where tests pass (current / branch HEAD / main)
