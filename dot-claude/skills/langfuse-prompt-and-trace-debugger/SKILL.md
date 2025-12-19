@@ -263,43 +263,42 @@ uv run python fetch_error_traces.py --help
 - Find traces related to specific failure modes
 - Debug issues reported by users
 
-### 5. extract_compiled_prompt.py - Quick Trace Inspection
+### 5. reconstruct_compiled_prompt.py - Prompt Reconstruction
 
-Extract compiled prompt from a Langfuse trace. **⚠️ May be truncated for large prompts (~10KB limit).**
+Reconstructs **full** prompts from database + Langfuse template. Uses the same compilation logic as the admin panel prompt playground.
 
-```bash
-cd .claude/skills/langfuse-prompt-and-trace-debugger
+**⚠️ Lives in CODEBASE at `api/src/cli/` - uses shared `compile_prompt()` service.**
 
-# Basic usage
-uv run python extract_compiled_prompt.py --trace-id TRACE_ID --production
-
-# Save to file
-uv run python extract_compiled_prompt.py --trace-id TRACE_ID --production --output docs/debug/prompt.md
-```
-
-### 6. reconstruct_compiled_prompt.py - Full Prompt (No Truncation)
-
-Reconstructs **full** prompts from database + Langfuse template. Bypasses API truncation limits.
-
-**⚠️ Lives in CODEBASE at `api/src/cli/` (not arsenal) - uses production formatters.**
+**Requires:**
+- `--message-id` or `-m`: Message ID from the database
+- `--prompt-name` or `-p`: Langfuse prompt name (e.g., `daily_question_summary`)
 
 ```bash
-# Basic usage (from project root)
-docker compose exec api python src/cli/reconstruct_compiled_prompt.py --message-id 90404
+# Basic usage (from project root) - defaults to production database
+cd api && PYTHONPATH=src python src/cli/reconstruct_compiled_prompt.py -m 91245 -p daily_question_summary
 
-# A/B test with specific version
-docker compose exec api python src/cli/reconstruct_compiled_prompt.py --message-id 90404 --version 99
+# A/B test with specific prompt version
+cd api && PYTHONPATH=src python src/cli/reconstruct_compiled_prompt.py -m 91245 -p daily_question_summary --version 5
 
 # Save to file
-docker compose exec api python src/cli/reconstruct_compiled_prompt.py --message-id 90404 --output docs/debug/full_prompt.md
+cd api && PYTHONPATH=src python src/cli/reconstruct_compiled_prompt.py -m 91245 -p daily_question_summary -o docs/debug/full_prompt.md
+
+# Output as JSON
+cd api && PYTHONPATH=src python src/cli/reconstruct_compiled_prompt.py -m 91245 -p daily_question_summary --json
+
+# Use local docker database (for development)
+cd api && PYTHONPATH=src python src/cli/reconstruct_compiled_prompt.py --local -m 12345 -p group_msg_intervention_needed
+
+# List available prompts in Langfuse
+cd api && PYTHONPATH=src python src/cli/reconstruct_compiled_prompt.py --list-prompts
 ```
 
-**When to use which:**
-| Use Case | Script |
-|----------|--------|
-| Quick trace inspection | `extract_compiled_prompt.py` (arsenal) |
-| Full prompt with history | `reconstruct_compiled_prompt.py` (codebase) |
-| A/B testing versions | `reconstruct_compiled_prompt.py --version N` |
+**When to use:**
+| Use Case | Command |
+|----------|---------|
+| Prompt reconstruction from message | `reconstruct_compiled_prompt.py -m MESSAGE_ID -p PROMPT_NAME` |
+| A/B testing prompt versions | `reconstruct_compiled_prompt.py -m MESSAGE_ID -p PROMPT_NAME --version N` |
+| List available prompts | `reconstruct_compiled_prompt.py --list-prompts` |
 
 ## Understanding Prompt Configs
 
@@ -390,11 +389,15 @@ uv run python fetch_error_traces.py --days 7
 # Find error traces in production
 uv run python fetch_error_traces.py --env production
 
-# Extract compiled prompt from trace (may truncate large prompts)
-uv run python extract_compiled_prompt.py --trace-id TRACE_ID --production
+# Reconstruct prompt from message (requires message ID and prompt name)
+# Run from project root - uses database + Langfuse template
+cd /home/odio/Hacking/codel/ct3/api && PYTHONPATH=src python src/cli/reconstruct_compiled_prompt.py -m MESSAGE_ID -p PROMPT_NAME
 
-# Full prompt reconstruction (from codebase, not arsenal)
-docker compose exec api python src/cli/reconstruct_compiled_prompt.py --message-id MESSAGE_ID
+# Or via docker compose
+docker compose exec api python src/cli/reconstruct_compiled_prompt.py -m MESSAGE_ID -p PROMPT_NAME
+
+# List available prompts in Langfuse
+docker compose exec api python src/cli/reconstruct_compiled_prompt.py --list-prompts
 ```
 
 ## Important Notes
