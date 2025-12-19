@@ -78,6 +78,8 @@ git diff main...HEAD
 
 **CI/CD flow**: Push → ci.yml runs lint+mocked tests → deploy.yml deploys if tests pass
 
+**🚨 When CI/CD fails:** Download the logs immediately (URLs expire in ~10 min) and consult `.github/workflows/ci.yml` to understand which step failed and reproduce locally.
+
 ## 🚨 CRITICAL FOR TEST WRITING
 
 - **BEFORE writing tests** → Use test-writer skill (MANDATORY - analyzes code type, dependencies, contract)
