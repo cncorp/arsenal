@@ -43,19 +43,19 @@ This skill provides a systematic workflow for:
 7. **You see test error output** from any source
 8. **User provides CI log URL** (Azure Blob, GitHub Actions, etc.)
 
-### ⚡ CI Log URLs: Download IMMEDIATELY
+### ⚡ CI Log URLs: curl IMMEDIATELY (before ANYTHING else)
 
-CI log URLs have **short-lived tokens (~10 min)**. When user provides one:
+CI log URLs expire in ~10 min. **First action when you see `blob.core.windows.net`:**
 
 ```bash
-# 1. IMMEDIATELY WebFetch the URL (before it expires)
-# 2. Grep for failures: grep -iE "failed|error|FAILED"
-# 3. Get diff vs main to develop thesis
-git diff main...HEAD
-# 4. Apply test-fixer workflow below
+curl -s "<URL>" -o /tmp/ci_logs.txt && wc -l /tmp/ci_logs.txt
+grep -iE "FAILED|KeyError|Error:|Exception" /tmp/ci_logs.txt | head -50
 ```
 
-**URL pattern:** `productionresultssa16.blob.core.windows.net/actions-results/*`
+**🚨 DO NOT use WebFetch for CI logs:**
+- WebFetch truncates large files (CI logs are often 3000+ lines)
+- You'll get a summary that misses the actual errors
+- curl saves the complete file locally where you can grep it
 
 **Integration with other skills:**
 - **test-runner** detects failures → immediately invoke test-fixer

@@ -6,6 +6,10 @@ bootstrap_token: e28604705b8e2934
 
 # Getting Started with Arsenal
 
+> **Editing this file?** Keep it concise. This file teaches *when* to use skills, not *how*.
+> The "how" belongs in each skill's SKILL.md. If you're adding details about how to do something,
+> put them in the relevant skill and just add a trigger here that routes to it.
+
 ## 🔥 Four Foundational Rules
 
 You have an arsenal of tools at your disposal. Here's how they work:
@@ -38,6 +42,16 @@ Message at 2:34 PM ([view](https://admin.prod.cncorp.io/conversations/456/messag
 - Time range: `...messages?start={iso}&end={iso}`
 
 **This is not optional. Manager-review checks for missing citations (Mistake #10).**
+
+---
+
+## 🔗 ALWAYS-ON: CI Log URLs
+
+**See `blob.core.windows.net`? → Immediately use test-fixer skill.**
+
+- URLs expire in ~10 min
+- **DO NOT use WebFetch** - it truncates large logs and you'll miss the actual errors
+- test-fixer skill has the curl commands
 
 ---
 
