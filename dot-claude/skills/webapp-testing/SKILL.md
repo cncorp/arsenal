@@ -62,11 +62,24 @@ with sync_playwright() as p:
     browser.close()
 ```
 
+## Screenshot Storage
+
+**All screenshots MUST be saved to `.playwright/` directory:**
+
+```python
+page.screenshot(path='.playwright/screenshot.png', full_page=True)
+```
+
+Use descriptive filenames:
+- `.playwright/01-initial-load.png`
+- `.playwright/02-after-login.png`
+- `.playwright/03-dashboard.png`
+
 ## Reconnaissance-Then-Action Pattern
 
 1. **Inspect rendered DOM**:
    ```python
-   page.screenshot(path='/tmp/inspect.png', full_page=True)
+   page.screenshot(path='.playwright/inspect.png', full_page=True)
    content = page.content()
    page.locator('button').all()
    ```
